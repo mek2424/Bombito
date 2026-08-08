@@ -576,19 +576,44 @@ function closeSidebar(){document.getElementById("sidebar").classList.remove("ope
 function saveSubtitle(v){S.subtitle=v;save();}
 function exportData(){
   const json=JSON.stringify(S,null,2);
-  const b=new Blob([json],{type:"application/json"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(b);
-  a.download="bombito_"+today()+".json";
-  a.click();
+  const filename='bombito_'+today()+'.json';
   localStorage.setItem('bombito_last_export',Date.now());
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(json).then(()=>{
-      toast('Záloha stažena a zkopírována do schránky ✓');
-    }).catch(()=>{
-      toast('Záloha stažena ✓');
-    });
+
+  // 1. Web Share API with File — best on mobile (opens native share sheet)
+  if(navigator.canShare){
+    const file=new File([json],filename,{type:'application/json'});
+    if(navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'Bombito záloha',text:'Data z aplikace Bombito'})
+        .then(()=>toast('Záloha sdílena ✓'))
+        .catch(err=>{if(err.name!=='AbortError')fallbackExport(json,filename);});
+      return;
+    }
   }
+  fallbackExport(json,filename);
+}
+
+function fallbackExport(json,filename){
+  // 2. Blob URL download — funguje na desktopu
+  try{
+    const b=new Blob([json],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},200);
+    toast('Záloha stažena ✓');
+  }catch(e){
+    // 3. Clipboard fallback
+    navigator.clipboard?.writeText(json)
+      .then(()=>toast('Data zkopírována do schránky — vlož do poznámek nebo e-mailu'))
+      .catch(()=>showExportModal(json));
+  }
+}
+
+function showExportModal(json){
+  // 4. Poslední záchrana: ukáž JSON v textarei pro ruční kopírování
+  openModal('<h2>📋 Záloha dat</h2><p style="font-size:0.8rem;color:var(--gm);margin-bottom:10px">Zkopíruj tento text a ulož ho např. do Poznámek.</p><textarea style="width:100%;height:180px;background:#07100a;border:1px solid var(--brd);color:var(--w);font-size:0.6rem;border-radius:6px;padding:8px;font-family:monospace" readonly>'+json+'</textarea><div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>');
 }
 function importData(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.players){S=d;save();load();render();toast("Import úspěšný ✓");}}catch{toast("Chyba importu!","err");};};r.readAsText(f);}
 function toast(msg,t="ok"){const el=document.createElement("div");el.className="toast";el.textContent=msg;el.style.background=t==="ok"?"var(--g)":"var(--red)";document.body.appendChild(el);setTimeout(()=>{el.style.opacity="0";setTimeout(()=>el.remove(),400);},2200);}
