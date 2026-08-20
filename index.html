@@ -4,16 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>🏐 Bombito</title>
-<meta name="description" content="Volejbalová tréninková aplikace — SK Meteor Praha">
-<meta name="theme-color" content="#1a4d22">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Bombito">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -1848,13 +1838,15 @@ function drawTsTimeline(p,norms){
 // ═══════════════════════════════════════════════
 function checkBackupReminder(){
   const last=parseInt(localStorage.getItem('bombito_last_export')||'0');
-  const days=Math.floor((Date.now()-last)/86400000);
-  if(days>=7&&S.players.length>0){
-    const banner=document.createElement('div');
-    banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#1a3a1e;border-top:2px solid var(--g);padding:10px 16px;display:flex;align-items:center;gap:12px;z-index:190;font-size:0.82rem';
-    banner.innerHTML=`<span style="flex:1">💾 Poslední záloha před ${days} dny — doporučujeme exportovat data</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout later</button>`;
-    document.body.appendChild(banner);
-  }
+  if(!S.players.length)return;
+  const days=last?Math.floor((Date.now()-last)/86400000):null;
+  const show=!last||(days>=7);
+  if(!show)return;
+  const label=last?`Poslední záloha před ${days} ${days===1?'dnem':days<5?'dny':'dny'}`:'Zatím bez zálohy';
+  const banner=document.createElement('div');
+  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#1a3a1e;border-top:2px solid var(--g);padding:10px 16px;display:flex;align-items:center;gap:12px;z-index:190;font-size:0.82rem';
+  banner.innerHTML=`<span style="flex:1">💾 ${label} — doporučujeme exportovat data</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout later</button>`;
+  document.body.appendChild(banner);
 }
 
 
@@ -1953,6 +1945,7 @@ function openLiveScreen(){
         <div style="font-size:0.62rem;color:#6aaa70;letter-spacing:1px">${fmtDate(LM.date)} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[LM.mode]}</div>
       </div>
       <span class="live-badge">LIVE</span>
+      <button onclick="undoAction()" title="Vrátit poslední akci" style="background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.3);border-radius:8px;color:#fff;font-size:1.1rem;width:40px;height:40px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700" onmousedown="this.style.background='rgba(255,255,255,0.25)'" onmouseup="this.style.background='rgba(255,255,255,0.12)'" ontouchstart="this.style.background='rgba(255,255,255,0.25)'" ontouchend="this.style.background='rgba(255,255,255,0.12)'">↩</button>
     </div>
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px" id="liveContent"></div>
 `;
@@ -2045,7 +2038,7 @@ function renderLiveContent(){
   const actDiv=document.createElement('div');
   actDiv.style.cssText='padding:10px 0 4px;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px';
   if(!set.closed){
-    actDiv.innerHTML=`<button class="btn btn-gray sm" onclick="undoAction()" title="Zpět o jeden krok" style="padding:0 14px;font-size:1.1rem">↩</button><button class="btn btn-p" style="flex:1" onclick="closeSet()">✔ Ukončit set</button>`;
+    actDiv.innerHTML=`<button class="btn btn-p" style="flex:1" onclick="closeSet()">✔ Ukončit set</button>`;
   } else if(!LM.finished){
     actDiv.innerHTML=`<button class="btn btn-o" style="flex:1" onclick="addNewSet()">+ Další set</button>
       <button class="btn btn-a" style="flex:1" onclick="finishMatch()">🏁 Ukončit zápas</button>`;
@@ -2126,6 +2119,7 @@ function lastRecv(pid, set){
 }
 
 function closeSet(){
+  if(!confirm('Ukončit set? Akci nelze vrátit.'))return;
   const set=LM.sets[LM.activeSet];
   set.closed=true;
   saveLM();
@@ -2150,6 +2144,7 @@ function addNewSet(){
 }
 
 function finishMatch(){
+  if(!confirm('Ukončit zápas? Akci nelze vrátit.'))return;
   LM.finished=true;
   upsertMatch(LM);
   save();
@@ -2744,15 +2739,6 @@ function deleteMatch(mid){
 
 load();loadLM();render();setTimeout(checkBackupReminder,2000);
 
-</script>
-<script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(r => console.log('SW registered:', r.scope))
-      .catch(e => console.warn('SW failed:', e));
-  });
-}
 </script>
 </body>
 </html>
