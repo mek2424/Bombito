@@ -17,7 +17,7 @@
 <script src="./chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--g:#2a7a35;--gd:#1a4d22;--gl:#3db84a;--w:#f5f7f5;--gm:#787870;--acc:#e8c840;--red:#d05555;--bg:#0d160e;--card:#0f1a10;--brd:#1a2e1a;--sw:228px}
+:root{--g:#2a7a35;--gd:#1a4d22;--gl:#3db84a;--w:#f5f7f5;--gm:#828278;--acc:#e8c840;--red:#d05555;--bg:#0d160e;--card:#0f1a10;--brd:#1a2e1a;--sw:228px;--gold-1:#c8a820;--gold-2:#f5e070}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;height:100%}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--w);display:flex;flex-direction:column;max-width:100vw}
@@ -35,7 +35,7 @@ header{background:linear-gradient(135deg,#1a4d22,#0f2e14);border-bottom:2px soli
 .btn-d{background:transparent;border:1.5px solid var(--red);color:var(--red)}.btn-d:hover{background:var(--red);color:#fff}
 .btn-a{background:var(--acc);color:#000}.btn-a:hover{background:#f0d060}
 .btn-gray{background:transparent;border:1.5px solid #444;color:#999}.btn-gray:hover{border-color:#888;color:var(--w)}
-.btn-gold{background:linear-gradient(90deg,#c8a820,#f5e070,#c8a820);background-size:200%;animation:shimmer 4s linear infinite;color:#000;border:none;font-weight:700}
+.btn-gold{background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--gold-1));background-size:200%;animation:shimmer 4s linear infinite;color:#000;border:none;font-weight:700}
 .sm{padding:5px 10px;font-size:0.73rem}
 .icon-btn{background:transparent;border:none;cursor:pointer;color:var(--w);font-size:1.15rem;padding:4px 7px;border-radius:6px;transition:background .15s;flex-shrink:0}
 .icon-btn:hover{background:rgba(255,255,255,.1)}
@@ -50,13 +50,13 @@ header{background:linear-gradient(135deg,#1a4d22,#0f2e14);border-bottom:2px soli
 .pc.active{background:#1a3a1e;border-color:var(--g)}
 .pc.cmp-sel{border-color:#4a9ee8;background:rgba(74,158,232,.08)}
 .pc.has-kap{border-style:solid;animation:borderMove 5s linear infinite;background:rgba(232,200,64,.04)}
-.pc.has-kap.active{background:rgba(26,58,30,.9);box-shadow:0 0 0 2px #e8c840,0 0 12px rgba(232,200,64,.4)}
-@keyframes borderMove{0%{border-image:linear-gradient(90deg,#c8a820 0%,#f5e070 25%,#e8c840 50%,#f5e070 75%,#c8a820 100%) 1}50%{border-image:linear-gradient(90deg,#f5e070 0%,#e8c840 25%,#c8a820 50%,#e8c840 75%,#f5e070 100%) 1}100%{border-image:linear-gradient(90deg,#c8a820 0%,#f5e070 25%,#e8c840 50%,#f5e070 75%,#c8a820 100%) 1}}
+.pc.has-kap.active{background:rgba(26,58,30,.9);box-shadow:0 0 0 2px var(--acc),0 0 12px rgba(232,200,64,.4)}
+@keyframes borderMove{0%{border-image:linear-gradient(90deg,var(--gold-1) 0%,var(--gold-2) 25%,var(--acc) 50%,var(--gold-2) 75%,var(--gold-1) 100%) 1}50%{border-image:linear-gradient(90deg,var(--gold-2) 0%,var(--acc) 25%,var(--gold-1) 50%,var(--acc) 75%,var(--gold-2) 100%) 1}100%{border-image:linear-gradient(90deg,var(--gold-1) 0%,var(--gold-2) 25%,var(--acc) 50%,var(--gold-2) 75%,var(--gold-1) 100%) 1}}
 .pc-name{font-weight:600;font-size:0.84rem;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pc-b{display:flex;flex-wrap:wrap;gap:3px;min-height:16px}
 .bc{font-size:0.55rem;padding:2px 5px;border-radius:7px;background:#152015;color:var(--gl);border:1px solid #2a4a2a;white-space:nowrap}
 .bc.on{background:var(--acc);color:#000;border-color:var(--acc);font-weight:700}
-.bc.sp{background:linear-gradient(90deg,#c8a820,#f5e070,#e8c840,#f5e070,#c8a820);background-size:300%;animation:shimmer 5s linear infinite;color:#000;border:none;font-weight:700}
+.bc.sp{background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--acc),var(--gold-2),var(--gold-1));background-size:300%;animation:shimmer 5s linear infinite;color:#000;border:none;font-weight:700}
 #sidebarBackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:149;backdrop-filter:blur(2px)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:100%;-webkit-overflow-scrolling:touch}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:55vh;gap:14px;color:var(--gm);text-align:center}
@@ -68,7 +68,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .pdi p{color:var(--gm);font-size:0.74rem;margin-top:2px}
 .brow{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .ba{color:#000;padding:3px 10px;border-radius:10px;font-size:0.68rem;font-weight:700;border:2px solid transparent}
-.ba.sp{background:linear-gradient(90deg,#c8a820,#f5e070,#e8c840,#f5e070,#c8a820);background-size:300%;animation:shimmer 5s linear infinite;box-shadow:0 0 10px rgba(232,200,64,.4)}
+.ba.sp{background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--acc),var(--gold-2),var(--gold-1));background-size:300%;animation:shimmer 5s linear infinite;box-shadow:0 0 10px rgba(232,200,64,.4)}
 .da{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
 .tabs{display:flex;border-bottom:2px solid var(--brd);margin-bottom:16px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -82,7 +82,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .me.inactive{opacity:0.35}
 .ml{flex:1;font-size:0.84rem;min-width:0}
 .ml small{display:block;font-size:0.65rem;color:var(--gm);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
-.note-btn{cursor:pointer;font-size:0.75rem;opacity:0.4;transition:opacity .15s;flex-shrink:0;background:none;border:none;color:var(--w);padding:0 2px;line-height:1}
+.note-btn{cursor:pointer;font-size:0.75rem;opacity:0.4;transition:opacity .15s;flex-shrink:0;background:none;border:none;color:var(--w);padding:4px;min-width:28px;min-height:28px;display:inline-flex;align-items:center;justify-content:center;line-height:1}
 .note-btn:hover{opacity:1}
 .note-btn.has-note{opacity:.9;color:var(--acc)}
 .mv{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--gl);letter-spacing:1px;flex-shrink:0}
@@ -93,7 +93,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .mi{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #141e14}
 .mi:last-child{border-bottom:none}
 .mi.inactive{opacity:0.35}
-.mck{width:27px;height:27px;border-radius:50%;border:2px solid #2a4a2a;display:flex;align-items:center;justify-content:center;font-size:0.85rem;cursor:pointer;transition:all .2s;flex-shrink:0}
+.mck{width:36px;height:36px;border-radius:50%;border:2px solid #2a4a2a;display:flex;align-items:center;justify-content:center;font-size:0.85rem;cursor:pointer;transition:all .2s;flex-shrink:0}
 .mck.done{background:var(--g);border-color:var(--g)}
 .ml2{flex:1;font-size:0.84rem}
 .md2{font-size:0.7rem;color:var(--gm);flex-shrink:0}
@@ -111,8 +111,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .no-data{color:var(--gm);font-size:0.79rem;padding:14px 0;text-align:center}
 /* T-SCORE 5 LEVELS */
 .ts-badge{font-size:0.67rem;padding:2px 6px;border-radius:10px;font-weight:700;flex-shrink:0;white-space:nowrap}
-.ts-legend{background:linear-gradient(90deg,#c8a820,#f5e070,#c8a820);background-size:200%;animation:shimmer 4s linear infinite;color:#000}
-.ts-great{background:#1a4a2a;color:#3db84a}
+.ts-legend{background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--gold-1));background-size:200%;animation:shimmer 4s linear infinite;color:#000}
+.ts-great{background:#1a4a2a;color:var(--gl)}
 .ts-avg{background:#1e2a1e;color:#7ab87a}
 .ts-low{background:#3a2a0a;color:#e8a030}
 .ts-vlow{background:#3a1a00;color:#e06010}
@@ -137,16 +137,16 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .bt{padding:10px 7px;border-radius:9px;text-align:center;cursor:pointer;border:2px solid var(--brd);background:#07100a;transition:all .2s;font-size:0.78rem;font-weight:600}
 .bt:hover{border-color:var(--gl)}
 .bt.on{background:rgba(232,200,64,.12);color:var(--acc)}
-.bt.sp-on{animation:shimmer 5s linear infinite;color:#e8c840}
+.bt.sp-on{animation:shimmer 5s linear infinite;color:var(--acc)}
 .bi{font-size:1.25rem;margin-bottom:3px}
 .ed-item{display:flex;align-items:center;gap:7px;padding:8px 0;border-bottom:1px solid #141e14}
 .ed-item:last-child{border-bottom:none}
 .ed-lbl{flex:1;font-size:0.84rem;min-width:0}
 .ed-lbl small{font-size:0.68rem;color:var(--gm)}
-.tog{width:34px;height:19px;border-radius:10px;border:none;cursor:pointer;transition:background .2s;flex-shrink:0;position:relative;background:#333}
+.tog{width:42px;height:22px;border-radius:11px;border:none;cursor:pointer;transition:background .2s;flex-shrink:0;position:relative;background:#333}
 .tog.on{background:var(--g)}
-.tog::after{content:'';position:absolute;width:13px;height:13px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s}
-.tog.on::after{left:18px}
+.tog::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s}
+.tog.on::after{left:23px}
 .cmp-chip{padding:5px 11px;border-radius:8px;border:1.5px solid var(--brd);cursor:pointer;font-size:0.78rem;font-weight:500;transition:all .15s;background:#07100a;display:inline-block;margin:3px}
 .cmp-chip:hover{border-color:var(--gl)}
 .cmp-chip.sel{border-color:var(--gl);background:rgba(61,184,74,.12);color:var(--gl)}
@@ -277,7 +277,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .btn-minus:hover,.btn-minus:active{background:var(--red);color:#fff}
 .recv-btns{display:flex;gap:8px}
 .recv-btn{border-radius:8px;border:2px solid var(--brd);width:44px;height:44px;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .15s;flex-shrink:0;background:#07100a}
-.recv-btn.r1{border-color:#2a7a35;color:#3db84a}.recv-btn.r1.sel{background:#2a7a35;color:#fff}
+.recv-btn.r1{border-color:var(--g);color:var(--gl)}.recv-btn.r1.sel{background:var(--g);color:#fff}
 .recv-btn.r3{border-color:#787820;color:#c8c820}.recv-btn.r3.sel{background:#787820;color:#fff}
 .recv-btn.r5{border-color:#7a2a2a;color:#d05555}.recv-btn.r5.sel{background:#7a2a2a;color:#fff}
 /* Match history cards */
@@ -350,8 +350,12 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 </div>
 <div class="mo" id="modal" style="display:none"><div class="md" id="modalContent"></div></div>
 <script>
-const COLORS=["#3db84a","#4a9ee8","#e87a4a","#c84ae8","#e8c840","#4ae8c8","#e84a4a","#9ae84a"];
-const BADGE_COLORS=["#e8c840","#3db84a","#4a9ee8","#e87a4a","#c84ae8","#ff6b6b","#4ae8c8","#ffffff","#ff69b4","#ffa500"];
+// Sdílené barvy pro Chart.js grafy — CSS proměnné (var(--x)) canvas nepřečte,
+// takže se stejné odstíny drží tady v JS konstantách místo opisování hexu v každém grafu.
+// Musí být definované dřív než COLORS/BADGE_COLORS, které je taky používají.
+const CGRID='#1a2a1a', CTICK='#828278', CLEG='#b8b8b4', CGREEN='#3db84a', CACC='#e8c840', CG='#2a7a35', CW='#f5f7f5';
+const COLORS=[CGREEN,"#4a9ee8","#e87a4a","#c84ae8",CACC,"#4ae8c8","#e84a4a","#9ae84a"];
+const BADGE_COLORS=[CACC,CGREEN,"#4a9ee8","#e87a4a","#c84ae8","#ff6b6b","#4ae8c8","#ffffff","#ff69b4","#ffa500"];
 
 const DEF_PHYSICAL=[
   {id:"k_test",        label:"K-test",                   unit:"s",  hint:"agility dráha — nižší = lepší", lowerBetter:true, spider:true,  showGraph:true,  active:true},
@@ -379,12 +383,12 @@ const DEF_MIL=[
   {id:"nataceni_prsty", label:"Natáčení se – prsty",    active:true},
 ];
 const DEF_BADGES=[
-  {id:"blokar",      label:"Blokař",     icon:"🧱", color:"#3db84a"},
+  {id:"blokar",      label:"Blokař",     icon:"🧱", color:CGREEN},
   {id:"servis_girl", label:"Servis Girl",icon:"🎯", color:"#4a9ee8"},
   {id:"bomberka",    label:"Bomberka",   icon:"💣", color:"#e87a4a"},
   {id:"capacka",     label:"Čapačka",    icon:"🤿", color:"#4ae8c8"},
-  {id:"hecirka",     label:"Hecířka",    icon:"🔥", color:"#e8c840"},
-  {id:"kapitanka",   label:"Kapitánka",  icon:"👑", color:"#e8c840", special:true},
+  {id:"hecirka",     label:"Hecířka",    icon:"🔥", color:CACC},
+  {id:"kapitanka",   label:"Kapitánka",  icon:"👑", color:CACC, special:true},
 ];
 
 let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"current",matches:[]};
@@ -428,7 +432,7 @@ function load(){
     if(m.defaultMax==null)m.defaultMax=m.max||10;
     delete m.max; // migrate old format
   });
-  S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?"#e8c840":"#3db84a";});
+  S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?CACC:CGREEN;});
   if(!S.normScope)S.normScope="current";
   if(!S.matches)S.matches=[];
   // Migrate: rename "Balony zadarmo" → "Zdarma"
@@ -681,7 +685,7 @@ function openBadges(){
   const btns=S.config.badges.map(b=>{
     const on=p.badges.includes(b.id);
     const style=on?`border-color:${b.color};background:${b.color}22;color:${b.color}`:"";
-    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"><div class="bi">${b.icon}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:#e8c840;margin-top:2px">★</div>':''}</div>`;
+    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"><div class="bi">${b.icon}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
   }).join("");
   openModal(`<h2>🏅 Odznaky</h2><p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${p.name}</p><div class="btg">${btns}</div><div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
@@ -807,7 +811,7 @@ function openMilEd(){
 function openBadgeEd(){
   const list=S.config.badges.map((b,i)=>`<div class="ed-item">
     <span style="font-size:1.2rem;flex-shrink:0">${b.icon}</span>
-    <div style="width:14px;height:14px;border-radius:50%;background:${b.color||"#3db84a"};flex-shrink:0;border:2px solid rgba(255,255,255,.3)"></div>
+    <div style="width:14px;height:14px;border-radius:50%;background:${b.color||CGREEN};flex-shrink:0;border:2px solid rgba(255,255,255,.3)"></div>
     <div class="ed-lbl">${b.label}${b.special?' <span style="color:var(--acc);font-size:0.68rem">★</span>':""}</div>
     <button class="btn btn-o sm" onclick="editBadge(${i})">✎</button>
     <button class="btn btn-d sm" onclick="delBadge(${i})">✕</button>
@@ -861,7 +865,7 @@ function saveGame(i){const m=S.config.game[i];m.label=document.getElementById("e
 function editMil(i){const m=S.config.milestones[i];openModal(`<h2>✎ Milník</h2><div class="fg"><label>Název</label><input id="el" value="${m.label}"></div><div class="ma"><button class="btn btn-o" onclick="openMilEd()">← Zpět</button><button class="btn btn-p" onclick="saveMil(${i})">Uložit</button></div>`);}
 function saveMil(i){const m=S.config.milestones[i];m.label=document.getElementById("el").value.trim()||m.label;save();toast("Uloženo ✓");openMilEd();if(S.activeId)renderDetail();}
 function editBadge(i){
-  const b=S.config.badges[i];const curColor=b.color||"#3db84a";
+  const b=S.config.badges[i];const curColor=b.color||CGREEN;
   openModal(`<h2>✎ Odznak</h2>
     <div class="fr"><div class="fg"><label>Emoji</label><input id="ei2" value="${b.icon}" maxlength="4"></div><div class="fg"><label>Název</label><input id="eb" value="${b.label}"></div></div>
     <div class="fg"><label>Barva rámečku</label><div class="swatch-row">${BADGE_COLORS.map(c=>`<div class="swatch ${c===curColor?"sel":""}" style="background:${c}" onclick="selSwatch(this,'editBadgeColor','${c}')"></div>`).join("")}</div><input type="hidden" id="editBadgeColor" value="${curColor}"></div>
@@ -872,7 +876,7 @@ function saveBadge(i){const b=S.config.badges[i];b.icon=document.getElementById(
 function addPhys(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.physical.push({id:"m_"+Date.now(),label,unit:document.getElementById("nu")?.value.trim()||"",lowerBetter:document.getElementById("nlb")?.checked||false,spider:document.getElementById("nsp")?.checked!==false,showGraph:document.getElementById("nsg")?.checked!==false,active:true});save();toast("Přidáno ✓");openPhysEd();}
 function addGame(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.game.push({id:"m_"+Date.now(),label,defaultMax:parseInt(document.getElementById("nmax")?.value)||15,active:true});save();toast("Přidáno ✓");openGameEd();}
 function addMil(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.milestones.push({id:"m_"+Date.now(),label,active:true});save();toast("Přidáno ✓");openMilEd();}
-function addBadge(){const icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if(!icon||!label){toast("Zadej ikonu i název!","err");return;}S.config.badges.push({id:"b_"+Date.now(),label,icon,color:document.getElementById("newBadgeColor")?.value||"#3db84a",special:document.getElementById("nsp2")?.checked||false});save();toast("Přidán ✓");openBadgeEd();}
+function addBadge(){const icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if(!icon||!label){toast("Zadej ikonu i název!","err");return;}S.config.badges.push({id:"b_"+Date.now(),label,icon,color:document.getElementById("newBadgeColor")?.value||CGREEN,special:document.getElementById("nsp2")?.checked||false});save();toast("Přidán ✓");openBadgeEd();}
 
 // ═══ COMPARE ═══
 function toggleCmp(){S.cmpMode=!S.cmpMode;document.getElementById("cmpBtn").className=S.cmpMode?"btn btn-a sm":"btn btn-o sm";const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
@@ -970,14 +974,14 @@ function buildPhys(){
   </div>${hasG?`<div>${chs}</div>`:""}</div>`;
 }
 function lineC(labels,data,rev,unitLabel){
-  return{type:"line",data:{labels,datasets:[{data,borderColor:"#3db84a",backgroundColor:"rgba(61,184,74,0.08)",tension:0.35,pointRadius:4,pointBackgroundColor:"#3db84a",fill:true,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,
+  return{type:"line",data:{labels,datasets:[{data,borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.08)",tension:0.35,pointRadius:4,pointBackgroundColor:CGREEN,fill:true,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,
     animation:{onComplete:function(){try{this.canvas.dataset.url=this.canvas.toDataURL('image/png');}catch(e){}}},
     plugins:{legend:{display:false},
-      subtitle:rev?{display:true,text:"↑ lepší výkon (osa obrácena)",color:"#787870",font:{size:9},padding:{bottom:4}}:{display:false}
+      subtitle:rev?{display:true,text:"↑ lepší výkon (osa obrácena)",color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}
     },
     scales:{
-      x:{grid:{color:"#1a2a1a"},ticks:{color:"#787870",font:{size:10}}},
-      y:{grid:{color:"#1a2a1a"},ticks:{color:"#787870",font:{size:10},callback:v=>v+(unitLabel?" "+unitLabel:"")},reverse:!!rev}
+      x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+(unitLabel?" "+unitLabel:"")},reverse:!!rev}
     }
   }};
 }
@@ -1016,7 +1020,7 @@ function drawGame(){
     const sess=p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     const pcts=sess.map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100));
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets:[{data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?"#3db84a":"#1a4a22"),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:"#1a2a1a"},ticks:{color:"#787870",font:{size:10}}},y:{grid:{color:"#1a2a1a"},ticks:{color:"#787870",font:{size:10},callback:v=>v+"%"},min:0,max:100}}}});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets:[{data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+"%"},min:0,max:100}}}});
   });
 }
 
@@ -1065,10 +1069,10 @@ function mkRadar(id,labels,cur,prev){
   const cv=document.getElementById(id);if(!cv)return;
   if(!labels?.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
   const threshold=((75-20)/60*100);
-  const ptColors=(cur||[]).map(v=>v>=threshold?'#e8c840':'#3db84a');
-  const ds=[{label:"Aktuální",data:cur||labels.map(()=>0),borderColor:"#3db84a",backgroundColor:"rgba(61,184,74,0.15)",pointBackgroundColor:ptColors,pointRadius:5,borderWidth:2}];
+  const ptColors=(cur||[]).map(v=>v>=threshold?CACC:CGREEN);
+  const ds=[{label:"Aktuální",data:cur||labels.map(()=>0),borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.15)",pointBackgroundColor:ptColors,pointRadius:5,borderWidth:2}];
   if(prev)ds.push({label:"Předchozí",data:prev,borderColor:"#555",backgroundColor:"rgba(80,80,80,0.05)",pointBackgroundColor:"#555",pointRadius:3,borderWidth:1,borderDash:[4,4]});
-  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#b8b8b4",font:{size:11}}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:"#b8b8b4",font:{size:10}},ticks:{display:false}}}}});
+  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11}}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
 }
 function drawSpider(){
   const showP=document.getElementById("prevTog")?.checked;
@@ -1112,7 +1116,7 @@ function renderCmp(){
   const gaChs=gaAct.map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
   const milTbl=milAct.length?`<div class="card"><table style="width:100%;border-collapse:collapse">
     <tr><th style="text-align:left;padding-bottom:8px;font-size:0.6rem;letter-spacing:1px;color:var(--gm)">MILNÍK</th>${sel.map((p,i)=>`<th style="text-align:center;padding-bottom:8px;font-size:0.71rem;color:${COLORS[i%COLORS.length]}">${playerLabel(p)}</th>`).join("")}</tr>
-    ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid #141e14">${m.label}</td>${sel.map(p=>`<td style="text-align:center;border-bottom:1px solid #141e14;padding:6px 4px">${p.milestones?.[m.id]?`<span style="color:var(--gl)">✓</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id])}</span>`:'<span style="color:#333">–</span>'}</td>`).join("")}</tr>`).join("")}
+    ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid #141e14">${m.label}</td>${sel.map(p=>`<td style="text-align:center;border-bottom:1px solid #141e14;padding:6px 4px">${p.milestones?.[m.id]?`<span style="color:var(--gl)">✓</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id])}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`).join("")}</tr>`).join("")}
   </table></div>`:"";
   el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ Porovnání</h2>
     <div style="margin-bottom:10px">${chips}</div>
@@ -1138,11 +1142,11 @@ function multiLine(cid,datasets,lowerBetter){
     borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',
     tension:0.3,pointRadius:4,borderWidth:2,spanGaps:false}))},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#b8b8b4',font:{size:10}}},
-        subtitle:lowerBetter?{display:true,text:'↑ lepší výkon (osa obrácena)',color:'#787870',font:{size:9},padding:{bottom:2}}:{display:false}},
+      plugins:{legend:{labels:{color:CLEG,font:{size:10}}},
+        subtitle:lowerBetter?{display:true,text:'↑ lepší výkon (osa obrácena)',color:CTICK,font:{size:9},padding:{bottom:2}}:{display:false}},
       scales:{
-        x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}},
-        y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}},reverse:!!lowerBetter}
+        x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+        y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},reverse:!!lowerBetter}
       }}});
 }
 function drawCmp(sel,norms){
@@ -1156,7 +1160,7 @@ function drawCmp(sel,norms){
     const f=spiderData(lS(sel[0]),norms);if(!f){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     const ds=sel.map((p,i)=>{const d=spiderData(lS(p),norms);if(!d)return null;return{label:playerLabel(p),data:d[dk],borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+"22",pointRadius:4,borderWidth:2};}).filter(Boolean);
     if(!ds.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
-    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#b8b8b4",font:{size:10}}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:"#b8b8b4",font:{size:10}},ticks:{display:false}}}}});
+    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
   }
   cmpRadar("cRPh","pL","pD");cmpRadar("cRGa","gL","gD");
 
@@ -1179,22 +1183,22 @@ function drawCmp(sel,norms){
           datasets:[{data:bodyTotals,backgroundColor:bodyTotals.map((v,i)=>COLORS[i%COLORS.length]),borderRadius:5,borderWidth:0}]},
         options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false}},
-          scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}},
-                  y:{grid:{display:false},ticks:{color:'#f5f7f5',font:{size:11}}}}}});
+          scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+                  y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
   if(cvRecv){
     const hasRecv=recvAvgs.some(v=>v!=null);
     if(!hasRecv){cvRecv.parentElement.innerHTML='<div class="no-data">Žádné záznamy příjmu</div>';}
     else{
-      const colors=recvAvgs.map((v,i)=>v==null?'#333':COLORS[i%COLORS.length]);
+      const colors=recvAvgs.map((v,i)=>v==null?CTICK:COLORS[i%COLORS.length]);
       CH['cmp_match_recv']=new Chart(cvRecv,{type:'bar',
         data:{labels:sel.map(p=>playerLabel(p)),
           datasets:[{data:recvAvgs.map(v=>v??0),backgroundColor:colors,borderRadius:5,borderWidth:0}]},
         options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},
-          scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10},callback:v=>v+'%'},min:0,max:100},
-                  y:{grid:{display:false},ticks:{color:'#f5f7f5',font:{size:11}}}}}});
+          scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},
+                  y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
 }
@@ -1205,7 +1209,7 @@ function drawCmp(sel,norms){
 // ══════════════════════════════════════════════
 function tBadgeStyle(t){
   if(t==null)return'background:#eee;color:#666';
-  if(t>=75)return'background:linear-gradient(90deg,#c8a820,#f5e070,#c8a820);background-size:200%;color:#000';
+  if(t>=75)return'background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--gold-1));background-size:200%;color:#000';
   if(t>=60)return'background:#d4f0dc;color:#1a5e2a';
   if(t>=45)return'background:#e8f5e8;color:#3a7a3a';
   if(t>=30)return'background:#fff0d0;color:#a05000';
@@ -1260,7 +1264,7 @@ function exportPDF(){
   // MILESTONES
   const milHtml=S.config.milestones.filter(m=>m.active!==false).map(m=>{
     const done=!!p.milestones?.[m.id];const dt=p.milestones?.[m.id]||'';
-    return`<div class="pdf-mil-row"><div class="pdf-dot" style="background:${done?'#2a7a35':'none'};border:2px solid ${done?'#2a7a35':'#ccc'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem">${done?'✓':''}</div><div style="flex:1">${m.label}</div>${done?`<div style="font-size:0.73rem;color:#666">${fmtDate(dt)}</div>`:''}</div>`;
+    return`<div class="pdf-mil-row"><div class="pdf-dot" style="background:${done?CG:'none'};border:2px solid ${done?CG:'#ccc'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem">${done?'✓':''}</div><div style="flex:1">${m.label}</div>${done?`<div style="font-size:0.73rem;color:#666">${fmtDate(dt)}</div>`:''}</div>`;
   }).join('');
 
   const dateRange=sessions.length>1?`${fmtDate(sessions[0].date)} – ${fmtDate(sessions[sessions.length-1].date)}`:fmtDate(sessions[0].date);
@@ -1392,7 +1396,7 @@ function renderPDFTop5(p){
   // Bar chart comparing player T vs 50 (team average)
   const html=top5.map(m=>{
     const pct=Math.max(0,Math.min(100,((Math.max(20,Math.min(80,m.t))-20)/60)*100));
-    const color=m.t>=75?'#c8a820':m.t>=60?'#2a7a35':m.t>=45?'#3a7a3a':m.t>=30?'#a05000':'#8b2500';
+    const color=m.t>=75?'#c8a820':m.t>=60?CG:m.t>=45?'#3a7a3a':m.t>=30?'#a05000':'#8b2500';
     const avgPct=((50-20)/60*100); // T=50 mapped to 0-100
     return`<div style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px">
@@ -1420,7 +1424,7 @@ function renderPDFCharts(p,sessions){
   S.config.physical.filter(m=>m.active!==false&&m.showGraph!==false&&m.id!=='dosah_vyskoku').forEach(m=>{
     const vals=sessions.filter(s=>s.physical?.[m.id]!=null);
     if(vals.length<2)return;
-    chartDefs.push({label:m.label+' ('+m.unit+')',labels:vals.map(s=>fmtDate(s.date,true)),data:vals.map(s=>s.physical[m.id]),color:'#2a7a35',reverse:!!m.lowerBetter,unit:m.unit});
+    chartDefs.push({label:m.label+' ('+m.unit+')',labels:vals.map(s=>fmtDate(s.date,true)),data:vals.map(s=>s.physical[m.id]),color:CG,reverse:!!m.lowerBetter,unit:m.unit});
   });
   // Výskok
   const vysVals=sessions.filter(s=>calcVys(s)!=null);
@@ -1746,7 +1750,7 @@ function renderOverview(){
         return lS(p)?.physical?.[m.id]??null;
       },
       display:(p,v)=>{
-        if(v==null)return'<span style="color:#333">–</span>';
+        if(v==null)return'<span style="color:var(--gm)">–</span>';
         const t=m.id==='dosah'?tRaw(v,norms['vyskok']):tRaw(v,norms[m.id]);
         const rank=rankIn(active,pp=>{
           const vv=m.id==='dosah'?calcVys(lS(pp)):lS(pp)?.physical?.[m.id];
@@ -1760,13 +1764,13 @@ function renderOverview(){
     })),
     {id:'ph_vyskok',label:'Výskok<br><small>cm</small>',
       get:p=>calcVys(lS(p)),
-      display:(p,v)=>{if(v==null)return'<span style="color:#333">–</span>';const t=tRaw(v,norms['vyskok']);const r=rankIn(active,pp=>calcVys(lS(pp)),false)(p);return `${v}<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
+      display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const t=tRaw(v,norms['vyskok']);const r=rankIn(active,pp=>calcVys(lS(pp)),false)(p);return `${v}<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>calcVys(lS(p))??-Infinity,lowerBetter:false},
     ...gaA.map(m=>({
       id:'ga_'+m.id,
       label:m.label.split(' ')[0]+'<br><small>%</small>',
       get:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs);},
-      display:(p,v)=>{if(v==null)return'<span style="color:#333">–</span>';const pct=Math.round(v*100);const t=tRaw(v,norms[m.id]);const r=rankIn(active,pp=>{const gs=gameScore(lS(pp)?.game,m.id);return gamePct(gs);},false)(p);return `${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
+      display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const pct=Math.round(v*100);const t=tRaw(v,norms[m.id]);const r=rankIn(active,pp=>{const gs=gameScore(lS(pp)?.game,m.id);return gamePct(gs);},false)(p);return `${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs)??-Infinity;},lowerBetter:false})),
     {id:'milestones',label:'Milníky',
       get:p=>Object.keys(p.milestones||{}).filter(id=>S.config.milestones.find(m=>m.id===id&&m.active!==false)).length,
@@ -1775,7 +1779,7 @@ function renderOverview(){
       lowerBetter:false},
     {id:'last_test',label:'Poslední<br><small>test</small>',
       get:p=>lS(p)?.date,
-      display:(p,v)=>v?fmtDate(v):'<span style="color:#333">–</span>',
+      display:(p,v)=>v?fmtDate(v):'<span style="color:var(--gm)">–</span>',
       sortVal:p=>lS(p)?.date??'',lowerBetter:false},
   ];
 
@@ -1882,10 +1886,10 @@ function drawTsTimeline(p,norms){
   const refLinePlugin={id:'refLine',afterDraw(chart){const{ctx,chartArea,scales}=chart;if(!scales.y)return;const y50=scales.y.getPixelForValue(50);ctx.save();ctx.strokeStyle='rgba(120,120,120,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(chartArea.left,y50);ctx.lineTo(chartArea.right,y50);ctx.stroke();ctx.fillStyle='#666';ctx.font='9px sans-serif';ctx.fillText('T=50',chartArea.right+4,y50+4);ctx.restore();}};
   CH['tsTimeline']=new Chart(cv,{type:'line',plugins:[refLinePlugin],data:{labels,datasets},options:{
     responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:'#b8b8b4',font:{size:9},boxWidth:12}}},
+    plugins:{legend:{labels:{color:CLEG,font:{size:9},boxWidth:12}}},
     scales:{
-      x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}},
-      y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}},
+      x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},
         min:20,max:80,
         afterBuildTicks:axis=>{axis.ticks=[{value:20},{value:30},{value:45},{value:50},{value:60},{value:75},{value:80}];},
       }
@@ -2319,7 +2323,7 @@ function drawLiveCharts(set){
     const sorted=[...withData].filter(p=>set.actions.some(a=>a.pid===p.id&&a.type==='body'))
       .sort((a,b)=>calcBodyScore(b.id,set)-calcBodyScore(a.id,set));
     const scores=sorted.map(p=>calcBodyScore(p.id,set));
-    const colors=scores.map(s=>s>0?'#2a7a35':s<0?'#7a2a2a':'#444');
+    const colors=scores.map(s=>s>0?CG:s<0?'#7a2a2a':'#444');
     const cv=document.getElementById('lc_bar');
     if(cv&&sorted.length){
       LCH.bar=new Chart(cv,{type:'bar',data:{
@@ -2327,8 +2331,8 @@ function drawLiveCharts(set){
         datasets:[{data:scores,backgroundColor:colors,borderRadius:5,borderWidth:0}]
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}},
-                y:{grid:{display:false},ticks:{color:'#f5f7f5',font:{size:11}}}}}});
+        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+                y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
 
     // ── Cumulative line chart ──
@@ -2346,9 +2350,9 @@ function drawLiveCharts(set){
       const labels=bodyActions.map((_,i)=>'#'+(i+1));
       LCH.line=new Chart(cv2,{type:'line',data:{labels,datasets},options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#b8b8b4',font:{size:10}}}},
-        scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:9}}},
-                y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}}}}});
+        plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},
+        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},
+                y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
     }
   }
 
@@ -2360,14 +2364,14 @@ function drawLiveCharts(set){
     if(cv3&&recvPlayers.length){
       const avgs=recvPlayers.map(p=>Math.round(calcRecvAvg(p.id,set)*10)/10);
       const pcts=avgs.map(a=>recvPct(a));
-      const colors3=pcts.map(v=>v>=80?'#2a7a35':v>=50?'#787820':'#7a2a2a');
+      const colors3=pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a');
       LCH.recv=new Chart(cv3,{type:'bar',data:{
         labels:recvPlayers.map(p=>playerLabel(p)),
         datasets:[{data:pcts,backgroundColor:colors3,borderRadius:5,borderWidth:0}]
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.x+'% ('+avgs[ctx.dataIndex]+')'}}},
-        scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10},callback:v=>v+'%'},min:0,max:100},
-                y:{grid:{display:false},ticks:{color:'#f5f7f5',font:{size:11}}}}}});
+        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},
+                y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
 
@@ -2391,13 +2395,13 @@ function drawLiveCharts(set){
       }));
       LCH.quad=new Chart(cv4,{type:'scatter',data:{datasets},options:{
         responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#b8b8b4',font:{size:10},boxWidth:10}},
+        plugins:{legend:{labels:{color:CLEG,font:{size:10},boxWidth:10}},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: body ${ctx.parsed.x>0?'+':''}${ctx.parsed.x}, příjem ${ctx.parsed.y}%`}}},
         scales:{
-          x:{title:{display:true,text:'Body (+/−)',color:'#787870',font:{size:10}},
-             grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:9}}},
-          y:{title:{display:true,text:'Příjem %',color:'#787870',font:{size:10}},
-             grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:9},callback:v=>v+'%'},min:0,max:100}
+          x:{title:{display:true,text:'Body (+/−)',color:CTICK,font:{size:10}},
+             grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},
+          y:{title:{display:true,text:'Příjem %',color:CTICK,font:{size:10}},
+             grid:{color:CGRID},ticks:{color:CTICK,font:{size:9},callback:v=>v+'%'},min:0,max:100}
         }
       }});
     }
@@ -2485,11 +2489,11 @@ function buildZapasTab(){
       CH['zh_body']=new Chart(cvb,{type:'bar',data:{
         labels:histBodyData.map(d=>d.x),
         datasets:[{data:histBodyData.map(d=>d.y),
-          backgroundColor:histBodyData.map(d=>d.y>0?'#2a7a35':d.y<0?'#7a2a2a':'#444'),
+          backgroundColor:histBodyData.map(d=>d.y>0?CG:d.y<0?'#7a2a2a':'#444'),
           borderRadius:4,borderWidth:0}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}},
-                y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}}}}});
+        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+                y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
     }
     const cvr=document.getElementById('zh_recv');
     if(cvr&&histRecvData.length>1){
@@ -2498,8 +2502,8 @@ function buildZapasTab(){
         datasets:[{data:histRecvData.map(d=>d.y),borderColor:'#4a9ee8',
           backgroundColor:'rgba(74,158,232,0.08)',tension:0.35,pointRadius:4,fill:true,borderWidth:2}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}},
-                y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}},reverse:true,min:1,max:5}}}});
+        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+                y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},reverse:true,min:1,max:5}}}});
     }
   },80);
 
@@ -2619,7 +2623,7 @@ function openMatchStatsModal(title, sets, players, isSet, extraHtml, closeScreen
           const data=bodyActions.map(a=>{if(a.pid===pid)cum+=a.value;return cum;});
           return{label:p?playerLabel(p):pid,data,borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',tension:0.3,pointRadius:3,borderWidth:2,spanGaps:true};
         });
-        new Chart(cv,{type:'line',data:{labels:bodyActions.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8b8b4',font:{size:10}}}},scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:9}}},y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}}}}});
+        new Chart(cv,{type:'line',data:{labels:bodyActions.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
       }
     }
     // Recv bar
@@ -2631,8 +2635,8 @@ function openMatchStatsModal(title, sets, players, isSet, extraHtml, closeScreen
         if(recvPlayers.length){
           const avgs=recvPlayers.map(p=>calcRecvAvg(p.id,{actions:allActions}));
           const pcts=avgs.map(a=>recvPct(a));
-          const colors=pcts.map(v=>v>=80?'#2a7a35':v>=50?'#787820':'#7a2a2a');
-          new Chart(cv2,{type:'bar',data:{labels:recvPlayers.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:colors,borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10},callback:v=>v+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:'#f5f7f5',font:{size:11}}}}}});
+          const colors=pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a');
+          new Chart(cv2,{type:'bar',data:{labels:recvPlayers.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:colors,borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
         } else cv2.parentElement.innerHTML='<div class="no-data">Žádná data</div>';
       }
     }
@@ -2710,7 +2714,7 @@ function renderMatchStats(m, actions, players, mode){
       const ba=actions.filter(a=>a.type==='body');
       const pids=[...new Set(ba.map(a=>a.pid))];
       const ds=pids.map((pid,i)=>{const p=players.find(x=>x.id===pid);let cum=0;const data=ba.map(a=>{if(a.pid===pid)cum+=a.value;return cum;});return{label:p?playerLabel(p):pid,data,borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',tension:0.3,pointRadius:3,borderWidth:2,spanGaps:true};});
-      new Chart(cv,{type:'line',data:{labels:ba.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#b8b8b4',font:{size:10}}}},scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:9}}},y:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10}}}}}});
+      new Chart(cv,{type:'line',data:{labels:ba.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
     }
   }
   if(showRecv){
@@ -2720,7 +2724,7 @@ function renderMatchStats(m, actions, players, mode){
       if(rp.length){
         const avgs=rp.map(p=>{const rv=actions.filter(a=>a.pid===p.id&&a.type==='prijem').map(a=>a.value);return rv.length?rv.reduce((s,v)=>s+v,0)/rv.length:null;});
         const pcts=avgs.map(a=>recvPct(a)??0);
-        new Chart(cv2,{type:'bar',data:{labels:rp.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:pcts.map(v=>v>=80?'#2a7a35':v>=50?'#787820':'#7a2a2a'),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{grid:{color:'#1a2a1a'},ticks:{color:'#787870',font:{size:10},callback:v=>v+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:'#f5f7f5',font:{size:11}}}}}});
+        new Chart(cv2,{type:'bar',data:{labels:rp.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a'),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
       }
     }
   }
