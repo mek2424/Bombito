@@ -730,7 +730,7 @@ function openEditor(){
       <label class="btn btn-o" style="cursor:pointer;text-align:center">⬆ Importovat data (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
       <button class="btn btn-d" onclick="openResetConfirm()">🗑 Resetovat paměť</button>
     </div>
-    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+    <div class="ma"><button class="btn btn-d sm" onclick="deleteMatch('${mid}')">✕ Smazat</button><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
 }
 function openPhysEd(){
   const list=S.config.physical.map((m,i)=>`<div class="ed-item">
@@ -2449,6 +2449,9 @@ function openAllMatchesLibrary(){
         ${recvAvgPct!=null?` Příjem: <b style="color:${recvAvgPct>=80?'var(--gl)':recvAvgPct>=50?'var(--acc)':'var(--red)'}">${recvAvgPct}%</b>`:''}
         · ${withData.length} hráček · ${m.sets.length} ${m.sets.length===1?'set':'setů'}
       </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-d sm" style="font-size:0.7rem" onclick="event.stopPropagation();deleteMatch('${m.id}')">✕ Smazat</button>
+      </div>
     </div>`;
   }).join('');
   openModal(`<h2>📚 Záznamy zápasů</h2>
@@ -2476,6 +2479,9 @@ function openMatchLibrary(pid){
         ${mActions.filter(a=>a.type==='body').length?`Body: <b style="color:${mBody>0?'var(--gl)':mBody<0?'var(--red)':'var(--gm)'}">${mBody>0?'+':''}${mBody}</b>`:''} 
         ${mRecvAvg?`Příjem: <b>${mRecvAvg} (${recvPct(parseFloat(mRecvAvg))}%)</b>`:''}
         · ${m.sets.length} ${m.sets.length===1?'set':'sety/setů'}
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:4px">
+        <button class="btn btn-d sm" style="font-size:0.7rem" onclick="event.stopPropagation();deleteMatch('${m.id}')">✕ Smazat</button>
       </div>
     </div>`;
   }).join('');
