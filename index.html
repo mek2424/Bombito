@@ -510,7 +510,7 @@ function computeNorms(){
 function toggleNormScope(){
   S.normScope=S.normScope==="current"?"all":"current";
   save();updateNormBar();
-  if(S.activeTab==="spider"){killCH();setTimeout(drawSpider,60);}
+  if(S.activeTab==="spider"){killCH();scheduleDraw(drawSpider);}
 }
 function activeNorms(){return S.lockedNorms?.norms||computeNorms();}
 function tScore(val,normObj,isPct){
@@ -588,13 +588,13 @@ function lockNorms(){
   confirmAction("Uzamknout aktuální normy jako sezónní standard?",()=>{
     S.lockedNorms={ts:today(),norms:computeNorms()};
     save();updateNormBar();toast("Normy uzamčeny ✓");
-    if(S.activeTab==="spider"){killCH();setTimeout(drawSpider,60);}
+    if(S.activeTab==="spider"){killCH();scheduleDraw(drawSpider);}
   });
 }
 function unlockNorms(){
   confirmAction("Odemknout normy? Pavouk se přepne zpět na dynamický výpočet.",()=>{
     S.lockedNorms=null;save();updateNormBar();toast("Normy odemčeny");
-    if(S.activeTab==="spider"){killCH();setTimeout(drawSpider,60);}
+    if(S.activeTab==="spider"){killCH();scheduleDraw(drawSpider);}
   });
 }
 function updateNormBar(){const el=document.getElementById("normBarEl");if(el)el.innerHTML=normBarInner();}
@@ -973,11 +973,17 @@ function renderDetail(){
 }
 function switchTab(id){S.activeTab=id;renderDetail();}
 function killCH(){Object.values(CH).forEach(c=>{try{c.destroy();}catch(e){}});Object.keys(CH).forEach(k=>delete CH[k]);}
+// Race guard: pokud se mezi naplánováním a spuštěním kresby grafů stihne spustit
+// novější render (rychlé přepnutí hráčky/tabu), starší draw() se tiše přeskočí
+// místo aby se pokusil nakreslit graf do plátna, které si mezitím vzal někdo jiný
+// (dřív to padalo na "Canvas is already in use").
+let _drawGen=0;
+function scheduleDraw(fn){const gen=++_drawGen;setTimeout(()=>{if(gen===_drawGen)fn();},60);}
 function renderTab(){
   const el=document.getElementById("tabContent");if(!el)return;killCH();
-  if(S.activeTab==="physical"){el.innerHTML=buildPhys();setTimeout(drawPhys,60);}
-  else if(S.activeTab==="game"){el.innerHTML=buildGame();setTimeout(drawGame,60);}
-  else if(S.activeTab==="spider"){el.innerHTML=buildSpider();setTimeout(drawSpider,60);}
+  if(S.activeTab==="physical"){el.innerHTML=buildPhys();scheduleDraw(drawPhys);}
+  else if(S.activeTab==="game"){el.innerHTML=buildGame();scheduleDraw(drawGame);}
+  else if(S.activeTab==="spider"){el.innerHTML=buildSpider();scheduleDraw(drawSpider);}
   else if(S.activeTab==="zapas")el.innerHTML=buildZapasTab();
   else el.innerHTML=buildMil();
 }
@@ -1173,7 +1179,7 @@ function renderCmp(){
       <div class="card"><h3>Celkové body</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_body"></canvas></div></div>
       <div class="card"><h3>Průměrný příjem (%)</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_recv"></canvas></div></div>
     </div>`;
-  setTimeout(()=>drawCmp(sel,norms),60);
+  scheduleDraw(()=>drawCmp(sel,norms));
 }
 function multiLine(cid,datasets,lowerBetter){
   const cv=document.getElementById(cid);if(!cv)return;
@@ -2188,7 +2194,7 @@ function renderLiveContent(){
     });
   }
   // Draw live charts
-  setTimeout(()=>drawLiveCharts(set), 60);
+  scheduleDraw(()=>drawLiveCharts(set));
 }
 
 function switchLiveSet(i){
