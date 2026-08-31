@@ -357,6 +357,32 @@ const CGRID='#1a2a1a', CTICK='#828278', CLEG='#b8b8b4', CGREEN='#3db84a', CACC='
 const COLORS=[CGREEN,"#4a9ee8","#e87a4a","#c84ae8",CACC,"#4ae8c8","#e84a4a","#9ae84a","#e8624a","#e8a24a","#cfe84a","#6ae84a","#4ae891","#4ad3e8","#5f4ae8","#e84aa9"];
 const BADGE_COLORS=[CACC,CGREEN,"#4a9ee8","#e87a4a","#c84ae8","#ff6b6b","#4ae8c8","#ffffff","#ff69b4","#ffa500"];
 
+// ═══ LEGENDY GRAFŮ: PUNTÍKY MÍSTO OBDÉLNÍČKŮ ═══
+// Globální nastavení pro Chart.js — týká se úplně všech grafů v appce, ne jen Porovnání.
+// Chart.js normálně bere barvu výplně puntíku/čtverečku v legendě přímo z dataset.backgroundColor.
+// Jenže spousta grafů tu má backgroundColor záměrně (částečně) průhledné — výplň plochy pod
+// čárou nebo radarem — takže by puntík vyšel vybledlý nebo úplně neviditelný. Proto: pokud je
+// barva výplně "slabá" (transparent / nízká alfa), nahradí se plnou barvou z ohraničení
+// (to appka vždy nastavuje natvrdo a neprůhledně). Grafy, co mají plnou barvu rovnou ve výplni
+// (např. bodový graf v Zápase), zůstanou beze změny.
+function _weakFill(c){
+  if(!c||c==='transparent')return true;
+  const hexA=typeof c==="string"&&c.match(/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})$/);
+  if(hexA)return parseInt(hexA[1],16)<200;
+  const rgba=typeof c==="string"&&c.match(/rgba?\([^)]+,\s*([\d.]+)\s*\)/);
+  if(rgba)return parseFloat(rgba[1])<0.6;
+  return false;
+}
+Chart.defaults.plugins.legend.labels.usePointStyle=true;
+Chart.defaults.plugins.legend.labels.pointStyle='circle';
+Chart.defaults.plugins.legend.labels.boxHeight=8;
+const _defGenerateLabels=Chart.defaults.plugins.legend.labels.generateLabels;
+Chart.defaults.plugins.legend.labels.generateLabels=chart=>{
+  const items=_defGenerateLabels(chart);
+  items.forEach(it=>{if(_weakFill(it.fillStyle)&&it.strokeStyle)it.fillStyle=it.strokeStyle;});
+  return items;
+};
+
 const DEF_PHYSICAL=[
   {id:"k_test",        label:"K-test",                   unit:"s",  hint:"agility dráha — nižší = lepší", lowerBetter:true, spider:true,  showGraph:true,  active:true},
   {id:"sprint_6m",     label:"6m sprint",                unit:"s",  hint:"nižší = lepší",                  lowerBetter:true, spider:true,  showGraph:true,  active:true},
