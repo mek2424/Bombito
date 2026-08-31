@@ -546,6 +546,43 @@ function tBadgeLabel(t){
   return"⚠ Podprůměr";
 }
 
+// ═══ OVERALL (souhrnné hodnocení hráčky, styl "FIFA overall") ═══
+// Počítá se ze stejných T-skóre, co už kreslí pavoučí grafy (spiderData) — jen zprůměrované.
+// Chybějící metrika se do průměru vůbec nepočítá (na rozdíl od pavouka, kde chybí = 0 v grafu).
+function overallRaw(sess,norms){
+  if(!sess)return{vals:[],n:0,total:0};
+  const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
+  const gaM=S.config.game.filter(m=>m.active!==false);
+  const total=physM.length+1+gaM.length; // +1 = dopočítaný výskok
+  const vals=[];
+  physM.forEach(m=>{const v=sess.physical?.[m.id];if(v!=null)vals.push(tRaw(v,norms[m.id]));});
+  const vys=calcVys(sess);if(vys!=null)vals.push(tRaw(vys,norms["vyskok"]));
+  gaM.forEach(m=>{const pct=gamePct(gameScore(sess.game,m.id));if(pct!=null)vals.push(tRaw(pct,norms[m.id]));});
+  return{vals,n:vals.length,total};
+}
+// Přeškáluje průměrné T-skóre (typicky 20–80) na "fifácké" 40–99, stejná logika ořezu jako tScore().
+function overallDisplay(tAvg){
+  if(tAvg==null)return null;
+  const c=Math.max(20,Math.min(80,tAvg));
+  return Math.round(40+((c-20)/60)*59);
+}
+// Nejvyšší počet naměřených overall-metrik v týmu — referenční "úplnost" pro hvězdičku.
+function teamMaxCovered(players,norms){
+  let max=0;
+  players.forEach(p=>{const{n}=overallRaw(lS(p),norms);if(n>max)max=n;});
+  return max;
+}
+function overallForPlayer(p,norms,maxCovered){
+  const{vals,n,total}=overallRaw(lS(p),norms);
+  if(!n)return{score:null,tAvg:null,n,total,incomplete:true};
+  const tAvg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered};
+}
+function overallColor(tAvg){
+  const cls=tBadgeCls(tAvg==null?null:Math.round(tAvg));
+  return cls==='ts-legend'?'var(--acc)':cls==='ts-great'?'var(--gl)':cls==='ts-avg'?'#7ab87a':cls==='ts-low'?'#e8a030':cls==='ts-vlow'?'#e06010':'var(--gm)';
+}
+
 // ═══ NORM LOCKING ═══
 function lockNorms(){
   confirmAction("Uzamknout aktuální normy jako sezónní standard?",()=>{
@@ -925,7 +962,11 @@ function renderDetail(){
   const el=document.getElementById("playerDetail");
   const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   const brow=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";const style=b.special?"":(`background:${b.color}33;border-color:${b.color};color:${b.color}`);return`<span class="ba ${b.special?"sp":""}" style="${style}">${b.icon} ${b.label}</span>`;}).join("");
-  el.innerHTML=`<div class="pdh"><div class="pav">${ini}</div><div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm" onclick="openBadges()">🏅 Odznaky</button><button class="btn btn-a sm" onclick="openAddTest()">+ Test</button><button class="btn btn-o sm" onclick="exportPDF()">📄 PDF</button><button class="btn btn-gray sm" onclick="openRenamePlayer()">✎</button><button class="btn btn-gray sm" onclick="openCopyPlayer()">⎘</button><button class="btn btn-d sm" onclick="deletePlayer()">✕</button></div></div></div>
+  const ovNorms=activeNorms(),ovMax=teamMaxCovered(getActiveP(),ovNorms),ov=overallForPlayer(p,ovNorms,ovMax);
+  const ovHtml=ov.score==null
+    ?`<div style="text-align:center;flex-shrink:0;min-width:56px"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL</div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
+    :`<div style="text-align:center;flex-shrink:0;min-width:56px" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''}</div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
+  el.innerHTML=`<div class="pdh"><div class="pav">${ini}</div>${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm" onclick="openBadges()">🏅 Odznaky</button><button class="btn btn-a sm" onclick="openAddTest()">+ Test</button><button class="btn btn-o sm" onclick="exportPDF()">📄 PDF</button><button class="btn btn-gray sm" onclick="openRenamePlayer()">✎</button><button class="btn btn-gray sm" onclick="openCopyPlayer()">⎘</button><button class="btn btn-d sm" onclick="deletePlayer()">✕</button></div></div></div>
   <div class="tabs">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -1739,10 +1780,21 @@ function renderOverview(){
   const norms=activeNorms();
   const phA=S.config.physical.filter(m=>m.active!==false&&m.id!=='dosah_vyskoku');
   const gaA=S.config.game.filter(m=>m.active!==false);
+  const ovMax=teamMaxCovered(active,norms);
 
-  // Build columns: name, then metrics
+  // Build columns: name, overall, then metrics
   const cols=[
     {id:'name',label:'Hráčka',get:p=>null,display:p=>p.name,noSort:true},
+    {id:'overall',label:'Overall',
+      get:p=>overallForPlayer(p,norms,ovMax).score,
+      display:(p,v)=>{
+        if(v==null)return'<span style="color:var(--gm)">–</span>';
+        const o=overallForPlayer(p,norms,ovMax);
+        const star=o.incomplete?`<span title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">★</span>`:'';
+        return `<b style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${overallColor(o.tAvg)}">${v}</b>${star}`;
+      },
+      sortVal:p=>overallForPlayer(p,norms,ovMax).score??-Infinity,
+      lowerBetter:false},
     ...phA.map(m=>({
       id:'ph_'+m.id,
       label:m.label.split(' ')[0]+'<br><small>'+m.unit+'</small>',
@@ -1808,7 +1860,7 @@ function renderOverview(){
 
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
-    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · <span style="color:var(--acc)">●</span> = bez testu / stará data</p>
+    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · <span style="color:var(--acc)">●</span> = bez testu / stará data · <span style="color:var(--acc)">★</span> = overall z neúplných dat</p>
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
