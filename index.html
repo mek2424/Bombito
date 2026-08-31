@@ -354,7 +354,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 // takže se stejné odstíny drží tady v JS konstantách místo opisování hexu v každém grafu.
 // Musí být definované dřív než COLORS/BADGE_COLORS, které je taky používají.
 const CGRID='#1a2a1a', CTICK='#828278', CLEG='#b8b8b4', CGREEN='#3db84a', CACC='#e8c840', CG='#2a7a35', CW='#f5f7f5';
-const COLORS=[CGREEN,"#4a9ee8","#e87a4a","#c84ae8",CACC,"#4ae8c8","#e84a4a","#9ae84a"];
+const COLORS=[CGREEN,"#4a9ee8","#e87a4a","#c84ae8",CACC,"#4ae8c8","#e84a4a","#9ae84a","#e8624a","#e8a24a","#cfe84a","#6ae84a","#4ae891","#4ad3e8","#5f4ae8","#e84aa9"];
 const BADGE_COLORS=[CACC,CGREEN,"#4a9ee8","#e87a4a","#c84ae8","#ff6b6b","#4ae8c8","#ffffff","#ff69b4","#ffa500"];
 
 const DEF_PHYSICAL=[
@@ -880,7 +880,7 @@ function addBadge(){const icon=document.getElementById("ni")?.value.trim();const
 
 // ═══ COMPARE ═══
 function toggleCmp(){S.cmpMode=!S.cmpMode;document.getElementById("cmpBtn").className=S.cmpMode?"btn btn-a sm":"btn btn-o sm";const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
-function toggleCmpP(id){if(S.cmpIds.includes(id))S.cmpIds=S.cmpIds.filter(x=>x!==id);else if(S.cmpIds.length>=6){toast("Max 6 hráček","err");return;}else S.cmpIds.push(id);save();renderCmp();renderPL();}
+function toggleCmpP(id){if(S.cmpIds.includes(id))S.cmpIds=S.cmpIds.filter(x=>x!==id);else S.cmpIds.push(id);save();renderCmp();renderPL();}
 
 // ═══ RENDER ═══
 function render(){
@@ -1114,10 +1114,11 @@ function renderCmp(){
   const milAct=S.config.milestones.filter(m=>m.active!==false);
   const phChs=phAct.map(m=>`<div class="card"><h3>${m.label} (${m.unit})</h3><div class="cw"><canvas id="c_ph_${m.id}"></canvas></div></div>`).join("");
   const gaChs=gaAct.map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
-  const milTbl=milAct.length?`<div class="card"><table style="width:100%;border-collapse:collapse">
+  const milTbl=milAct.length?`<div class="card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse">
     <tr><th style="text-align:left;padding-bottom:8px;font-size:0.6rem;letter-spacing:1px;color:var(--gm)">MILNÍK</th>${sel.map((p,i)=>`<th style="text-align:center;padding-bottom:8px;font-size:0.71rem;color:${COLORS[i%COLORS.length]}">${playerLabel(p)}</th>`).join("")}</tr>
     ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid #141e14">${m.label}</td>${sel.map(p=>`<td style="text-align:center;border-bottom:1px solid #141e14;padding:6px 4px">${p.milestones?.[m.id]?`<span style="color:var(--gl)">✓</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id])}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`).join("")}</tr>`).join("")}
-  </table></div>`:"";
+  </table></div></div>`:"";
+  const battleH=Math.max(175,sel.length*26);
   el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ Porovnání</h2>
     <div style="margin-bottom:10px">${chips}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${legend}</div>
@@ -1128,8 +1129,8 @@ function renderCmp(){
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🎖 Milníky</h3>${milTbl}
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🏐 Zápasové statistiky</h3>
     <div class="g2">
-      <div class="card"><h3>Celkové body</h3><div class="cw"><canvas id="cmp_match_body"></canvas></div></div>
-      <div class="card"><h3>Průměrný příjem (%)</h3><div class="cw"><canvas id="cmp_match_recv"></canvas></div></div>
+      <div class="card"><h3>Celkové body</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_body"></canvas></div></div>
+      <div class="card"><h3>Průměrný příjem (%)</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_recv"></canvas></div></div>
     </div>`;
   setTimeout(()=>drawCmp(sel,norms),60);
 }
