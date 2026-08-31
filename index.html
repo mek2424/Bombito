@@ -1154,7 +1154,12 @@ function renderCmp(){
   const sel=getActiveP().filter(p=>S.cmpIds.includes(p.id));
   if(!sel.length){el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ Porovnání</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:12px">Vyber hráčky:</p><div style="margin-bottom:20px">${chips}</div><div class="empty" style="height:25vh"><div class="ei" style="font-size:2rem">👆</div><div>Vyber alespoň 2 hráčky</div></div>`;return;}
   const norms=activeNorms();
-  const legend=sel.map((p,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:0.81rem"><div style="width:9px;height:9px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0"></div>${p.name}</div>`).join("");
+  const ovMax=teamMaxCovered(getActiveP(),norms);
+  const legend=sel.map((p,i)=>{
+    const o=overallForPlayer(p,norms,ovMax);
+    const ovTxt=o.score==null?"":` · <b style="font-family:'Bebas Neue',sans-serif;color:${overallColor(o.tAvg)}">${o.score}</b>${o.incomplete?`<span title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">★</span>`:""}`;
+    return `<div style="display:flex;align-items:center;gap:6px;font-size:0.81rem"><div style="width:9px;height:9px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0"></div>${p.name}${ovTxt}</div>`;
+  }).join("");
   // Physical: show výška + spider metrics, not dosah (replaced by výška)
   const phAct=S.config.physical.filter(m=>m.active!==false&&m.id!=="dosah_vyskoku"&&m.id!=="dosah");
   const gaAct=S.config.game.filter(m=>m.active!==false);
