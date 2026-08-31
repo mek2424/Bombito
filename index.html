@@ -100,6 +100,9 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .gi{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid #141e14}
 .gi:last-child{border-bottom:none}
 .gi.inactive{opacity:0.35}
+.inactive-metrics{margin-top:4px}
+.inactive-metrics summary{cursor:pointer;color:var(--gm);padding:6px 0;user-select:none}
+.inactive-metrics summary:hover{color:var(--gl)}
 .gl2{flex:1;font-size:0.84rem;min-width:0}
 .sb{width:75px;height:7px;background:#162016;border-radius:4px;overflow:hidden;flex-shrink:0}
 .sf{height:100%;background:var(--g);border-radius:4px;transition:width .4s}
@@ -382,6 +385,15 @@ Chart.defaults.plugins.legend.labels.generateLabels=chart=>{
   items.forEach(it=>{if(_weakFill(it.fillStyle)&&it.strokeStyle)it.fillStyle=it.strokeStyle;});
   return items;
 };
+
+// Zaokrouhlení čísel v popiscích os a tooltipech grafů na max 2 desetinná místa.
+// Chart.js si mezikroky osy počítá binární aritmetikou (dělení/násobení desetinných
+// čísel), takže bez zaokrouhlení se občas objeví např. "14.400000000000002" místo 14.4.
+function roundN(v,n=2){
+  if(v==null||isNaN(v))return v;
+  const f=Math.pow(10,n);
+  return Math.round(v*f)/f;
+}
 
 const DEF_PHYSICAL=[
   {id:"k_test",        label:"K-test",                   unit:"s",  hint:"agility dráha — nižší = lepší", lowerBetter:true, spider:true,  showGraph:true,  active:true},
@@ -1017,22 +1029,29 @@ function renderTab(){
 // ═══ PHYSICAL ═══
 function buildPhys(){
   const s=lS(),pv=pS();
-  const rows=S.config.physical.map(m=>{
+  const activeRows=[],inactiveRows=[];
+  S.config.physical.forEach(m=>{
+    const isA=m.active!==false;
     const ntitle=m.note?'Poznámka: '+m.note.slice(0,40):'Přidat poznámku';
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'physical\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
     if(m.id==="dosah_vyskoku"){
       const c=s?.physical?.dosah_vyskoku,pc=pv?.physical?.dosah_vyskoku,vys=calcVys(s),pvys=calcVys(pv);
-      return`<div class="me ${m.active===false?"inactive":""}"><div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,false)}</div>`+
-        `<div class="me"><div class="ml">Výskok <small>↳ dopočítáno</small></div>${vys!=null?`<span class="mv calc">${vys}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(vys,pvys,false)}</div>`;
+      const row=`<div class="me ${isA?"":"inactive"}"><div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,false)}</div>`;
+      (isA?activeRows:inactiveRows).push(row);
+      // Výskok je dopočítaný, ne samostatně vypínatelná metrika — vždy mezi aktivními.
+      activeRows.push(`<div class="me"><div class="ml">Výskok <small>↳ dopočítáno</small></div>${vys!=null?`<span class="mv calc">${vys}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(vys,pvys,false)}</div>`);
+      return;
     }
     const c=s?.physical?.[m.id],pc=pv?.physical?.[m.id];
-    return`<div class="me ${m.active===false?"inactive":""}"><div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,m.lowerBetter)}</div>`;
-  }).join("");
-  const chs=S.config.physical.filter(m=>m.showGraph!==false).map(m=>{
+    const row=`<div class="me ${isA?"":"inactive"}"><div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,m.lowerBetter)}</div>`;
+    (isA?activeRows:inactiveRows).push(row);
+  });
+  const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
+  const chs=S.config.physical.filter(m=>m.active!==false&&m.showGraph!==false).map(m=>{
     if(m.id==="dosah_vyskoku")return`<div class="card"><h3>Výskok — dopočítaný (cm)</h3><div class="cw"><canvas id="ch_vys"></canvas></div></div>`;
     return`<div class="card"><h3>${m.label} (${m.unit})</h3><div class="cw"><canvas id="ch_ph_${m.id}"></canvas></div></div>`;
   }).join("");
-  const hasG=S.config.physical.some(m=>m.showGraph!==false);
+  const hasG=S.config.physical.some(m=>m.active!==false&&m.showGraph!==false);
   const p2=gP();
   const sessList=p2?.testSessions?.length?[...p2.testSessions].reverse().map((sess,ri)=>{
     const i=p2.testSessions.length-1-ri;
@@ -1054,17 +1073,17 @@ function lineC(labels,data,rev,unitLabel){
     },
     scales:{
       x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+(unitLabel?" "+unitLabel:"")},reverse:!!rev}
+      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+(unitLabel?" "+unitLabel:"")},reverse:!!rev}
     }
   }};
 }
 function drawPhys(){
   const p=gP();if(!p)return;
-  if(S.config.physical.find(m=>m.id==="dosah_vyskoku"&&m.showGraph!==false)){
+  if(S.config.physical.find(m=>m.id==="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false)){
     const cv=document.getElementById("ch_vys");
     if(cv){const sess=p.testSessions?.filter(s=>calcVys(s)!=null)||[];if(sess.length)CH.vys=new Chart(cv,lineC(sess.map(s=>fmtDate(s.date,true)),sess.map(s=>calcVys(s)),false,'cm'));else cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';}
   }
-  S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.showGraph!==false).forEach(m=>{
+  S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false).forEach(m=>{
     const cv=document.getElementById("ch_ph_"+m.id);if(!cv)return;
     const sess=p.testSessions?.filter(s=>s.physical?.[m.id]!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
@@ -1075,25 +1094,29 @@ function drawPhys(){
 // ═══ GAME ═══
 function buildGame(){
   const s=lS(),pv=pS();
-  const rows=S.config.game.map(m=>{
+  const activeRows=[],inactiveRows=[];
+  S.config.game.forEach(m=>{
+    const isA=m.active!==false;
     const gs=gameScore(s?.game,m.id),gpv=gameScore(pv?.game,m.id);
     const pct=gamePct(gs),pctpv=gamePct(gpv);
     const pctDisp=pct!=null?Math.round(pct*100):null;
     const ntitle=m.note?'Poznámka: '+m.note.slice(0,40):'Přidat poznámku';
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'game\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
-    return`<div class="gi ${m.active===false?"inactive":""}"><div class="gl2">${m.label}</div>${nb}<div class="sb"><div class="sf" style="width:${pctDisp||0}%"></div></div>${gs!=null?`<div class="sc"><span style="font-size:1rem;font-family:'Bebas Neue',sans-serif;color:var(--gl)">${pctDisp}%</span><span style="font-size:0.7rem;color:var(--gm);margin-left:4px">${gs.score}/${gs.attempts}</span></div>`:'<div class="sc" style="color:var(--gm)">–</div>'}${trElPct(pct,pctpv)}</div>`;
-  }).join("");
-  const chs=S.config.game.map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div></div>`).join("");
+    const row=`<div class="gi ${isA?"":"inactive"}"><div class="gl2">${m.label}</div>${nb}<div class="sb"><div class="sf" style="width:${pctDisp||0}%"></div></div>${gs!=null?`<div class="sc"><span style="font-size:1rem;font-family:'Bebas Neue',sans-serif;color:var(--gl)">${pctDisp}%</span><span style="font-size:0.7rem;color:var(--gm);margin-left:4px">${gs.score}/${gs.attempts}</span></div>`:'<div class="sc" style="color:var(--gm)">–</div>'}${trElPct(pct,pctpv)}</div>`;
+    (isA?activeRows:inactiveRows).push(row);
+  });
+  const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
+  const chs=S.config.game.filter(m=>m.active!==false).map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div></div>`).join("");
   return`<div class="g2"><div><div class="card"><h3>Poslední výsledky &nbsp;<span style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
 }
 function drawGame(){
   const p=gP();if(!p)return;
-  S.config.game.forEach(m=>{
+  S.config.game.filter(m=>m.active!==false).forEach(m=>{
     const cv=document.getElementById("ch_ga_"+m.id);if(!cv)return;
     const sess=p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     const pcts=sess.map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100));
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets:[{data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+"%"},min:0,max:100}}}});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets:[{data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
   });
 }
 
@@ -1275,8 +1298,8 @@ function drawCmp(sel,norms){
         data:{labels:sel.map(p=>playerLabel(p)),
           datasets:[{data:recvAvgs.map(v=>v??0),backgroundColor:colors,borderRadius:5,borderWidth:0}]},
         options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},
-          scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},
+          scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},
                   y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
@@ -1535,7 +1558,7 @@ function renderPDFCharts(p,sessions){
       pointStyle:'circle',
     }]},options:{responsive:false,maintainAspectRatio:false,
       animation:{onComplete:function(){try{cv.dataset.url=cv.toDataURL('image/png');}catch(e){}}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y+(def.ymax?'%':'')}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+roundN(ctx.parsed.y)+(def.ymax?'%':'')}}},
       scales:{
         x:{grid:{color:'#e8e8e8'},ticks:{color:'#666',font:{size:10}}},
         y:{grid:{color:'#e8e8e8'},ticks:{color:'#666',font:{size:10}},
@@ -2459,8 +2482,8 @@ function drawLiveCharts(set){
         labels:recvPlayers.map(p=>playerLabel(p)),
         datasets:[{data:pcts,backgroundColor:colors3,borderRadius:5,borderWidth:0}]
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.x+'% ('+avgs[ctx.dataIndex]+')'}}},
-        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+roundN(ctx.parsed.x)+'% ('+avgs[ctx.dataIndex]+')'}}},
+        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},
                 y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
@@ -2486,12 +2509,12 @@ function drawLiveCharts(set){
       LCH.quad=new Chart(cv4,{type:'scatter',data:{datasets},options:{
         responsive:true,maintainAspectRatio:false,
         plugins:{legend:{labels:{color:CLEG,font:{size:10},boxWidth:10}},
-          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: body ${ctx.parsed.x>0?'+':''}${ctx.parsed.x}, příjem ${ctx.parsed.y}%`}}},
+          tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: body ${ctx.parsed.x>0?'+':''}${roundN(ctx.parsed.x)}, příjem ${roundN(ctx.parsed.y)}%`}}},
         scales:{
           x:{title:{display:true,text:'Body (+/−)',color:CTICK,font:{size:10}},
              grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},
           y:{title:{display:true,text:'Příjem %',color:CTICK,font:{size:10}},
-             grid:{color:CGRID},ticks:{color:CTICK,font:{size:9},callback:v=>v+'%'},min:0,max:100}
+             grid:{color:CGRID},ticks:{color:CTICK,font:{size:9},callback:v=>roundN(v)+'%'},min:0,max:100}
         }
       }});
     }
@@ -2726,7 +2749,7 @@ function openMatchStatsModal(title, sets, players, isSet, extraHtml, closeScreen
           const avgs=recvPlayers.map(p=>calcRecvAvg(p.id,{actions:allActions}));
           const pcts=avgs.map(a=>recvPct(a));
           const colors=pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a');
-          new Chart(cv2,{type:'bar',data:{labels:recvPlayers.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:colors,borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
+          new Chart(cv2,{type:'bar',data:{labels:recvPlayers.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:colors,borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
         } else cv2.parentElement.innerHTML='<div class="no-data">Žádná data</div>';
       }
     }
@@ -2814,7 +2837,7 @@ function renderMatchStats(m, actions, players, mode){
       if(rp.length){
         const avgs=rp.map(p=>{const rv=actions.filter(a=>a.pid===p.id&&a.type==='prijem').map(a=>a.value);return rv.length?rv.reduce((s,v)=>s+v,0)/rv.length:null;});
         const pcts=avgs.map(a=>recvPct(a)??0);
-        new Chart(cv2,{type:'bar',data:{labels:rp.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a'),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.x+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>v+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
+        new Chart(cv2,{type:'bar',data:{labels:rp.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a'),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
       }
     }
   }
