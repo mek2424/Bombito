@@ -570,9 +570,26 @@ function computeNorms(){
   const vysVals=[];pool.forEach(p=>{p.testSessions?.forEach(ss=>{const v=calcVys(ss);if(v!=null)vysVals.push(v);});});
   norms["vyskok"]={mu:mean(vysVals),sigma:std(vysVals,mean(vysVals)),n:vysVals.length,lowerBetter:false};
   S.config.game.filter(m=>m.active!==false).forEach(m=>{
-    const vals=[];pool.forEach(p=>{p.testSessions?.forEach(ss=>{const gs=gameScore(ss.game,m.id);const pct=gamePct(gs);if(pct!=null)vals.push(pct);});});
+    const vals=[],deltas=[];
+    pool.forEach(p=>{
+      let prev=null;
+      p.testSessions?.forEach(ss=>{
+        const pct=gamePct(gameScore(ss.game,m.id));
+        if(pct!=null){
+          vals.push(pct);
+          if(prev!=null)deltas.push(Math.abs(pct-prev));
+          prev=pct;
+        }
+      });
+    });
     const mu=mean(vals),sigma=std(vals,mu);
-    norms[m.id]={mu,sigma,n:vals.length,lowerBetter:false,isPct:true};
+    // "swing" = typická velikost výkyvu mezi dvěma po sobě jdoucími testy TÉŽE
+    // hráčky (průměr absolutních rozdílů), spočtená napříč CELÝM poolem (stejná
+    // referenční skupina jako norma/T-skóre výše, respektuje normScope) — Kolo 16.
+    // Používá se jako pásmo "normálního kolísání" v grafu dané herní metriky
+    // (drawGame) kolem PRŮMĚRU JEDNÉ hráčky — NE jako srovnání mezi hráčkami.
+    const swing=deltas.length?mean(deltas):null;
+    norms[m.id]={mu,sigma,n:vals.length,lowerBetter:false,isPct:true,swing,swingN:deltas.length};
   });
   return norms;
 }
@@ -1187,6 +1204,22 @@ function buildGame(){
   }).join("");
   return`<div class="g2"><div><div class="card"><h3>Poslední výsledky &nbsp;<span style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
 }
+// Pásmo "normálního kolísání" v grafu herní metriky (Kolo 16) — jemný obdélník
+// v pozadí, od (průměr hráčky − typický výkyv) do (průměr + typický výkyv).
+// `avg`/`halfW` jsou v procentních bodech (stejná škála jako osa y grafu).
+// Kreslí se `beforeDatasetsDraw`, tedy POD sloupci, ne přes ně.
+function gameBandPlugin(avg,halfW){
+  return {id:"gameBand",beforeDatasetsDraw(chart){
+    if(avg==null||halfW==null)return;
+    const{ctx,chartArea,scales}=chart;if(!scales.y)return;
+    const top=scales.y.getPixelForValue(Math.min(100,avg+halfW));
+    const bot=scales.y.getPixelForValue(Math.max(0,avg-halfW));
+    ctx.save();
+    ctx.fillStyle="rgba(130,130,120,0.28)";
+    ctx.fillRect(chartArea.left,top,chartArea.right-chartArea.left,bot-top);
+    ctx.restore();
+  }};
+}
 function drawGame(){
   const p=gP();if(!p)return;
   const norms=activeNorms();
@@ -1198,9 +1231,19 @@ function drawGame(){
     const pcts=sess.map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100));
     // Stejná logika trendu jako u fyzických grafů (lineC) — čárkovaná linie navrch přes sloupce.
     const showTrend=pcts.length>=3;
+    // Pásmo normálního kolísání — jen když computeNorms() napočítal dost dvojic
+    // po sobě jdoucích testů napříč poolem (aspoň 3), jinak by byl odhad nespolehlivý.
+    // Střed pásma je průměr TÉTO hráčky (ne poolu), šířka je typický výkyv z poolu — viz Kolo 16.
+    const norm=norms[m.id];
+    const avg100=mean(pcts);
+    const showBand=norm?.swing!=null&&norm.swingN>=3;
+    const swing100=showBand?norm.swing*100:null;
+    const subtitleParts=[];
+    if(showTrend)subtitleParts.push("čárkovaně = klouzavý průměr");
+    if(showBand)subtitleParts.push("šedé pásmo = typický rozptyl mezi testy");
     const datasets=[{type:"bar",data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0,order:1}];
     if(showTrend)datasets.push({type:"line",data:movingAvg3(pcts),borderColor:CACC,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false,order:0});
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:showTrend?{display:true,text:"čárkovaně = klouzavý průměr",color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[gameBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
   });
 }
 // Sloučený graf "Útok na cíl" / "Útok do pole" pro hráčku, která přešla na těžší
