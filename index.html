@@ -425,7 +425,17 @@ const DEF_GAME=[
   {id:"tezke_balony",   label:"Těžké balony v poli",    defaultMax:15, active:true},
   {id:"servisy_zatezy", label:"Servisy po fyz. zátěži", defaultMax:15, active:true},
   {id:"prihravka_cil",  label:"Přihrávka na cíl",       defaultMax:15, active:true},
+  {id:"utok_cil",       label:"Útok na cíl",            defaultMax:15, active:true},
+  {id:"utok_pole",      label:"Útok do pole (lehčí varianta)", defaultMax:15, active:true},
+  {id:"nahravka_cil",   label:"Nahrávka na cíl",        defaultMax:15, active:true},
 ];
+// Krátká zkratka pro sloupce/hlavičky tabulek — utok_cil a utok_pole obě začínají "Útok",
+// prosté vzetí prvního slova (jako u ostatních herních metrik) by je nerozlišilo.
+function gameAbbr(m){
+  if(m.id==='utok_cil')return'Útok–cíl';
+  if(m.id==='utok_pole')return'Útok–pole';
+  return m.label.split(' ')[0];
+}
 const DEF_MIL=[
   {id:"vrchni_servis",  label:"Vrchní servis",          active:true},
   {id:"smec_vyskoku",   label:"Smeč z výskoku",         active:true},
@@ -489,6 +499,8 @@ function load(){
   if(!S.matches)S.matches=[];
   // Migrate: rename "Balony zadarmo" → "Zdarma"
   if(S.config.game){S.config.game.forEach(m=>{if(m.id==='balony_zadarmo'&&m.label==='Balony zadarmo')m.label='Zdarma';});}
+  // Migrate: rename "Útok v poli" → "Útok do pole (lehčí varianta)"
+  if(S.config.game){S.config.game.forEach(m=>{if(m.id==='utok_pole'&&m.label==='Útok v poli')m.label='Útok do pole (lehčí varianta)';});}
   // Deduplicate matches by ID (keep last occurrence)
   const seen={}; S.matches.forEach(m=>{seen[m.id]=m;});
   S.matches=Object.values(seen).filter(m=>m.finished!==false||!m._autosave);
@@ -1134,6 +1146,7 @@ function drawPhys(){
 // ═══ GAME ═══
 function buildGame(){
   const s=lS(),pv=pS();
+  const p=gP();const attackMerged=!!p?.attackHarderSince;
   const activeRows=[],inactiveRows=[];
   S.config.game.forEach(m=>{
     const isA=m.active!==false;
@@ -1146,13 +1159,27 @@ function buildGame(){
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
-  const chs=S.config.game.filter(m=>m.active!==false).map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div></div>`).join("");
+  // Útok na cíl / Útok do pole: pokud má hráčka nastavené datum přechodu na těžší
+  // variantu (p.attackHarderSince), sloučí se obě metriky do jedné karty s jedním
+  // grafem (viz drawGame/drawAttackMerged) — karta "utok_pole" se v tom případě vynechá.
+  const chs=S.config.game.filter(m=>m.active!==false).map(m=>{
+    if(m.id==="utok_pole"&&attackMerged)return"";
+    if(m.id==="utok_cil"){
+      if(attackMerged){
+        return`<div class="card"><h3>🎯 Útok — progres (lehčí → těžší)</h3><p style="font-size:0.75rem;color:var(--gm);margin-bottom:6px">Přešla na těžší variantu (Útok na cíl) <b>${fmtDate(p.attackHarderSince)}</b> · graf ukazuje T-skóre, srovnatelné napříč oběma variantami <button class="btn btn-o sm" onclick="openAttackTransition()" style="margin-left:4px">✎ Upravit</button></p><div class="cw"><canvas id="ch_ga_utok_cil"></canvas></div></div>`;
+      }
+      return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div><div style="text-align:right;margin-top:6px"><button class="btn btn-o sm" onclick="openAttackTransition()">🎯 Označit přechod na těžší variantu</button></div></div>`;
+    }
+    return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div></div>`;
+  }).join("");
   return`<div class="g2"><div><div class="card"><h3>Poslední výsledky &nbsp;<span style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
 }
 function drawGame(){
   const p=gP();if(!p)return;
+  const norms=activeNorms();
   S.config.game.filter(m=>m.active!==false).forEach(m=>{
     const cv=document.getElementById("ch_ga_"+m.id);if(!cv)return;
+    if(m.id==="utok_cil"&&p.attackHarderSince){drawAttackMerged(cv,p,norms);return;}
     const sess=p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     const pcts=sess.map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100));
@@ -1161,6 +1188,68 @@ function drawGame(){
     const datasets=[{type:"bar",data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0,order:1}];
     if(showTrend)datasets.push({type:"line",data:movingAvg3(pcts),borderColor:CACC,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false,order:0});
     CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:showTrend?{display:true,text:"čárkovaně = klouzavý průměr",color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
+  });
+}
+// Sloučený graf "Útok na cíl" / "Útok do pole" pro hráčku, která přešla na těžší
+// variantu (p.attackHarderSince = datum přechodu). Obě metriky mají různou obtížnost
+// (a tedy různou surovou úspěšnost), takže se NEPŘEVÁDÍ vzorcem mezi sebou — místo
+// toho se obě vynesou jako T-skóre (každá vůči vlastní normě), což je srovnatelné.
+// Sessions před datem přechodu = utok_pole (lehčí), od data přechodu = utok_cil (těžší).
+function drawAttackMerged(cv,p,norms){
+  const cutoff=p.attackHarderSince;
+  const sess=(p.testSessions||[]).filter(s=>{
+    const mid=s.date<cutoff?"utok_pole":"utok_cil";
+    return gamePct(gameScore(s.game,mid))!=null;
+  });
+  if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
+  const labels=sess.map(s=>fmtDate(s.date,true));
+  const lehci=sess.map(s=>s.date<cutoff?tRaw(gamePct(gameScore(s.game,"utok_pole")),norms["utok_pole"]):null);
+  const tezsi=sess.map(s=>s.date>=cutoff?tRaw(gamePct(gameScore(s.game,"utok_cil")),norms["utok_cil"]):null);
+  const lastEasyIdx=lehci.reduce((acc,v,i)=>v!=null?i:acc,-1);
+  const firstHardIdx=tezsi.findIndex(v=>v!=null);
+  const markerPlugin={id:"attackMarker",afterDraw(chart){
+    const{ctx,chartArea,scales}=chart;if(!scales.y)return;
+    const y50=scales.y.getPixelForValue(50);
+    ctx.save();ctx.strokeStyle="rgba(120,120,120,0.5)";ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(chartArea.left,y50);ctx.lineTo(chartArea.right,y50);ctx.stroke();
+    ctx.fillStyle="#666";ctx.font="9px sans-serif";ctx.fillText("T=50",chartArea.right+4,y50+4);
+    if(lastEasyIdx>=0&&firstHardIdx>=0){
+      const x=(scales.x.getPixelForTick(lastEasyIdx)+scales.x.getPixelForTick(firstHardIdx))/2;
+      ctx.strokeStyle=CACC;ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+      ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
+    }
+    ctx.restore();
+  }};
+  CH["ga_utok_cil"]=new Chart(cv,{type:"line",plugins:[markerPlugin],data:{labels,datasets:[
+    {label:"Útok do pole (lehčí)",data:lehci,borderColor:CTICK,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:4,borderWidth:2,spanGaps:false},
+    {label:"Útok na cíl (těžší)",data:tezsi,borderColor:CGREEN,backgroundColor:"transparent",tension:0.3,pointRadius:4,borderWidth:2,spanGaps:false},
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:CLEG,font:{size:10}}},subtitle:{display:true,text:"zlatá čárkovaná = datum přechodu",color:CTICK,font:{size:9},padding:{bottom:4}}},
+    scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},min:20,max:80,
+        afterBuildTicks:axis=>{axis.ticks=[{value:20},{value:30},{value:45},{value:50},{value:60},{value:75},{value:80}];}}}
+  }});
+}
+// ═══ ÚTOK — PŘECHOD NA TĚŽŠÍ VARIANTU ═══
+function openAttackTransition(){
+  const p=gP();if(!p)return;
+  const cur=p.attackHarderSince||today();
+  const hasVal=!!p.attackHarderSince;
+  openModal(`<h2>🎯 Přechod na těžší variantu útoku</h2>
+    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:10px">Od tohoto data appka v grafu "Útok" použije místo metriky "Útok do pole (lehčí varianta)" metriku "Útok na cíl". Starší testování zůstanou zachovaná — v grafu se jen ukážou jako T-skóre, aby šly srovnat.</p>
+    <div class="fg"><label>Datum přechodu</label><input type="date" id="atDate" value="${cur}"></div>
+    <div class="ma">${hasVal?'<button class="btn btn-d" onclick="clearAttackTransition()">Zrušit přechod</button>':''}<button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="saveAttackTransition()">Uložit</button></div>`);
+}
+function saveAttackTransition(){
+  const p=gP();if(!p)return;
+  const v=document.getElementById("atDate")?.value;
+  if(!v){toast("Zadej datum!","err");return;}
+  p.attackHarderSince=v;save();closeModal();toast("Uloženo ✓");render();
+}
+function clearAttackTransition(){
+  const p=gP();if(!p)return;
+  confirmAction("Zrušit označení přechodu na těžší variantu?",()=>{
+    delete p.attackHarderSince;save();render();
   });
 }
 
@@ -1809,7 +1898,7 @@ function openGroupTest(){
     const abbr=m.id==='dosah_vyskoku'?'Výskok↑':m.id==='dosah'?'Dosah paží':m.label.split(' ')[0];
     return`<th title="${m.label}">${abbr}<br><small style="font-weight:400;text-transform:none">${m.unit}</small></th>`;
   }).join('');
-  const gaHeads=gaA.map(m=>`<th title="${m.label}">${m.label.split(' ')[0]}<br><small style="font-weight:400;text-transform:none">počet</small></th>`).join('');
+  const gaHeads=gaA.map(m=>`<th title="${m.label}">${gameAbbr(m)}<br><small style="font-weight:400;text-transform:none">počet</small></th>`).join('');
   // Player rows
   const rows=active.map(p=>{
     const phInputs=phA.map(m=>`<td><input type="number" id="g_ph_${p.id}_${m.id}" step="0.1" placeholder="–"></td>`).join('');
@@ -1925,7 +2014,7 @@ function renderOverview(){
       sortVal:p=>calcVys(lS(p))??-Infinity,lowerBetter:false},
     ...gaA.map(m=>({
       id:'ga_'+m.id,
-      label:m.label.split(' ')[0]+'<br><small>%</small>',
+      label:gameAbbr(m)+'<br><small>%</small>',
       get:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs);},
       display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const pct=Math.round(v*100);const t=tRaw(v,norms[m.id]);const r=rankIn(active,pp=>{const gs=gameScore(lS(pp)?.game,m.id);return gamePct(gs);},false)(p);return `${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs)??-Infinity;},lowerBetter:false})),
@@ -2004,7 +2093,7 @@ function buildTsTimeline(p,norms){
     {label:'Výskok',data:sessions.map(s=>{const v=calcVys(s);return tRaw(v,norms['vyskok']);}),
       borderColor:'#5db87a',backgroundColor:'transparent',tension:0.3,pointRadius:4,borderWidth:2,spanGaps:true,borderDash:[5,3]},
     ...gaM.map((m,i)=>({
-      label:m.label.split(' ')[0]+' %',
+      label:gameAbbr(m)+' %',
       data:sessions.map(s=>{const gs=gameScore(s.game,m.id);return tRaw(gamePct(gs),norms[m.id]);}),
       borderColor:COLORS[(phM.length+1+i)%COLORS.length],backgroundColor:'transparent',
       tension:0.3,pointRadius:4,borderWidth:1.5,spanGaps:true,borderDash:[3,2],
@@ -2034,7 +2123,7 @@ function drawTsTimeline(p,norms){
     {label:'Výskok',data:sessions.map(s=>tRaw(calcVys(s),norms['vyskok'])),
       borderColor:'#5db87a',backgroundColor:'transparent',tension:0.3,pointRadius:4,borderWidth:2,spanGaps:true,borderDash:[5,3]},
     ...gaM.map((m,i)=>({
-      label:m.label.split(' ')[0],
+      label:gameAbbr(m),
       data:sessions.map(s=>tRaw(gamePct(gameScore(s.game,m.id)),norms[m.id])),
       borderColor:COLORS[(phM.length+1+i)%COLORS.length],backgroundColor:'transparent',
       tension:0.3,pointRadius:3,borderWidth:1.5,spanGaps:true,borderDash:[3,2],
