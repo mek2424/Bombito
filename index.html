@@ -624,7 +624,14 @@ function toggleNormScope(){
     renderOverview();
   }else{
     render();
-    if(S.activeTab==="spider"){killCH();scheduleDraw(drawSpider);}
+    // Pozor (Kolo 18 vedlejší oprava): S.activeTab zůstává "spider", i když uživatel
+    // mezitím otevře Porovnání — toggleCmp() ho nemaže. Bez "&&!S.cmpMode" by se tu
+    // spustil zbytečný killCH()+drawSpider() NAD právě dokresleným Porovnáním (render()
+    // výše už samo přes renderCmp() naplánovalo scheduleDraw(drawCmp)) — kvůli
+    // generačnímu čítači scheduleDraw (Kolo 5) by ten druhý (nesprávný) scheduleDraw
+    // "vyhrál" a drawCmp() by se tiše přeskočil. Radary v Porovnání by tak po přepnutí
+    // scope zůstaly prázdné, dokud by uživatel neodešel a nevrátil se zpátky.
+    if(S.activeTab==="spider"&&!S.cmpMode){killCH();scheduleDraw(drawSpider);}
   }
 }
 function activeNorms(){return S.lockedNorms?.norms||computeNorms();}
@@ -1417,9 +1424,21 @@ function mkRadar(id,labels,cur,prev){
   if(!labels?.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
   const threshold=((75-20)/60*100);
   const ptColors=(cur||[]).map(v=>v>=threshold?CACC:CGREEN);
-  const ds=[{label:"Aktuální",data:cur||labels.map(()=>0),borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.15)",pointBackgroundColor:ptColors,pointRadius:5,borderWidth:2}];
+  const ds=[
+    {label:"Aktuální",data:cur||labels.map(()=>0),borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.15)",pointBackgroundColor:ptColors,pointRadius:5,borderWidth:2},
+  ];
   if(prev)ds.push({label:"Předchozí",data:prev,borderColor:"#555",backgroundColor:"rgba(80,80,80,0.05)",pointBackgroundColor:"#555",pointRadius:3,borderWidth:1,borderDash:[4,4]});
-  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11}}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
+  // "Průměr" (Kolo 18) — referenční prstenec přesně na T=50, tj. průměr AKTUÁLNÍHO
+  // referenčního poolu (Tým/Databáze, podle scopeChip). T-skóre je z definice
+  // postavené tak, že průměr poolu vždy vychází na 50 na téhle 0–100 zobrazovací
+  // ose — appka proto nic nedopočítává navíc, jen nakreslí plochý dataset "50"
+  // na všech osách. Když se přepne scope (viz toggleNormScope), tenhle prstenec
+  // se NEHÝBE (pořád 50) — mění se `cur`/`prev`, tedy vidíš, jak se hráčka vůči
+  // téhle stejné referenci posouvá. Bez výplně, tečkovaně, bez legendy (viz filter).
+  // Přidává se AŽ NAKONEC pole (kreslí se navrch) a barvou CLEG (ne CTICK) —
+  // ověřeno pixel-sample testem, že jinak splývá pod translucentní výplní Aktuální.
+  ds.push({label:"Průměr",data:labels.map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
+  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
 }
 function drawSpider(){
   const showP=document.getElementById("prevTog")?.checked;
@@ -1513,7 +1532,10 @@ function drawCmp(sel,norms){
     const f=spiderData(lS(sel[0]),norms);if(!f){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     const ds=sel.map((p,i)=>{const d=spiderData(lS(p),norms);if(!d)return null;return{label:playerLabel(p),data:d[dk],borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+"22",pointRadius:4,borderWidth:2};}).filter(Boolean);
     if(!ds.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
-    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
+    // "Průměr" (Kolo 18) — stejný princip jako mkRadar(), viz komentář tam. Přidává
+    // se až nakonec (kreslí se navrch přes hráčky), barva CLEG.
+    ds.push({label:"Průměr",data:f[lk].map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
+    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
   }
   cmpRadar("cRPh","pL","pD");cmpRadar("cRGa","gL","gD");
 
