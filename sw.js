@@ -1,4 +1,4 @@
-const CACHE = 'bombito-v17';
+const CACHE = 'bombito-v18';
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
   './icons/icon-192.png', './icons/icon-512.png'];
 

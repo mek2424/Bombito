@@ -436,6 +436,11 @@ function gameAbbr(m){
   if(m.id==='utok_pole')return'Útok–pole';
   return m.label.split(' ')[0];
 }
+// Aktuálně platná varianta útoku pro danou hráčku — "utok_cil" (těžší), pokud má
+// nastavené datum přechodu (p.attackHarderSince), jinak "utok_pole" (lehčí). Appka
+// tohle používá všude, kde se útok na cíl/do pole zobrazuje jako JEDNA věc, ne dvě
+// samostatné metriky vedle sebe (Poslední výsledky, grafové karty, Přehled týmu).
+function activeAttackMetricId(p){return p?.attackHarderSince?"utok_cil":"utok_pole";}
 const DEF_MIL=[
   {id:"vrchni_servis",  label:"Vrchní servis",          active:true},
   {id:"smec_vyskoku",   label:"Smeč z výskoku",         active:true},
@@ -1149,6 +1154,11 @@ function buildGame(){
   const p=gP();const attackMerged=!!p?.attackHarderSince;
   const activeRows=[],inactiveRows=[];
   S.config.game.forEach(m=>{
+    // Útok na cíl / Útok do pole: hráčka je vždy jen na JEDNÉ variantě (viz
+    // activeAttackMetricId) — řádek té druhé se tu vůbec neukazuje, ani ztlumený
+    // pod "Vypnuté metriky" (to je pro jinou věc — vypnuté v nastavení appky).
+    if(m.id==="utok_pole"&&attackMerged)return;
+    if(m.id==="utok_cil"&&!attackMerged)return;
     const isA=m.active!==false;
     const gs=gameScore(s?.game,m.id),gpv=gameScore(pv?.game,m.id);
     const pct=gamePct(gs),pctpv=gamePct(gpv);
@@ -1159,16 +1169,19 @@ function buildGame(){
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
-  // Útok na cíl / Útok do pole: pokud má hráčka nastavené datum přechodu na těžší
-  // variantu (p.attackHarderSince), sloučí se obě metriky do jedné karty s jedním
-  // grafem (viz drawGame/drawAttackMerged) — karta "utok_pole" se v tom případě vynechá.
+  // Útok na cíl / Útok do pole: appka ukazuje vždy jen JEDNU kartu podle toho, na
+  // které variantě hráčka zrovna je (activeAttackMetricId) — ne obě vedle sebe.
+  // Dokud nemá nastavený přechod, je to karta "Útok do pole" (s tlačítkem na
+  // označení přechodu); od data přechodu ji nahradí sloučená karta "Útok na cíl"
+  // s jedním grafem (viz drawAttackMerged).
   const chs=S.config.game.filter(m=>m.active!==false).map(m=>{
-    if(m.id==="utok_pole"&&attackMerged)return"";
+    if(m.id==="utok_pole"){
+      if(attackMerged)return"";
+      return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_utok_pole"></canvas></div><div style="text-align:right;margin-top:6px"><button class="btn btn-o sm" onclick="openAttackTransition()">🎯 Označit přechod na těžší variantu</button></div></div>`;
+    }
     if(m.id==="utok_cil"){
-      if(attackMerged){
-        return`<div class="card"><h3>🎯 Útok — progres (lehčí → těžší)</h3><p style="font-size:0.75rem;color:var(--gm);margin-bottom:6px">Přešla na těžší variantu (Útok na cíl) <b>${fmtDate(p.attackHarderSince)}</b> · graf ukazuje T-skóre, srovnatelné napříč oběma variantami <button class="btn btn-o sm" onclick="openAttackTransition()" style="margin-left:4px">✎ Upravit</button></p><div class="cw"><canvas id="ch_ga_utok_cil"></canvas></div></div>`;
-      }
-      return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div><div style="text-align:right;margin-top:6px"><button class="btn btn-o sm" onclick="openAttackTransition()">🎯 Označit přechod na těžší variantu</button></div></div>`;
+      if(!attackMerged)return"";
+      return`<div class="card"><h3>🎯 Útok — progres (lehčí → těžší)</h3><p style="font-size:0.75rem;color:var(--gm);margin-bottom:6px">Přešla na těžší variantu (Útok na cíl) <b>${fmtDate(p.attackHarderSince)}</b> · graf ukazuje T-skóre, srovnatelné napříč oběma variantami <button class="btn btn-o sm" onclick="openAttackTransition()" style="margin-left:4px">✎ Upravit</button></p><div class="cw"><canvas id="ch_ga_utok_cil"></canvas></div></div>`;
     }
     return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div></div>`;
   }).join("");
@@ -1194,7 +1207,11 @@ function drawGame(){
 // variantu (p.attackHarderSince = datum přechodu). Obě metriky mají různou obtížnost
 // (a tedy různou surovou úspěšnost), takže se NEPŘEVÁDÍ vzorcem mezi sebou — místo
 // toho se obě vynesou jako T-skóre (každá vůči vlastní normě), což je srovnatelné.
-// Sessions před datem přechodu = utok_pole (lehčí), od data přechodu = utok_cil (těžší).
+// Sessions před datem přechodu čtou utok_pole (lehčí), od data přechodu utok_cil
+// (těžší) — ale appka to teď kreslí jako JEDEN nepřerušený dataset (ne dvě série
+// vedle sebe s mezerou): barva jednotlivých ÚSEKŮ čáry (Chart.js `segment`) se mění
+// podle varianty, a bod přesně v místě přechodu dostane hvězdičku — "povýšení" je
+// tak vizuálně jasné, ale datově/technicky je to pořád jedna spojitá věc.
 function drawAttackMerged(cv,p,norms){
   const cutoff=p.attackHarderSince;
   const sess=(p.testSessions||[]).filter(s=>{
@@ -1203,28 +1220,37 @@ function drawAttackMerged(cv,p,norms){
   });
   if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
   const labels=sess.map(s=>fmtDate(s.date,true));
-  const lehci=sess.map(s=>s.date<cutoff?tRaw(gamePct(gameScore(s.game,"utok_pole")),norms["utok_pole"]):null);
-  const tezsi=sess.map(s=>s.date>=cutoff?tRaw(gamePct(gameScore(s.game,"utok_cil")),norms["utok_cil"]):null);
-  const lastEasyIdx=lehci.reduce((acc,v,i)=>v!=null?i:acc,-1);
-  const firstHardIdx=tezsi.findIndex(v=>v!=null);
-  const markerPlugin={id:"attackMarker",afterDraw(chart){
+  const data=sess.map(s=>{
+    const mid=s.date<cutoff?"utok_pole":"utok_cil";
+    return tRaw(gamePct(gameScore(s.game,mid)),norms[mid]);
+  });
+  const upIdx=sess.findIndex(s=>s.date>=cutoff); // bod "povýšení" na těžší variantu
+  const pointRadius=sess.map((_,i)=>i===upIdx?8:4);
+  const pointStyle=sess.map((_,i)=>i===upIdx?"star":"circle");
+  const pointColor=sess.map((_,i)=>i===upIdx?CACC:(sess[i].date<cutoff?CTICK:CGREEN));
+  const vlinePlugin={id:"attackVline",afterDraw(chart){
     const{ctx,chartArea,scales}=chart;if(!scales.y)return;
     const y50=scales.y.getPixelForValue(50);
     ctx.save();ctx.strokeStyle="rgba(120,120,120,0.5)";ctx.lineWidth=1;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.moveTo(chartArea.left,y50);ctx.lineTo(chartArea.right,y50);ctx.stroke();
     ctx.fillStyle="#666";ctx.font="9px sans-serif";ctx.fillText("T=50",chartArea.right+4,y50+4);
-    if(lastEasyIdx>=0&&firstHardIdx>=0){
-      const x=(scales.x.getPixelForTick(lastEasyIdx)+scales.x.getPixelForTick(firstHardIdx))/2;
-      ctx.strokeStyle=CACC;ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+    if(upIdx>0){
+      // Jemná svislá čára přesně v bodě přechodu — jen vodítko, ne hlavní signál
+      // (ten je hvězdička na bodu).
+      const x=scales.x.getPixelForTick(upIdx);
+      ctx.strokeStyle="rgba(232,200,64,0.35)";ctx.lineWidth=1;ctx.setLineDash([2,3]);
       ctx.beginPath();ctx.moveTo(x,chartArea.top);ctx.lineTo(x,chartArea.bottom);ctx.stroke();
     }
     ctx.restore();
   }};
-  CH["ga_utok_cil"]=new Chart(cv,{type:"line",plugins:[markerPlugin],data:{labels,datasets:[
-    {label:"Útok do pole (lehčí)",data:lehci,borderColor:CTICK,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:4,borderWidth:2,spanGaps:false},
-    {label:"Útok na cíl (těžší)",data:tezsi,borderColor:CGREEN,backgroundColor:"transparent",tension:0.3,pointRadius:4,borderWidth:2,spanGaps:false},
-  ]},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:CLEG,font:{size:10}}},subtitle:{display:true,text:"zlatá čárkovaná = datum přechodu",color:CTICK,font:{size:9},padding:{bottom:4}}},
+  CH["ga_utok_cil"]=new Chart(cv,{type:"line",plugins:[vlinePlugin],data:{labels,datasets:[{
+    data,
+    segment:{borderColor:ctx=>sess[ctx.p1DataIndex].date<cutoff?CTICK:CGREEN},
+    borderColor:CGREEN,backgroundColor:"transparent",
+    tension:0.3,borderWidth:2.5,spanGaps:false,
+    pointRadius,pointStyle,pointBackgroundColor:pointColor,pointBorderColor:pointColor,pointBorderWidth:1.5,
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},subtitle:{display:true,text:"šedá = lehčí varianta · zelená = těžší · ⭐ = přechod",color:CTICK,font:{size:9},padding:{bottom:4}}},
     scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
       y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},min:20,max:80,
         afterBuildTicks:axis=>{axis.ticks=[{value:20},{value:30},{value:45},{value:50},{value:60},{value:75},{value:80}];}}}
@@ -2012,12 +2038,29 @@ function renderOverview(){
       get:p=>calcVys(lS(p)),
       display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const t=tRaw(v,norms['vyskok']);const r=rankIn(active,pp=>calcVys(lS(pp)),false)(p);return `${v}<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>calcVys(lS(p))??-Infinity,lowerBetter:false},
-    ...gaA.map(m=>({
+    ...gaA.filter(m=>m.id!=='utok_cil'&&m.id!=='utok_pole').map(m=>({
       id:'ga_'+m.id,
       label:gameAbbr(m)+'<br><small>%</small>',
       get:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs);},
       display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const pct=Math.round(v*100);const t=tRaw(v,norms[m.id]);const r=rankIn(active,pp=>{const gs=gameScore(lS(pp)?.game,m.id);return gamePct(gs);},false)(p);return `${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs)??-Infinity;},lowerBetter:false})),
+    // Útok na cíl / Útok do pole: sloučeno do jednoho sloupce (activeAttackMetricId) —
+    // každá hráčka se ukazuje na variantě, na které zrovna je, s ikonkou podle stupně.
+    ...(gaA.some(m=>m.id==='utok_cil'||m.id==='utok_pole')?[{
+      id:'ga_utok',label:'Útok<br><small>%</small>',
+      get:p=>{const mid=activeAttackMetricId(p);const gs=gameScore(lS(p)?.game,mid);return gamePct(gs);},
+      display:(p,v)=>{
+        if(v==null)return'<span style="color:var(--gm)">–</span>';
+        const mid=activeAttackMetricId(p);
+        const pct=Math.round(v*100);const t=tRaw(v,norms[mid]);
+        const r=rankIn(active,pp=>{const mid2=activeAttackMetricId(pp);const gs=gameScore(lS(pp)?.game,mid2);return gamePct(gs);},false)(p);
+        const tierIcon=mid==='utok_cil'?'🎯':'▫️';
+        const tierTitle=mid==='utok_cil'?'Útok na cíl (těžší varianta)':'Útok do pole (lehčí varianta)';
+        return `<span title="${tierTitle}">${tierIcon}</span> ${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;
+      },
+      sortVal:p=>{const mid=activeAttackMetricId(p);const gs=gameScore(lS(p)?.game,mid);return gamePct(gs)??-Infinity;},
+      lowerBetter:false,
+    }]:[]),
     {id:'milestones',label:'Milníky',
       get:p=>Object.keys(p.milestones||{}).filter(id=>S.config.milestones.find(m=>m.id===id&&m.active!==false)).length,
       display:(p,v)=>{const tot=S.config.milestones.filter(m=>m.active!==false).length;return `${v}/${tot}`;},
@@ -2053,7 +2096,7 @@ function renderOverview(){
 
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
-    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · <span style="color:var(--acc)">●</span> = bez testu / stará data · <span style="color:var(--acc)">★</span> = overall z neúplných dat<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
+    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · <span style="color:var(--acc)">●</span> = bez testu / stará data · <span style="color:var(--acc)">★</span> = overall z neúplných dat · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
