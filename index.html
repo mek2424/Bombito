@@ -395,6 +395,18 @@ function roundN(v,n=2){
   return Math.round(v*f)/f;
 }
 
+// Klouzavý průměr (okno max 3 body) — pomáhá ve vývojových grafech odlišit jednorázový
+// výkyv od skutečného trendu. Na začátku řady okno "smrští" (1. bod = sám sebou, 2. bod =
+// průměr prvních dvou), od 3. bodu dál jede plné okno posledních 3 hodnot. Zachovává mezery
+// (null zůstává null), i když volající dnes vždy posílají už předfiltrovaná data bez mezer.
+function movingAvg3(data){
+  return data.map((v,i)=>{
+    if(v==null)return null;
+    const win=data.slice(Math.max(0,i-2),i+1).filter(x=>x!=null);
+    return win.reduce((a,b)=>a+b,0)/win.length;
+  });
+}
+
 const DEF_PHYSICAL=[
   {id:"k_test",        label:"K-test",                   unit:"s",  hint:"agility dráha — nižší = lepší", lowerBetter:true, spider:true,  showGraph:true,  active:true},
   {id:"sprint_6m",     label:"6m sprint",                unit:"s",  hint:"nižší = lepší",                  lowerBetter:true, spider:true,  showGraph:true,  active:true},
@@ -1066,10 +1078,18 @@ function buildPhys(){
   </div>${hasG?`<div>${chs}</div>`:""}</div>`;
 }
 function lineC(labels,data,rev,unitLabel){
-  return{type:"line",data:{labels,datasets:[{data,borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.08)",tension:0.35,pointRadius:4,pointBackgroundColor:CGREEN,fill:true,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,
+  // Trend (klouzavý průměr) se kreslí až od 3 testování — s méně body by nešlo poznat
+  // výkyv od trendu a čárkovaná linie by jen zbytečně kopírovala tu plnou.
+  const showTrend=data.length>=3;
+  const datasets=[{data,borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.08)",tension:0.35,pointRadius:4,pointBackgroundColor:CGREEN,fill:true,borderWidth:2}];
+  if(showTrend)datasets.push({data:movingAvg3(data),borderColor:CTICK,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false});
+  const subParts=[];
+  if(rev)subParts.push("↑ lepší výkon (osa obrácena)");
+  if(showTrend)subParts.push("čárkovaně = klouzavý průměr");
+  return{type:"line",data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
     animation:{onComplete:function(){try{this.canvas.dataset.url=this.canvas.toDataURL('image/png');}catch(e){}}},
     plugins:{legend:{display:false},
-      subtitle:rev?{display:true,text:"↑ lepší výkon (osa obrácena)",color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}
+      subtitle:subParts.length?{display:true,text:subParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}
     },
     scales:{
       x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
@@ -1116,7 +1136,11 @@ function drawGame(){
     const sess=p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     const pcts=sess.map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100));
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets:[{data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
+    // Stejná logika trendu jako u fyzických grafů (lineC) — čárkovaná linie navrch přes sloupce.
+    const showTrend=pcts.length>=3;
+    const datasets=[{type:"bar",data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0,order:1}];
+    if(showTrend)datasets.push({type:"line",data:movingAvg3(pcts),borderColor:CACC,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false,order:0});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:showTrend?{display:true,text:"čárkovaně = klouzavý průměr",color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
   });
 }
 
