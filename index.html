@@ -330,6 +330,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
     <button class="btn btn-a" onclick="openAddPlayer();closeMenu()">+ Přidat hráčku</button>
     <hr class="sep-line">
     <button class="btn btn-o" onclick="openAllMatchesLibrary();closeMenu()">📚 Záznamy zápasů</button>
+    <button class="btn btn-o" onclick="openTournaments();closeMenu()">🏟 Turnaje</button>
     <hr class="sep-line">
     <button class="btn btn-o" onclick="exportData();closeMenu()">⬇ Exportovat JSON</button>
     <label class="btn btn-o" style="cursor:pointer">⬆ Importovat JSON<input type="file" accept=".json" style="display:none" onchange="importData(event);closeMenu()"></label>
@@ -458,7 +459,7 @@ const DEF_BADGES=[
   {id:"kapitanka",   label:"Kapitánka",  icon:"👑", color:CACC, special:true},
 ];
 
-let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[]};
+let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[],tournaments:[]};
 const CH={};
 let _modalSnap=null;
 
@@ -502,6 +503,7 @@ function load(){
   S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?CACC:CGREEN;});
   if(!S.normScope)S.normScope="all";
   if(!S.matches)S.matches=[];
+  if(!S.tournaments)S.tournaments=[];
   // Migrate: rename "Balony zadarmo" → "Zdarma"
   if(S.config.game){S.config.game.forEach(m=>{if(m.id==='balony_zadarmo'&&m.label==='Balony zadarmo')m.label='Zdarma';});}
   // Migrate: rename "Útok v poli" → "Útok do pole (lehčí varianta)"
@@ -509,6 +511,22 @@ function load(){
   // Deduplicate matches by ID (keep last occurrence)
   const seen={}; S.matches.forEach(m=>{seen[m.id]=m;});
   S.matches=Object.values(seen).filter(m=>m.finished!==false||!m._autosave);
+  // Kolo 19 — jednorázový zpětný backfill: staré zápasy bez tournamentId,
+  // co sdílí stejné datum, appka při prvním načtení po aktualizaci spojí
+  // do turnaje (stejná logika jako autoAssignTournament, jen hromadně).
+  // Idempotentní — zápasy, co už tournamentId mají, se nepřeskupují, takže
+  // se to nespustí znovu při dalších načteních ani nepřepíše ruční úpravy.
+  {
+    const byDate={};
+    S.matches.filter(m=>m.finished!==false&&!m._autosave&&!m.tournamentId).forEach(m=>{
+      (byDate[m.date]=byDate[m.date]||[]).push(m);
+    });
+    Object.values(byDate).filter(g=>g.length>1).forEach(group=>{
+      const tid='t_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      S.tournaments.push({id:tid,name:'Turnaj '+fmtDate(group[0].date)});
+      group.forEach(m=>{m.tournamentId=tid;});
+    });
+  }
 }
 
 function gP(id){return S.players.find(p=>p.id===(id||S.activeId));}
@@ -2638,7 +2656,7 @@ function addNewSet(){
 
 function finishMatch(){
   confirmAction('Ukončit zápas?',()=>{
-    LM.finished=true;upsertMatch(LM);save();
+    LM.finished=true;autoAssignTournament(LM);upsertMatch(LM);save();
     localStorage.removeItem(lmKey());
     const finished=JSON.parse(JSON.stringify(LM));LM=null;
     renderLiveContent();showMatchSummary(finished);
@@ -2684,8 +2702,9 @@ function showMatchSummary(match){
     :m.mode==='prijem'?`Příjem: ${Math.round(potmScore)}%`
     :`Kombinovaný index: ${Math.round(potmScore)}`;
   const potmHtml=potm?`<div class="potm"><div class="potm-title">⭐ Hráčka zápasu</div><div class="potm-name">${potm.name}</div><div class="potm-stats">${potmStatStr}</div></div>`:'';
+  const tourHtml=m.tournamentId?`<div style="text-align:center;margin-bottom:10px"><button class="btn btn-o sm" onclick="closeModal();openTournamentDetail('${m.tournamentId}')">🏟 Zobrazit turnaj a formu hráček</button></div>`:'';
   const allPlayers=active.filter(p=>allActions.some(a=>a.pid===p.id));
-  openMatchStatsModal("🏁 Zápas ukončen — vs "+m.opponent,m.sets,allPlayers,false,potmHtml,true,m.mode);
+  openMatchStatsModal("🏁 Zápas ukončen — vs "+m.opponent,m.sets,allPlayers,false,potmHtml+tourHtml,true,m.mode);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2865,6 +2884,7 @@ function buildZapasTab(){
         ${mRecvAvg?`Příjem: <b style="color:${mRecvAvg<=2?'var(--gl)':mRecvAvg<=3.5?'var(--acc)':'var(--red)'}">${mRecvAvg} (${recvPct(parseFloat(mRecvAvg))}%)</b>`:''}
         · ${m.sets.length} ${m.sets.length===1?'set':'setů'}
       </div>
+      ${tournamentBadgeHtml(m)}
     </div>`;
   };
   const hasMore=allSorted.length>3;
@@ -2934,6 +2954,7 @@ function openAllMatchesLibrary(){
         ${recvAvgPct!=null?` Příjem: <b style="color:${recvAvgPct>=80?'var(--gl)':recvAvgPct>=50?'var(--acc)':'var(--red)'}">${recvAvgPct}%</b>`:''}
         · ${withData.length} hráček · ${m.sets.length} ${m.sets.length===1?'set':'setů'}
       </div>
+      ${tournamentBadgeHtml(m)}
       <div style="display:flex;justify-content:flex-end;margin-top:6px">
         <button class="btn btn-d sm" style="font-size:0.7rem" onclick="event.stopPropagation();deleteMatch('${m.id}')">✕ Smazat</button>
       </div>
@@ -2965,6 +2986,7 @@ function openMatchLibrary(pid){
         ${mRecvAvg?`Příjem: <b>${mRecvAvg} (${recvPct(parseFloat(mRecvAvg))}%)</b>`:''}
         · ${m.sets.length} ${m.sets.length===1?'set':'sety/setů'}
       </div>
+      ${tournamentBadgeHtml(m)}
       <div style="display:flex;justify-content:flex-end;margin-top:4px">
         <button class="btn btn-d sm" style="font-size:0.7rem" onclick="event.stopPropagation();deleteMatch('${m.id}')">✕ Smazat</button>
       </div>
@@ -3153,7 +3175,243 @@ function showMatchSetStats(mid,setIdx){
   renderMatchStats(m,set.actions,withData,m.mode);
 }
 
+// ══════════════════════════════════════════════════════════
+// TURNAJE (Kolo 19) — seskupování zápasů, forma hráček
+// ══════════════════════════════════════════════════════════
+// Turnaj je volný "štítek": S.tournaments=[{id,name}], zápas má nepovinné
+// m.tournamentId. Appka ho sama navrhne, jakmile najde dva zápasy se
+// stejným datem (autoAssignTournament, volané z finishMatch) — ale je to
+// jen návrh: turnaj jde kdykoli přejmenovat i ručně doplnit o zápas z
+// jiného data (vícedenní turnaj), viz openTournamentDetail.
 
+// Skutečné, dohrané zápasy — bez živě rozehraných autosave-snapshotů.
+function realMatches(){return (S.matches||[]).filter(m=>m.finished!==false&&!m._autosave);}
+
+function tournamentMatches(tid){
+  return realMatches().filter(m=>m.tournamentId===tid).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function tournamentDateRange(tid){
+  const ms=tournamentMatches(tid);
+  if(!ms.length)return'';
+  const first=ms[0].date,last=ms[ms.length-1].date;
+  return first===last?fmtDate(first):`${fmtDate(first)} – ${fmtDate(last)}`;
+}
+
+// Volá se po dohrání zápasu (finishMatch). Pokud na stejné datum už
+// existuje jiný dohraný zápas, appka je spojí do společného turnaje —
+// založí ho, pokud ještě neexistuje.
+function autoAssignTournament(match){
+  if(match.tournamentId)return; // appka/uživatel už přiřadila dřív
+  const sameDate=realMatches().filter(m=>m.id!==match.id&&m.date===match.date);
+  if(!sameDate.length)return;
+  let tid=sameDate.find(m=>m.tournamentId)?.tournamentId;
+  if(!tid){
+    tid='t_'+Date.now();
+    S.tournaments=S.tournaments||[];
+    S.tournaments.push({id:tid,name:'Turnaj '+fmtDate(match.date)});
+    sameDate.forEach(m=>{m.tournamentId=tid;upsertMatch(m);});
+  }
+  match.tournamentId=tid;
+}
+
+// Pokud turnaji po odebrání/přesunu zápasu zbyde 0-1 zápasů, přestává dávat
+// smysl jako "turnaj" (je to pak jen samostatný zápas) — appka ho tiše zruší,
+// zápas(y) zůstanou uložené, jen se rozpojí.
+function cleanupTournamentIfEmpty(tid){
+  if(!tid)return;
+  const remaining=tournamentMatches(tid);
+  if(remaining.length<=1){
+    remaining.forEach(m=>{delete m.tournamentId;upsertMatch(m);});
+    S.tournaments=(S.tournaments||[]).filter(t=>t.id!==tid);
+  }
+}
+
+function renameTournament(tid,name){
+  const t=(S.tournaments||[]).find(x=>x.id===tid);if(!t)return;
+  t.name=name.trim()||t.name;save();
+}
+
+function createTournamentManual(){
+  const name=(document.getElementById('newTourName')?.value||'').trim();
+  if(!name){toast('Zadej název turnaje','err');return;}
+  const t={id:'t_'+Date.now(),name};
+  S.tournaments=S.tournaments||[];S.tournaments.push(t);save();
+  openTournamentDetail(t.id);
+}
+
+function addMatchToTournament(mid,tid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
+  const oldTid=m.tournamentId;
+  m.tournamentId=tid;save();
+  if(oldTid&&oldTid!==tid)cleanupTournamentIfEmpty(oldTid);
+  openTournamentDetail(tid);
+}
+
+function removeMatchFromTournament(mid,tid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
+  delete m.tournamentId;save();
+  cleanupTournamentIfEmpty(tid);
+  if((S.tournaments||[]).some(t=>t.id===tid))openTournamentDetail(tid);
+  else openTournaments();
+}
+
+function deleteTournament(tid){
+  confirmAction('Zrušit turnaj? Zápasy zůstanou uložené, jen se rozpojí.',()=>{
+    (S.matches||[]).forEach(m=>{if(m.tournamentId===tid)delete m.tournamentId;});
+    S.tournaments=(S.tournaments||[]).filter(t=>t.id!==tid);
+    save();closeModal();openTournaments();
+  });
+}
+
+// ---- Forma: výkon hráčky v tomhle turnaji vs. její vlastní dlouhodobý
+// průměr MIMO tenhle turnaj, v kontextu jejího vlastního obvyklého
+// kolísání mezi zápasy. Stejný princip jako "swing" u testů (Kolo 16/17,
+// viz computeNorms) — Winkelman: forma je výkonový signál, ne rozvojový,
+// proto se srovnává jen vůči hráččině VLASTNÍ historii, ne vůči týmu/normě.
+// Gray: jeden zápas nad/pod průměr může být jen normální kolísání — 🔥/❄️
+// se proto ukáže, jen když je odchylka větší než hráččino obvyklé kolísání
+// (min. 3 páry zápasů mimo turnaj, stejný práh spolehlivosti jako jinde).
+
+function playerMatchMetric(p,m,type){
+  const actions=m.sets.flatMap(s=>s.actions).filter(a=>a.pid===p.id&&a.type===type);
+  if(!actions.length)return null;
+  if(type==='body')return actions.reduce((s,a)=>s+a.value,0);
+  return recvPct(actions.reduce((s,a)=>s+a.value,0)/actions.length); // 'prijem' → %, vyšší = lepší
+}
+
+function playerFormaMetric(p,tid,type){
+  const all=realMatches().filter(m=>playerMatchMetric(p,m,type)!=null).sort((a,b)=>a.date.localeCompare(b.date));
+  const inT=all.filter(m=>m.tournamentId===tid);
+  if(!inT.length)return null;
+  const outT=all.filter(m=>m.tournamentId!==tid);
+  const avg=mean(inT.map(m=>playerMatchMetric(p,m,type)));
+  if(!outT.length)return{avg,n:inT.length,baseline:null,swing:null,badge:null};
+  const oVals=outT.map(m=>playerMatchMetric(p,m,type));
+  const baseline=mean(oVals);
+  const deltas=[];for(let i=1;i<oVals.length;i++)deltas.push(Math.abs(oVals[i]-oVals[i-1]));
+  const swing=deltas.length>=3?mean(deltas):null;
+  const dev=avg-baseline;
+  const badge=swing!=null&&Math.abs(dev)>swing?(dev>0?'up':'down'):null;
+  return{avg,n:inT.length,baseline,swing,dev,badge};
+}
+
+function computePlayerForma(p,tid){
+  const body=playerFormaMetric(p,tid,'body');
+  const recv=playerFormaMetric(p,tid,'prijem');
+  return(body||recv)?{body,recv}:null;
+}
+
+function tournamentBadgeHtml(m){
+  if(!m.tournamentId)return'';
+  const t=(S.tournaments||[]).find(x=>x.id===m.tournamentId);
+  if(!t)return'';
+  return`<div style="font-size:0.68rem;color:var(--acc);margin-top:4px;cursor:pointer" onclick="event.stopPropagation();closeModal();openTournamentDetail('${t.id}')">🏟 ${t.name}</div>`;
+}
+
+function openTournaments(){
+  const list=(S.tournaments||[]).slice().sort((a,b)=>{
+    const da=tournamentMatches(a.id)[0]?.date||'',db=tournamentMatches(b.id)[0]?.date||'';
+    return db.localeCompare(da);
+  });
+  const cards=list.map(t=>{
+    const ms=tournamentMatches(t.id);
+    const opps=[...new Set(ms.map(m=>m.opponent))].join(', ');
+    return`<div class="match-card" onclick="closeModal();openTournamentDetail('${t.id}')">
+      <div class="match-card-head">
+        <span class="match-card-opp">🏟 ${t.name}</span>
+        <span class="match-card-date">${tournamentDateRange(t.id)}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--gm)">${ms.length} ${ms.length===1?'zápas':ms.length<5?'zápasy':'zápasů'}${opps?` · vs ${opps}`:''}</div>
+    </div>`;
+  }).join('');
+  openModal(`<h2>🏟 Turnaje</h2>
+    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Zápasy ze stejného dne appka sama navrhne jako turnaj. Vícedenní turnaj založ ručně a zápasy do něj přidej v jeho detailu.</p>
+    <div style="max-height:50vh;overflow-y:auto;margin-bottom:12px">${cards||'<div class="no-data">Zatím žádné turnaje</div>'}</div>
+    <div class="fg"><label>Založit nový turnaj</label>
+      <div style="display:flex;gap:6px">
+        <input id="newTourName" type="text" placeholder="Název turnaje" style="flex:1">
+        <button class="btn btn-a sm" onclick="createTournamentManual()">+ Založit</button>
+      </div>
+    </div>
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+}
+
+function openTournamentDetail(tid){
+  const t=(S.tournaments||[]).find(x=>x.id===tid);
+  if(!t){openTournaments();return;}
+  const ms=tournamentMatches(tid);
+  const active=getActiveP();
+
+  const matchCards=ms.map(m=>{
+    const allActions=m.sets.flatMap(s=>s.actions);
+    const totalBody=allActions.filter(a=>a.type==='body').reduce((s,a)=>s+a.value,0);
+    const rv=allActions.filter(a=>a.type==='prijem').map(a=>a.value);
+    const recvAvgPct=rv.length?recvPct(rv.reduce((s,v)=>s+v,0)/rv.length):null;
+    return`<div class="match-card" onclick="closeModal();openMatchStats('${m.id}')">
+      <div class="match-card-head">
+        <span class="match-card-opp">vs ${m.opponent}</span>
+        <span class="match-card-date">${fmtDate(m.date)}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--gm)">
+        ${m.mode!=='prijem'?`Body: <b style="color:${totalBody>0?'var(--gl)':totalBody<0?'var(--red)':'var(--gm)'}">${totalBody>0?'+':''}${totalBody}</b>`:''}
+        ${recvAvgPct!=null?` Příjem: <b>${recvAvgPct}%</b>`:''}
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-o sm" style="font-size:0.7rem" onclick="event.stopPropagation();removeMatchFromTournament('${m.id}','${tid}')">↩ Vyjmout z turnaje</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Forma — jen hráčky, co v tomhle turnaji už alespoň jednou nastoupily
+  const formaRows=active.map(p=>({p,f:computePlayerForma(p,tid)})).filter(x=>x.f);
+  const fmtNum=(v,isPct)=>isPct?Math.round(v)+'%':(v>0?'+':'')+roundN(v);
+  const formaHtml=formaRows.length?formaRows.map(({p,f})=>{
+    const part=(m,label,isPct)=>{
+      if(!m)return'';
+      const base=m.baseline!=null?` <span style="color:var(--gm)">· jinak Ø ${fmtNum(m.baseline,isPct)}</span>`:'';
+      const badge=m.badge==='up'?' 🔥':m.badge==='down'?' ❄️':'';
+      return`<div>${label}: <b>Ø ${fmtNum(m.avg,isPct)}</b> <small style="color:var(--gm)">(${m.n} z.)</small>${base}${badge}</div>`;
+    };
+    return`<div class="me" style="align-items:flex-start">
+      <div class="ml">${playerLabel(p)}</div>
+      <div style="font-size:0.8rem;text-align:right">${part(f.body,'Body',false)}${part(f.recv,'Příjem',true)}</div>
+    </div>`;
+  }).join(''):'<div class="no-data">Zatím žádná hráčka s odehraným zápasem v tomto turnaji</div>';
+
+  openModal(`<h2>🏟 <input id="tourNameEl" type="text" value="${t.name}" title="Klikni pro úpravu názvu" onchange="renameTournament('${tid}',this.value)" style="font-family:inherit;font-size:1.05rem;font-weight:700;border:none;border-bottom:1px dashed var(--brd);background:transparent;color:inherit;width:auto;max-width:65%"></h2>
+    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:14px">${tournamentDateRange(tid)} · ${ms.length} ${ms.length===1?'zápas':ms.length<5?'zápasy':'zápasů'}</p>
+    <div class="card" style="margin-bottom:12px">
+      <h3>📈 Forma hráček</h3>
+      <p style="font-size:0.72rem;color:var(--gm);margin-bottom:8px">Výkon v tomhle turnaji vs. vlastní průměr mimo něj. 🔥/❄️ se ukáže, jen když je odchylka větší než obvyklé kolísání té hráčky.</p>
+      ${formaHtml}
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>Zápasy turnaje</h3>
+      ${matchCards||'<div class="no-data">Žádné zápasy</div>'}
+      <button class="btn btn-o" style="width:100%;margin-top:4px" onclick="openTournamentMatchPicker('${tid}')">+ Přidat zápas do turnaje</button>
+    </div>
+    <div class="ma">
+      <button class="btn btn-d sm" onclick="deleteTournament('${tid}')">🗑 Zrušit turnaj</button>
+      <button class="btn btn-p" onclick="closeModal()">Zavřít</button>
+    </div>`);
+}
+
+function openTournamentMatchPicker(tid){
+  const candidates=realMatches().filter(m=>m.tournamentId!==tid).slice().reverse();
+  const rows=candidates.map(m=>{
+    const other=m.tournamentId?(S.tournaments||[]).find(x=>x.id===m.tournamentId):null;
+    return`<div class="match-card" onclick="addMatchToTournament('${m.id}','${tid}')">
+      <div class="match-card-head">
+        <span class="match-card-opp">vs ${m.opponent}</span>
+        <span class="match-card-date">${fmtDate(m.date)}</span>
+      </div>
+      ${other?`<div style="font-size:0.72rem;color:var(--gm)">už v turnaji „${other.name}“ — přesune se sem</div>`:''}
+    </div>`;
+  }).join('');
+  openModal(`<h2>+ Přidat zápas do turnaje</h2>
+    <div style="max-height:60vh;overflow-y:auto">${rows||'<div class="no-data">Žádné další zápasy k přidání</div>'}</div>
+    <div class="ma"><button class="btn btn-o" onclick="openTournamentDetail('${tid}')">Zpět</button></div>`);
+}
 
 function openResetConfirm(){
   openModal('<h2>\uD83D\uDDD1 Resetovat pam\u011b\u0165</h2><div style="background:#3a1a1a;border:1.5px solid var(--red);border-radius:8px;padding:14px;margin-bottom:16px"><p style="color:#ff8888;font-weight:700;margin-bottom:6px">\u26A0\uFE0F Tato akce je nevratn\u00e1</p><p style="font-size:0.82rem;color:var(--w);line-height:1.6">V\u0161echna data hr\u00e1\u010dek, testy, z\u00e1pasy a nastaven\u00ed budou trvale smaz\u00e1na z pam\u011bti prohl\u00ed\u017ee\u010de. Pokud nem\u00e1\u0161 exportovan\u00e1 data jako JSON soubor, nep\u016fjde to obnovit.</p></div><p style="font-size:0.85rem;margin-bottom:16px">Opravdu chce\u0161 smazat v\u0161echna data?</p><div style="display:flex;gap:8px"><button class="btn btn-o" style="flex:1" onclick="closeModal()">Ne, zp\u011bt</button><button class="btn btn-d" style="flex:1" onclick="openResetBackupOffer()">Ano, smazat</button></div>');
@@ -3221,7 +3479,9 @@ function saveEditTest(idx){
 
 function deleteMatch(mid){
   confirmAction('Smazat zápasový záznam?',()=>{
+    const tid=(S.matches||[]).find(m=>m.id===mid)?.tournamentId;
     S.matches=(S.matches||[]).filter(m=>m.id!==mid);
+    if(tid)cleanupTournamentIfEmpty(tid);
     save();renderDetail();toast('Zápas smazán');
   });
 }
