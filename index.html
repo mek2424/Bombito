@@ -562,13 +562,40 @@ function normPlayers(){
 function computeNorms(){
   const pool=normPlayers();
   const norms={};
+  // "swing" (Kolo 16 u herních metrik, Kolo 17 i tady) = typická velikost výkyvu
+  // mezi dvěma po sobě jdoucími testy TÉŽE hráčky (průměr absolutních rozdílů),
+  // spočtená napříč CELÝM poolem (stejná referenční skupina jako norma výše,
+  // respektuje normScope). V nativních jednotkách dané metriky (cm, s, ks…).
   S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku").forEach(m=>{
-    const vals=[];pool.forEach(p=>{p.testSessions?.forEach(ss=>{const v=ss.physical?.[m.id];if(v!=null)vals.push(v);});});
+    const vals=[],deltas=[];
+    pool.forEach(p=>{
+      let prev=null;
+      p.testSessions?.forEach(ss=>{
+        const v=ss.physical?.[m.id];
+        if(v!=null){
+          vals.push(v);
+          if(prev!=null)deltas.push(Math.abs(v-prev));
+          prev=v;
+        }
+      });
+    });
     const mu=mean(vals),sigma=std(vals,mu);
-    norms[m.id]={mu,sigma,n:vals.length,lowerBetter:!!m.lowerBetter};
+    const swing=deltas.length?mean(deltas):null;
+    norms[m.id]={mu,sigma,n:vals.length,lowerBetter:!!m.lowerBetter,swing,swingN:deltas.length};
   });
-  const vysVals=[];pool.forEach(p=>{p.testSessions?.forEach(ss=>{const v=calcVys(ss);if(v!=null)vysVals.push(v);});});
-  norms["vyskok"]={mu:mean(vysVals),sigma:std(vysVals,mean(vysVals)),n:vysVals.length,lowerBetter:false};
+  const vysVals=[],vysDeltas=[];
+  pool.forEach(p=>{
+    let prev=null;
+    p.testSessions?.forEach(ss=>{
+      const v=calcVys(ss);
+      if(v!=null){
+        vysVals.push(v);
+        if(prev!=null)vysDeltas.push(Math.abs(v-prev));
+        prev=v;
+      }
+    });
+  });
+  norms["vyskok"]={mu:mean(vysVals),sigma:std(vysVals,mean(vysVals)),n:vysVals.length,lowerBetter:false,swing:vysDeltas.length?mean(vysDeltas):null,swingN:vysDeltas.length};
   S.config.game.filter(m=>m.active!==false).forEach(m=>{
     const vals=[],deltas=[];
     pool.forEach(p=>{
@@ -583,11 +610,6 @@ function computeNorms(){
       });
     });
     const mu=mean(vals),sigma=std(vals,mu);
-    // "swing" = typická velikost výkyvu mezi dvěma po sobě jdoucími testy TÉŽE
-    // hráčky (průměr absolutních rozdílů), spočtená napříč CELÝM poolem (stejná
-    // referenční skupina jako norma/T-skóre výše, respektuje normScope) — Kolo 16.
-    // Používá se jako pásmo "normálního kolísání" v grafu dané herní metriky
-    // (drawGame) kolem PRŮMĚRU JEDNÉ hráčky — NE jako srovnání mezi hráčkami.
     const swing=deltas.length?mean(deltas):null;
     norms[m.id]={mu,sigma,n:vals.length,lowerBetter:false,isPct:true,swing,swingN:deltas.length};
   });
@@ -1113,11 +1135,17 @@ function buildPhys(){
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
-  const chs=S.config.physical.filter(m=>m.active!==false&&m.showGraph!==false).map(m=>{
-    if(m.id==="dosah_vyskoku")return`<div class="card"><h3>Výskok — dopočítaný (cm)</h3><div class="cw"><canvas id="ch_vys"></canvas></div></div>`;
-    return`<div class="card"><h3>${m.label} (${m.unit})</h3><div class="cw"><canvas id="ch_ph_${m.id}"></canvas></div></div>`;
-  }).join("");
-  const hasG=S.config.physical.some(m=>m.active!==false&&m.showGraph!==false);
+  // Výskok je dopočítaná metrika, "vždy mezi aktivními" stejně jako v řádcích výše
+  // (viz komentář u activeRows.push) — grafová karta se proto NEŘÍDÍ showGraph/active
+  // vlastní syrové metriky dosah_vyskoku (ta má schválně showGraph:false, protože
+  // graf SUROVÉHO "dosahu z výskoku" sám o sobě nikoho nezajímá — zajímá dopočítaný
+  // rozdíl). Stejný princip appka už měla v PDF exportu (`renderPDFCharts`), jen tady
+  // v appce chyběl — vedlejší oprava, Kolo 17.
+  const vysCard=`<div class="card"><h3>Výskok — dopočítaný (cm)</h3><div class="cw"><canvas id="ch_vys"></canvas></div></div>`;
+  const chs=vysCard+S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false).map(m=>
+    `<div class="card"><h3>${m.label} (${m.unit})</h3><div class="cw"><canvas id="ch_ph_${m.id}"></canvas></div></div>`
+  ).join("");
+  const hasG=true; // Výskok karta je teď vždy přítomna, takže grafový sloupec je vždy neprázdný.
   const p2=gP();
   const sessList=p2?.testSessions?.length?[...p2.testSessions].reverse().map((sess,ri)=>{
     const i=p2.testSessions.length-1-ri;
@@ -1131,16 +1159,41 @@ function buildPhys(){
     <div class="card"><h3>Historie &nbsp;<span style="font-weight:400;color:var(--gm)">✎ upravit · ✕ smazat</span></h3>${sessList}</div>
   </div>${hasG?`<div>${chs}</div>`:""}</div>`;
 }
-function lineC(labels,data,rev,unitLabel){
+// Pásmo "normálního kolísání" — sdílené mezi Herním (Kolo 16) a Fyzickým tabem
+// (Kolo 17). Jemný obdélník v pozadí grafu, od (průměr hráčky − typický výkyv)
+// do (průměr + typický výkyv), v NATIVNÍCH jednotkách dané metriky (%, cm, s…).
+// Kreslí se `beforeDatasetsDraw`, tedy POD daty (sloupce/čára), ne přes ně.
+// Ořezává se na pixely `chartArea`, ne na hodnoty — funguje tak stejně dobře na
+// ose s pevným rozsahem (herní %, 0–100) jako na automaticky škálované ose
+// fyzických metrik (žádný fixní strop/podlaha) i na obrácené ose (`lowerBetter`).
+function swingBandPlugin(avg,halfW){
+  return {id:"swingBand",beforeDatasetsDraw(chart){
+    if(avg==null||halfW==null)return;
+    const{ctx,chartArea,scales}=chart;if(!scales.y)return;
+    let top=scales.y.getPixelForValue(avg+halfW), bot=scales.y.getPixelForValue(avg-halfW);
+    if(top>bot)[top,bot]=[bot,top]; // obrácená osa (lowerBetter) má obrácené pixely
+    top=Math.max(chartArea.top,top); bot=Math.min(chartArea.bottom,bot);
+    if(bot<=top)return;
+    ctx.save();
+    ctx.fillStyle="rgba(130,130,120,0.28)";
+    ctx.fillRect(chartArea.left,top,chartArea.right-chartArea.left,bot-top);
+    ctx.restore();
+  }};
+}
+function lineC(labels,data,rev,unitLabel,avg,swing){
   // Trend (klouzavý průměr) se kreslí až od 3 testování — s méně body by nešlo poznat
   // výkyv od trendu a čárkovaná linie by jen zbytečně kopírovala tu plnou.
   const showTrend=data.length>=3;
   const datasets=[{data,borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.08)",tension:0.35,pointRadius:4,pointBackgroundColor:CGREEN,fill:true,borderWidth:2}];
   if(showTrend)datasets.push({data:movingAvg3(data),borderColor:CTICK,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false});
+  // Pásmo normálního kolísání (Kolo 17) — `swing` je null, když computeNorms()
+  // nenašel dost dvojic po sobě jdoucích testů napříč poolem (viz drawPhys).
+  const showBand=swing!=null;
   const subParts=[];
   if(rev)subParts.push("↑ lepší výkon (osa obrácena)");
   if(showTrend)subParts.push("čárkovaně = klouzavý průměr");
-  return{type:"line",data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
+  if(showBand)subParts.push("šedé pásmo = typický rozptyl mezi testy");
+  return{type:"line",plugins:[swingBandPlugin(avg,swing)],data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
     animation:{onComplete:function(){try{this.canvas.dataset.url=this.canvas.toDataURL('image/png');}catch(e){}}},
     plugins:{legend:{display:false},
       subtitle:subParts.length?{display:true,text:subParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}
@@ -1153,15 +1206,27 @@ function lineC(labels,data,rev,unitLabel){
 }
 function drawPhys(){
   const p=gP();if(!p)return;
-  if(S.config.physical.find(m=>m.id==="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false)){
-    const cv=document.getElementById("ch_vys");
-    if(cv){const sess=p.testSessions?.filter(s=>calcVys(s)!=null)||[];if(sess.length)CH.vys=new Chart(cv,lineC(sess.map(s=>fmtDate(s.date,true)),sess.map(s=>calcVys(s)),false,'cm'));else cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';}
+  const norms=activeNorms();
+  // Výskok karta je teď vždy v DOM (viz buildPhys) — kreslí se, kdykoli existuje
+  // canvas, bez ohledu na showGraph/active syrové metriky dosah_vyskoku.
+  const cvVys=document.getElementById("ch_vys");
+  if(cvVys){
+    const sess=p.testSessions?.filter(s=>calcVys(s)!=null)||[];
+    if(sess.length){
+      const vals=sess.map(s=>calcVys(s));
+      const norm=norms["vyskok"];
+      const swing=(norm?.swing!=null&&norm.swingN>=3)?norm.swing:null;
+      CH.vys=new Chart(cvVys,lineC(sess.map(s=>fmtDate(s.date,true)),vals,false,'cm',mean(vals),swing));
+    } else cvVys.parentElement.innerHTML='<div class="no-data">Žádná data</div>';
   }
   S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false).forEach(m=>{
     const cv=document.getElementById("ch_ph_"+m.id);if(!cv)return;
     const sess=p.testSessions?.filter(s=>s.physical?.[m.id]!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
-    CH["ph_"+m.id]=new Chart(cv,lineC(sess.map(s=>fmtDate(s.date,true)),sess.map(s=>s.physical[m.id]),m.lowerBetter,m.unit));
+    const vals=sess.map(s=>s.physical[m.id]);
+    const norm=norms[m.id];
+    const swing=(norm?.swing!=null&&norm.swingN>=3)?norm.swing:null;
+    CH["ph_"+m.id]=new Chart(cv,lineC(sess.map(s=>fmtDate(s.date,true)),vals,m.lowerBetter,m.unit,mean(vals),swing));
   });
 }
 
@@ -1204,22 +1269,6 @@ function buildGame(){
   }).join("");
   return`<div class="g2"><div><div class="card"><h3>Poslední výsledky &nbsp;<span style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
 }
-// Pásmo "normálního kolísání" v grafu herní metriky (Kolo 16) — jemný obdélník
-// v pozadí, od (průměr hráčky − typický výkyv) do (průměr + typický výkyv).
-// `avg`/`halfW` jsou v procentních bodech (stejná škála jako osa y grafu).
-// Kreslí se `beforeDatasetsDraw`, tedy POD sloupci, ne přes ně.
-function gameBandPlugin(avg,halfW){
-  return {id:"gameBand",beforeDatasetsDraw(chart){
-    if(avg==null||halfW==null)return;
-    const{ctx,chartArea,scales}=chart;if(!scales.y)return;
-    const top=scales.y.getPixelForValue(Math.min(100,avg+halfW));
-    const bot=scales.y.getPixelForValue(Math.max(0,avg-halfW));
-    ctx.save();
-    ctx.fillStyle="rgba(130,130,120,0.28)";
-    ctx.fillRect(chartArea.left,top,chartArea.right-chartArea.left,bot-top);
-    ctx.restore();
-  }};
-}
 function drawGame(){
   const p=gP();if(!p)return;
   const norms=activeNorms();
@@ -1243,7 +1292,7 @@ function drawGame(){
     if(showBand)subtitleParts.push("šedé pásmo = typický rozptyl mezi testy");
     const datasets=[{type:"bar",data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0,order:1}];
     if(showTrend)datasets.push({type:"line",data:movingAvg3(pcts),borderColor:CACC,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false,order:0});
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[gameBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[swingBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
   });
 }
 // Sloučený graf "Útok na cíl" / "Útok do pole" pro hráčku, která přešla na těžší
