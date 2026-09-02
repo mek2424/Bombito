@@ -167,7 +167,6 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   #sidebarBackdrop.open{display:block}
   main{padding:13px}
   .hact{display:none}
-  #menuToggle{display:flex!important}
 }
 
 /* PDF PRINT */
@@ -234,7 +233,13 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 
 
 /* DROPDOWN MENU */
-#menuToggle{display:none;background:transparent;border:none;cursor:pointer;color:var(--w);font-size:1.3rem;padding:6px 8px;border-radius:6px;flex-shrink:0;margin-left:auto}
+/* Kolo 20 — dřív bylo #menuToggle vidět jen pod 768px (na širším viewportu
+   se čekávalo, že .hact pokryje úplně všechno). Jenže do menu postupem času
+   přibyly položky (Záznamy zápasů, Turnaje, Export/Import JSON), co v .hact
+   nikdy neměly ekvivalent — na tabletu/desktopu tak nešly vůbec otevřít.
+   Proto je ⋮ teď vidět vždy, i vedle .hact — je to jediné místo, kde je
+   garantovaně kompletní seznam akcí, bez ohledu na šířku obrazovky. */
+#menuToggle{display:flex;background:transparent;border:none;cursor:pointer;color:var(--w);font-size:1.3rem;padding:6px 8px;border-radius:6px;flex-shrink:0;margin-left:auto}
 #menuToggle:hover{background:rgba(255,255,255,.1)}
 .menu-dropdown{display:none;position:fixed;top:62px;right:0;background:#0f1a10;border:1px solid var(--brd);border-top:none;border-radius:0 0 12px 12px;padding:8px;min-width:200px;z-index:199;box-shadow:0 8px 30px rgba(0,0,0,.6);flex-direction:column;gap:6px}
 .menu-dropdown.open{display:flex}
@@ -1426,13 +1431,21 @@ function buildSpider(){
   ${buildTsTimeline(gP(),norms)}
   <div class="card"><h3>ℹ️ Metodika</h3><p style="font-size:0.79rem;color:var(--gm);line-height:1.65"><b>T-score</b> = 50 + 10 × (výkon − průměr skupiny) / odchylka. Průměr se počítá ze všech testování v databázi. Herní metriky jsou normalizovány jako procento úspěšnosti (score/pokusy).<br><br><b>Genetika v pavouku není</b> — výška a dosah s paží se evidují, ale do radaru nevstupují.<br><br><b>Uzamčení normy</b> — zmrazí referenční průměr. Radar se celou sezónu srovnává vůči stejné základně.</p></div>`;
 }
-function spiderData(sess,norms){
+function spiderData(sess,norms,p){
   if(!sess)return null;
   const vys=calcVys(sess)||0;
   const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
   const pL=[...physM.map(m=>m.label),"Výskok"];
   const pD=[...physM.map(m=>tScore(sess.physical?.[m.id],norms[m.id])),tScore(vys,norms["vyskok"])];
-  const gm=S.config.game.filter(m=>m.active!==false);
+  // Kolo 20 — stejné pravidlo jako v Herním tabu (buildGame/drawGame) a Přehledu
+  // týmu: hráčka je vždy jen na JEDNÉ variantě útoku (activeAttackMetricId), ta
+  // druhá se do pavouka vůbec nepočítá — jinak vycházela jako osa s hodnotou 0.
+  // Parametr `p` je volitelný, aby se nerozbilo Porovnání (cmpRadar), kde se
+  // jedna sada os sdílí napříč více hráčkami a přepínání osy podle hráčky by
+  // rozbilo zarovnání datasetů — tam se volá beze změny, se všemi osami.
+  const activeAtk=p?activeAttackMetricId(p):null;
+  const isAtk=id=>id==="utok_cil"||id==="utok_pole";
+  const gm=S.config.game.filter(m=>m.active!==false&&(!isAtk(m.id)||!activeAtk||m.id===activeAtk));
   const gL=gm.map(m=>m.label);
   const gD=gm.map(m=>{const gs=gameScore(sess.game,m.id);return tScore(gamePct(gs),norms[m.id]);});
   return{pL,pD,gL,gD};
@@ -1461,7 +1474,8 @@ function mkRadar(id,labels,cur,prev){
 function drawSpider(){
   const showP=document.getElementById("prevTog")?.checked;
   const norms=activeNorms();
-  const cur=spiderData(lS(),norms),prev=showP?spiderData(pS(),norms):null;
+  const _sp=gP();
+  const cur=spiderData(lS(),norms,_sp),prev=showP?spiderData(pS(),norms,_sp):null;
   if(CH.rPhys){CH.rPhys.destroy();delete CH.rPhys;}
   if(CH.rGame){CH.rGame.destroy();delete CH.rGame;}
   mkRadar("rPhys",cur?.pL,cur?.pD,prev?.pD);
@@ -1494,7 +1508,7 @@ function renderCmp(){
   const ovMax=teamMaxCovered(getActiveP(),norms);
   const legend=sel.map((p,i)=>{
     const o=overallForPlayer(p,norms,ovMax);
-    const ovTxt=o.score==null?"":` · <b style="font-family:'Bebas Neue',sans-serif;color:${overallColor(o.tAvg)}">${o.score}</b>${o.incomplete?`<span title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">★</span>`:""}`;
+    const ovTxt=o.score==null?"":` · <b style="font-family:'Bebas Neue',sans-serif;color:${overallColor(o.tAvg)}">${o.score}</b>${o.incomplete?`<sup title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">*</sup>`:""}`;
     return `<div style="display:flex;align-items:center;gap:6px;font-size:0.81rem"><div style="width:9px;height:9px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0"></div>${p.name}${ovTxt}</div>`;
   }).join("");
   // Physical: show výška + spider metrics, not dosah (replaced by výška)
@@ -2141,7 +2155,7 @@ function renderOverview(){
       display:(p,v)=>{
         if(v==null)return'<span style="color:var(--gm)">–</span>';
         const o=overallForPlayer(p,norms,ovMax);
-        const star=o.incomplete?`<span title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">★</span>`:'';
+        const star=o.incomplete?`<sup title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">*</sup>`:'';
         return `<b style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${overallColor(o.tAvg)}">${v}</b>${star}`;
       },
       sortVal:p=>overallForPlayer(p,norms,ovMax).score??-Infinity,
@@ -2228,7 +2242,7 @@ function renderOverview(){
 
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
-    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · <span style="color:var(--acc)">●</span> = bez testu / stará data · <span style="color:var(--acc)">★</span> = overall z neúplných dat · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
+    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
@@ -2702,9 +2716,18 @@ function showMatchSummary(match){
     :m.mode==='prijem'?`Příjem: ${Math.round(potmScore)}%`
     :`Kombinovaný index: ${Math.round(potmScore)}`;
   const potmHtml=potm?`<div class="potm"><div class="potm-title">⭐ Hráčka zápasu</div><div class="potm-name">${potm.name}</div><div class="potm-stats">${potmStatStr}</div></div>`:'';
-  const tourHtml=m.tournamentId?`<div style="text-align:center;margin-bottom:10px"><button class="btn btn-o sm" onclick="closeModal();openTournamentDetail('${m.tournamentId}')">🏟 Zobrazit turnaj a formu hráček</button></div>`:'';
+  const tourHtml=m.tournamentId?`<div style="text-align:center;margin-bottom:10px"><button class="btn btn-o sm" onclick="closeModal();openTournamentDetail('${m.tournamentId}','${m.id}')">🏟 Zobrazit turnaj a formu hráček</button></div>`:'';
   const allPlayers=active.filter(p=>allActions.some(a=>a.pid===p.id));
   openMatchStatsModal("🏁 Zápas ukončen — vs "+m.opponent,m.sets,allPlayers,false,potmHtml+tourHtml,true,m.mode);
+}
+// Kolo 20 — pomocník pro návrat z detailu turnaje zpět na souhrn zápasu
+// (viz openTournamentDetail's backMid). Zápas v tu chvíli už je uložený
+// v S.matches (finishMatch dělá upsertMatch ještě před showMatchSummary),
+// takže stačí dohledat podle id — nemusíme si pamatovat celý objekt.
+function showMatchSummaryById(mid){
+  const m=(S.matches||[]).find(x=>x.id===mid);
+  if(!m){closeModal();return;}
+  showMatchSummary(m);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -3239,19 +3262,19 @@ function createTournamentManual(){
   openTournamentDetail(t.id);
 }
 
-function addMatchToTournament(mid,tid){
+function addMatchToTournament(mid,tid,backMid){
   const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
   const oldTid=m.tournamentId;
   m.tournamentId=tid;save();
   if(oldTid&&oldTid!==tid)cleanupTournamentIfEmpty(oldTid);
-  openTournamentDetail(tid);
+  openTournamentDetail(tid,backMid);
 }
 
-function removeMatchFromTournament(mid,tid){
+function removeMatchFromTournament(mid,tid,backMid){
   const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
   delete m.tournamentId;save();
   cleanupTournamentIfEmpty(tid);
-  if((S.tournaments||[]).some(t=>t.id===tid))openTournamentDetail(tid);
+  if((S.tournaments||[]).some(t=>t.id===tid))openTournamentDetail(tid,backMid);
   else openTournaments();
 }
 
@@ -3336,11 +3359,12 @@ function openTournaments(){
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
 }
 
-function openTournamentDetail(tid){
+function openTournamentDetail(tid,backMid){
   const t=(S.tournaments||[]).find(x=>x.id===tid);
   if(!t){openTournaments();return;}
   const ms=tournamentMatches(tid);
   const active=getActiveP();
+  const bm=backMid||'';
 
   const matchCards=ms.map(m=>{
     const allActions=m.sets.flatMap(s=>s.actions);
@@ -3357,50 +3381,66 @@ function openTournamentDetail(tid){
         ${recvAvgPct!=null?` Příjem: <b>${recvAvgPct}%</b>`:''}
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:6px">
-        <button class="btn btn-o sm" style="font-size:0.7rem" onclick="event.stopPropagation();removeMatchFromTournament('${m.id}','${tid}')">↩ Vyjmout z turnaje</button>
+        <button class="btn btn-o sm" style="font-size:0.7rem" onclick="event.stopPropagation();removeMatchFromTournament('${m.id}','${tid}','${bm}')">↩ Vyjmout z turnaje</button>
       </div>
     </div>`;
   }).join('');
 
-  // Forma — jen hráčky, co v tomhle turnaji už alespoň jednou nastoupily
+  // Forma — jen hráčky, co v tomhle turnaji už alespoň jednou nastoupily.
+  // Kolo 20 — zjednodušeno na 3 stavy (Forma/Normál/Špatenka) podle zpětné
+  // vazby: dvě čísla (Body i Příjem) zvlášť bylo na první pohled nepřehledné.
+  // Když si signály z obou metrik protiřečí (jedna nahoru, druhá dolů), bereme
+  // to jako Normál — netvrdíme formu ani špatenku, když si data neodpovídají.
+  // Přesná čísla zůstávají v title tooltipu (podržet/najet myší) pro zvídavé.
   const formaRows=active.map(p=>({p,f:computePlayerForma(p,tid)})).filter(x=>x.f);
   const fmtNum=(v,isPct)=>isPct?Math.round(v)+'%':(v>0?'+':'')+roundN(v);
+  const formaState=f=>{
+    const badges=[f.body?.badge,f.recv?.badge].filter(Boolean);
+    const up=badges.includes('up'),down=badges.includes('down');
+    if(up&&!down)return'up';
+    if(down&&!up)return'down';
+    return'normal';
+  };
+  const formaTip=f=>{
+    const part=(m,label,isPct)=>m?`${label}: Ø ${fmtNum(m.avg,isPct)} (${m.n} z.)${m.baseline!=null?', jinak Ø '+fmtNum(m.baseline,isPct):''}`:'';
+    return[part(f.body,'Body',false),part(f.recv,'Příjem',true)].filter(Boolean).join(' · ');
+  };
+  const STATE_UI={up:{cls:'tu',txt:'🔥 Forma'},down:{cls:'td',txt:'❄️ Špatenka'},normal:{cls:'ts',txt:'➖ Normál'}};
   const formaHtml=formaRows.length?formaRows.map(({p,f})=>{
-    const part=(m,label,isPct)=>{
-      if(!m)return'';
-      const base=m.baseline!=null?` <span style="color:var(--gm)">· jinak Ø ${fmtNum(m.baseline,isPct)}</span>`:'';
-      const badge=m.badge==='up'?' 🔥':m.badge==='down'?' ❄️':'';
-      return`<div>${label}: <b>Ø ${fmtNum(m.avg,isPct)}</b> <small style="color:var(--gm)">(${m.n} z.)</small>${base}${badge}</div>`;
-    };
-    return`<div class="me" style="align-items:flex-start">
+    const st=STATE_UI[formaState(f)];
+    return`<div class="me" title="${formaTip(f)}" style="cursor:help">
       <div class="ml">${playerLabel(p)}</div>
-      <div style="font-size:0.8rem;text-align:right">${part(f.body,'Body',false)}${part(f.recv,'Příjem',true)}</div>
+      <span class="tr ${st.cls}" style="font-size:0.78rem;padding:4px 9px">${st.txt}</span>
     </div>`;
   }).join(''):'<div class="no-data">Zatím žádná hráčka s odehraným zápasem v tomto turnaji</div>';
+
+  const backHtml=bm?`<button class="btn btn-o sm" onclick="closeModal();showMatchSummaryById('${bm}')">← Zpět na zápas</button>`:'';
 
   openModal(`<h2>🏟 <input id="tourNameEl" type="text" value="${t.name}" title="Klikni pro úpravu názvu" onchange="renameTournament('${tid}',this.value)" style="font-family:inherit;font-size:1.05rem;font-weight:700;border:none;border-bottom:1px dashed var(--brd);background:transparent;color:inherit;width:auto;max-width:65%"></h2>
     <p style="color:var(--gm);font-size:0.78rem;margin-bottom:14px">${tournamentDateRange(tid)} · ${ms.length} ${ms.length===1?'zápas':ms.length<5?'zápasy':'zápasů'}</p>
     <div class="card" style="margin-bottom:12px">
       <h3>📈 Forma hráček</h3>
-      <p style="font-size:0.72rem;color:var(--gm);margin-bottom:8px">Výkon v tomhle turnaji vs. vlastní průměr mimo něj. 🔥/❄️ se ukáže, jen když je odchylka větší než obvyklé kolísání té hráčky.</p>
+      <p style="font-size:0.72rem;color:var(--gm);margin-bottom:8px">Výkon v tomhle turnaji vs. vlastní průměr mimo něj (podrž/najeď na štítek pro čísla). Forma/Špatenka se ukáže, jen když je odchylka větší než obvyklé kolísání té hráčky.</p>
       ${formaHtml}
     </div>
     <div class="card" style="margin-bottom:12px">
       <h3>Zápasy turnaje</h3>
       ${matchCards||'<div class="no-data">Žádné zápasy</div>'}
-      <button class="btn btn-o" style="width:100%;margin-top:4px" onclick="openTournamentMatchPicker('${tid}')">+ Přidat zápas do turnaje</button>
+      <button class="btn btn-o" style="width:100%;margin-top:4px" onclick="openTournamentMatchPicker('${tid}','${bm}')">+ Přidat zápas do turnaje</button>
     </div>
     <div class="ma">
+      ${backHtml}
       <button class="btn btn-d sm" onclick="deleteTournament('${tid}')">🗑 Zrušit turnaj</button>
       <button class="btn btn-p" onclick="closeModal()">Zavřít</button>
     </div>`);
 }
 
-function openTournamentMatchPicker(tid){
+function openTournamentMatchPicker(tid,backMid){
+  const bm=backMid||'';
   const candidates=realMatches().filter(m=>m.tournamentId!==tid).slice().reverse();
   const rows=candidates.map(m=>{
     const other=m.tournamentId?(S.tournaments||[]).find(x=>x.id===m.tournamentId):null;
-    return`<div class="match-card" onclick="addMatchToTournament('${m.id}','${tid}')">
+    return`<div class="match-card" onclick="addMatchToTournament('${m.id}','${tid}','${bm}')">
       <div class="match-card-head">
         <span class="match-card-opp">vs ${m.opponent}</span>
         <span class="match-card-date">${fmtDate(m.date)}</span>
@@ -3410,7 +3450,7 @@ function openTournamentMatchPicker(tid){
   }).join('');
   openModal(`<h2>+ Přidat zápas do turnaje</h2>
     <div style="max-height:60vh;overflow-y:auto">${rows||'<div class="no-data">Žádné další zápasy k přidání</div>'}</div>
-    <div class="ma"><button class="btn btn-o" onclick="openTournamentDetail('${tid}')">Zpět</button></div>`);
+    <div class="ma"><button class="btn btn-o" onclick="openTournamentDetail('${tid}','${bm}')">Zpět</button></div>`);
 }
 
 function openResetConfirm(){
