@@ -719,16 +719,23 @@ function tBadgeLabel(t){
 // ═══ OVERALL (souhrnné hodnocení hráčky, styl "FIFA overall") ═══
 // Počítá se ze stejných T-skóre, co už kreslí pavoučí grafy (spiderData) — jen zprůměrované.
 // Chybějící metrika se do průměru vůbec nepočítá (na rozdíl od pavouka, kde chybí = 0 v grafu).
-function overallRaw(sess,norms){
+function overallPhysRaw(sess,norms){
   if(!sess)return{vals:[],n:0,total:0};
   const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
-  const gaM=S.config.game.filter(m=>m.active!==false);
-  const total=physM.length+1+gaM.length; // +1 = dopočítaný výskok
+  const total=physM.length+1; // +1 = dopočítaný výskok
   const vals=[];
   physM.forEach(m=>{const v=sess.physical?.[m.id];if(v!=null)vals.push(tRaw(v,norms[m.id]));});
   const vys=calcVys(sess);if(vys!=null)vals.push(tRaw(vys,norms["vyskok"]));
-  gaM.forEach(m=>{const pct=gamePct(gameScore(sess.game,m.id));if(pct!=null)vals.push(tRaw(pct,norms[m.id]));});
   return{vals,n:vals.length,total};
+}
+// Kolo 24: herní blok odděleně od fyzického (dřív appka obojí míchala plochým průměrem
+// v jedné funkci, viz výš) — stejná vstupní data, jen vlastní T-skórovaný průměr.
+function overallGameRaw(sess,norms){
+  if(!sess)return{vals:[],n:0,total:0};
+  const gaM=S.config.game.filter(m=>m.active!==false);
+  const vals=[];
+  gaM.forEach(m=>{const pct=gamePct(gameScore(sess.game,m.id));if(pct!=null)vals.push(tRaw(pct,norms[m.id]));});
+  return{vals,n:vals.length,total:gaM.length};
 }
 // Přeškáluje průměrné T-skóre (typicky 20–80) na "fifácké" 40–99, stejná logika ořezu jako tScore().
 function overallDisplay(tAvg){
@@ -736,16 +743,20 @@ function overallDisplay(tAvg){
   const c=Math.max(20,Math.min(80,tAvg));
   return Math.round(40+((c-20)/60)*59);
 }
-// ═══ OVERALL fáze 2 (Kolo 22): blokové vážení testy/zápasy ═══
-// Domluveno s trenérkou po rozboru literatury (Gray — reprezentativnost zápasu vs.
-// izolovaného drilu — a Winkelman — výkon ≠ učení, jeden zápas je šum): zápasová data
-// (body + příjem, viz playerRecentMatchAvg) dostávají VLASTNÍ blok vah vedle bloku testů,
-// ne jednu položku zamíchanou mezi 11 testovacích metrik, kde by numericky zanikla.
-// Když hráčka nemá žádný zápas, blok zápasy se úplně vynechá a testy dostanou celou váhu
-// (100 %), ne že by zápasový blok počítal jako 0 — stejný princip "vynechat, ne penalizovat"
-// jako u jednotlivých metrik uvnitř overallRaw().
+// ═══ OVERALL fáze 2→3 (Kolo 22 → Kolo 24): blokové vážení fyzické/herní/zápasy ═══
+// Kolo 22: zápasová data (body + příjem, viz playerRecentMatchAvg) dostala VLASTNÍ blok vah
+// vedle bloku testů, ne jednu položku zamíchanou mezi 11 testovacích metrik, kde by numericky
+// zanikla — zdůvodněno Grayem (reprezentativnost zápasu vs. izolovaného drilu) a Winkelmanem
+// (výkon ≠ učení, jeden zápas je šum).
+// Kolo 24: dosavadní jeden blok "testy" rozdělen na DVA — fyzické a herní — protože mají
+// různou reprezentativnost vůči skutečné hře (fyzický test je obecná atletická veličina,
+// herní dril je aspoň volejbalově specifický pohyb). Žebříček blízkosti ke "hraje dobře
+// v zápase": fyzické < herní < zápasy, promítnuto do vah níž (startovní čísla, doladitelná).
+// Chybějící blok (kterýkoli z tří) se pořád úplně vynechá a váhy zbylých přítomných bloků
+// se PROPORČNĚ přepočítají tak, aby daly dohromady 100 % — princip "vynechat, ne penalizovat"
+// z Kola 22, teď zobecněný na libovolný počet chybějících bloků (viz overallForPlayer níž).
 const OVERALL_MATCH_CAP=12; // kolik posledních reálných zápasů hráčky se bere do průměru
-const OVERALL_W_TEST=0.6, OVERALL_W_MATCH=0.4; // startovní váhy, snadno doladitelné později
+const OVERALL_W_PHYS=0.25, OVERALL_W_GAME=0.35, OVERALL_W_MATCH=0.40; // startovní váhy, snadno doladitelné později
 function overallMatchRaw(p,norms){
   const types=[["body","body_zapas"],["prijem","prijem_zapas"]];
   const vals=[];
@@ -756,28 +767,37 @@ function overallMatchRaw(p,norms){
   const matchCount=realMatches().filter(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null).length;
   return{vals,n:vals.length,total:types.length,matchCount};
 }
-// Nejvyšší počet naměřených overall-metrik (testy + zápasy dohromady) v týmu —
+// Nejvyšší počet naměřených overall-metrik (fyzické + herní + zápasy dohromady) v týmu —
 // referenční "úplnost" pro hvězdičku.
 function teamMaxCovered(players,norms){
   let max=0;
   players.forEach(p=>{
-    const n=overallRaw(lS(p),norms).n+overallMatchRaw(p,norms).n;
+    const sess=lS(p);
+    const n=overallPhysRaw(sess,norms).n+overallGameRaw(sess,norms).n+overallMatchRaw(p,norms).n;
     if(n>max)max=n;
   });
   return max;
 }
 function overallForPlayer(p,norms,maxCovered){
-  const test=overallRaw(lS(p),norms);
+  const sess=lS(p);
+  const phys=overallPhysRaw(sess,norms);
+  const game=overallGameRaw(sess,norms);
   const match=overallMatchRaw(p,norms);
-  const testAvg=test.n?test.vals.reduce((a,b)=>a+b,0)/test.n:null;
+  const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
+  const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
   const matchAvg=match.n?match.vals.reduce((a,b)=>a+b,0)/match.n:null;
-  const n=test.n+match.n, total=test.total+match.total;
-  // testAvg/matchAvg/matchCount se dál posílají ven (ne jen tAvg) — potřebuje je rozpad
-  // po kliknutí na Overall (showOverallBreakdown) a odznak zápasový/testovací typ
-  // (matchGapBadge), oboje Kolo 23. Počítá se to tu jen jednou, ne duplicitně na obou místech.
-  if(testAvg==null&&matchAvg==null)return{score:null,tAvg:null,n,total,incomplete:true,testAvg:null,matchAvg:null,matchCount:match.matchCount};
-  const tAvg=testAvg==null?matchAvg:matchAvg==null?testAvg:OVERALL_W_TEST*testAvg+OVERALL_W_MATCH*matchAvg;
-  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered,testAvg,matchAvg,matchCount:match.matchCount};
+  const n=phys.n+game.n+match.n, total=phys.total+game.total+match.total;
+  // physAvg/gameAvg/matchAvg/matchCount se dál posílají ven (ne jen tAvg) — potřebuje je
+  // rozpad po kliknutí na Overall (showOverallBreakdown) a odznak zápasový/testovací typ
+  // (matchGapBadge), oboje Kolo 23/24. Počítá se to tu jen jednou, ne duplicitně jinde.
+  const blocks=[];
+  if(physAvg!=null)blocks.push({avg:physAvg,w:OVERALL_W_PHYS});
+  if(gameAvg!=null)blocks.push({avg:gameAvg,w:OVERALL_W_GAME});
+  if(matchAvg!=null)blocks.push({avg:matchAvg,w:OVERALL_W_MATCH});
+  if(!blocks.length)return{score:null,tAvg:null,n,total,incomplete:true,physAvg:null,gameAvg:null,matchAvg:null,matchCount:match.matchCount};
+  const wSum=blocks.reduce((s,b)=>s+b.w,0);
+  const tAvg=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum;
+  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered,physAvg,gameAvg,matchAvg,matchCount:match.matchCount};
 }
 // ═══ Kolo 23: rozpad Overallu po kliknutí + odznak zápasový/testovací typ ═══
 // Práh 10 bodů na SUROVÉM T-skóre (ne na přeškálovaném 40–99 zobrazení) je záměrně —
@@ -785,24 +805,36 @@ function overallForPlayer(p,norms,maxCovered){
 // odchylka z definice. Není to práh vycucaný z prstu. Min. 3 zápasy je stejná
 // spolehlivostní hranice jako jinde v appce (Forma, pásmo kolísání) — jedna náhoda
 // ze dvou zápasů nemá appku opravňovat cokoli o hráčce tvrdit.
+// Kolo 24: porovnává se zápasy vs. HERNÍ testy (ne vs. celý dřívější test blok) — fyzické
+// testy jsou obecná atletická veličina, ne herní dovednost, takže nejsou dobrý referenční
+// bod na otázku "hraje v zápasech líp/hůř, než by se dalo čekat z jejích herních testů".
 const OVERALL_GAP_THRESHOLD=10, OVERALL_GAP_MIN_MATCHES=3;
 function matchGapBadge(ov){
-  if(ov.testAvg==null||ov.matchAvg==null||ov.matchCount<OVERALL_GAP_MIN_MATCHES)return null;
-  const gap=ov.matchAvg-ov.testAvg;
+  if(ov.gameAvg==null||ov.matchAvg==null||ov.matchCount<OVERALL_GAP_MIN_MATCHES)return null;
+  const gap=ov.matchAvg-ov.gameAvg;
   const usedN=Math.min(ov.matchCount,OVERALL_MATCH_CAP);
-  if(gap>=OVERALL_GAP_THRESHOLD)return{icon:'⚡',title:`V zápasech o ${Math.round(gap)} bodů lepší, než testy naznačují (z posledních ${usedN} zápasů)`};
-  if(gap<=-OVERALL_GAP_THRESHOLD)return{icon:'🧪',title:`V testech o ${Math.round(-gap)} bodů lepší, než ukazují zápasy (z posledních ${usedN} zápasů)`};
+  if(gap>=OVERALL_GAP_THRESHOLD)return{icon:'⚡',title:`V zápasech o ${Math.round(gap)} bodů lepší, než herní testy naznačují (z posledních ${usedN} zápasů)`};
+  if(gap<=-OVERALL_GAP_THRESHOLD)return{icon:'🧪',title:`V herních testech o ${Math.round(-gap)} bodů lepší, než ukazují zápasy (z posledních ${usedN} zápasů)`};
   return null;
 }
 function overallBreakdownHtml(p,norms,ovMax){
   const ov=overallForPlayer(p,norms,ovMax);
-  const rows=[];
-  if(ov.testAvg!=null)rows.push({label:'Testy',pct:OVERALL_W_TEST,score:overallDisplay(ov.testAvg),color:CGREEN});
-  if(ov.matchAvg!=null)rows.push({label:'Zápasy',pct:OVERALL_W_MATCH,score:overallDisplay(ov.matchAvg),color:CACC});
-  const bothPresent=ov.testAvg!=null&&ov.matchAvg!=null;
-  const barHtml=bothPresent
-    ?`<div style="display:flex;height:34px;border-radius:6px;overflow:hidden;margin:10px 0">${rows.map(r=>`<div style="width:${r.pct*100}%;background:${r.color}22;border-bottom:3px solid ${r.color};display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:${r.color};font-weight:600">${r.label} · ${r.score} <span style="opacity:.6;margin-left:4px">(${Math.round(r.pct*100)}%)</span></div>`).join('')}</div>`
-    :`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">${ov.testAvg!=null?'Zatím jen z testů — žádný reálný zápas nemá zapsaný.':'Zatím jen ze zápasů — chybí testování.'}</p>`;
+  const blocks=[];
+  if(ov.physAvg!=null)blocks.push({label:'Fyzické',w:OVERALL_W_PHYS,score:overallDisplay(ov.physAvg),color:"#4a9ee8"});
+  if(ov.gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(ov.gameAvg),color:CGREEN});
+  if(ov.matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(ov.matchAvg),color:CACC});
+  const wSum=blocks.reduce((s,b)=>s+b.w,0);
+  // Výška baru zvýšena z 34 na 44px oproti Kolu 23 — se třemi segmenty (dřív dvěma) je ten
+  // nejužší užší a text se občas zalomí na dva řádky, 44px na to má dost místa. font-size
+  // záměrně beze změny (0.8rem) — jen nový prostor okolo, ne přepočet písma. Popisek a
+  // číslo jsou navíc od sebe rozdělené do dvou samostatných řádků (flex-direction:column)
+  // místo spoléhání na to, kde přirozeně zalomí prohlížeč — u nejužšího segmentu (25 %)
+  // se "Fyzické · 87" na jeden řádek občas o pár pixelů nevešlo, takhle je nejširší řádek
+  // vždy jen samotný popisek nebo jen "87 (25%)", ne oboje spojené.
+  const barHtml=blocks.length>1
+    ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
+    :blocks.length===1?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
+    :'';
   const gapBadge=matchGapBadge(ov);
   const gapHtml=gapBadge?`<p style="font-size:0.8rem;color:var(--acc);margin-top:6px">${gapBadge.icon} ${gapBadge.title}</p>`:'';
   const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů (appka bere max ${OVERALL_MATCH_CAP}).</p>`:'';
@@ -1205,7 +1237,7 @@ function renderDetail(){
   const ovScopeIcon=S.normScope==="current"?"👥":"🗃",ovScopeTitle=S.normScope==="current"?"aktuální tým":"celá databáze";
   const ovHtml=ov.score==null
     ?`<div style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
-    :`<div style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad testy/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
+    :`<div style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
   el.innerHTML=`<div class="pdh"><div class="pav">${ini}</div>${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm" onclick="openBadges()">🏅 Odznaky</button><button class="btn btn-a sm" onclick="openAddTest()">+ Test</button><button class="btn btn-o sm" onclick="exportPDF()">📄 PDF</button><button class="btn btn-gray sm" onclick="openRenamePlayer()">✎</button><button class="btn btn-gray sm" onclick="openCopyPlayer()">⎘</button><button class="btn btn-d sm" onclick="deletePlayer()">✕</button></div></div></div>
   <div class="tabs">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div>
   <div id="tabContent"></div>`;
@@ -1635,7 +1667,7 @@ function renderCmp(){
   const ovMax=teamMaxCovered(getActiveP(),norms);
   const legend=sel.map((p,i)=>{
     const o=overallForPlayer(p,norms,ovMax);
-    const ovTxt=o.score==null?"":` · <b style="font-family:'Bebas Neue',sans-serif;color:${overallColor(o.tAvg)};cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="Klepni pro rozpad testy/zápasy">${o.score}</b>${o.incomplete?`<sup title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">*</sup>`:""}`;
+    const ovTxt=o.score==null?"":` · <b style="font-family:'Bebas Neue',sans-serif;color:${overallColor(o.tAvg)};cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="Klepni pro rozpad na fyzické/herní/zápasy">${o.score}</b>${o.incomplete?`<sup title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">*</sup>`:""}`;
     return `<div style="display:flex;align-items:center;gap:6px;font-size:0.81rem"><div style="width:9px;height:9px;border-radius:50%;background:${COLORS[i%COLORS.length]};flex-shrink:0"></div>${p.name}${ovTxt}</div>`;
   }).join("");
   // Physical: show výška + spider metrics, not dosah (replaced by výška)
@@ -2304,7 +2336,7 @@ function renderOverview(){
         if(v==null)return'<span style="color:var(--gm)">–</span>';
         const o=overallForPlayer(p,norms,ovMax);
         const star=o.incomplete?`<sup title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">*</sup>`:'';
-        return `<b style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${overallColor(o.tAvg)};cursor:pointer" onclick="event.stopPropagation();showOverallBreakdown('${p.id}')" title="Klepni pro rozpad testy/zápasy">${v}</b>${star}`;
+        return `<b style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${overallColor(o.tAvg)};cursor:pointer" onclick="event.stopPropagation();showOverallBreakdown('${p.id}')" title="Klepni pro rozpad na fyzické/herní/zápasy">${v}</b>${star}`;
       },
       sortVal:p=>overallForPlayer(p,norms,ovMax).score??-Infinity,
       lowerBetter:false},
@@ -2394,7 +2426,7 @@ function renderOverview(){
 
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
-    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad testy/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
+    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
