@@ -1431,34 +1431,73 @@ function buildSpider(){
   ${buildTsTimeline(gP(),norms)}
   <div class="card"><h3>ℹ️ Metodika</h3><p style="font-size:0.79rem;color:var(--gm);line-height:1.65"><b>T-score</b> = 50 + 10 × (výkon − průměr skupiny) / odchylka. Průměr se počítá ze všech testování v databázi. Herní metriky jsou normalizovány jako procento úspěšnosti (score/pokusy).<br><br><b>Genetika v pavouku není</b> — výška a dosah s paží se evidují, ale do radaru nevstupují.<br><br><b>Uzamčení normy</b> — zmrazí referenční průměr. Radar se celou sezónu srovnává vůči stejné základně.</p></div>`;
 }
+// Kolo 21 — najde, kterou variantu útoku má KONKRÉTNÍ session skutečně
+// naměřenou: přednostně tu, na které je hráčka teď (activeAttackMetricId),
+// jinak tu druhou. Díky "jinak tu druhou" funguje správně i "Předchozí"
+// session z doby těsně před přechodem, co by jinak appka nutila na variantu,
+// kterou tehdy vůbec neměla — přesně okrajový případ, co Kolo 20 řešení
+// (vynechat celou nepoužitou osu) nemělo jak podchytit.
+function sessionAttackMetric(sess,p){
+  if(!sess)return null;
+  const has=id=>{const gs=gameScore(sess.game,id);return!!(gs&&gs.attempts);};
+  const preferred=p?activeAttackMetricId(p):"utok_cil";
+  const other=preferred==="utok_cil"?"utok_pole":"utok_cil";
+  if(has(preferred))return preferred;
+  if(has(other))return other;
+  return null;
+}
 function spiderData(sess,norms,p){
   if(!sess)return null;
   const vys=calcVys(sess)||0;
   const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
   const pL=[...physM.map(m=>m.label),"Výskok"];
   const pD=[...physM.map(m=>tScore(sess.physical?.[m.id],norms[m.id])),tScore(vys,norms["vyskok"])];
-  // Kolo 20 — stejné pravidlo jako v Herním tabu (buildGame/drawGame) a Přehledu
-  // týmu: hráčka je vždy jen na JEDNÉ variantě útoku (activeAttackMetricId), ta
-  // druhá se do pavouka vůbec nepočítá — jinak vycházela jako osa s hodnotou 0.
-  // Parametr `p` je volitelný, aby se nerozbilo Porovnání (cmpRadar), kde se
-  // jedna sada os sdílí napříč více hráčkami a přepínání osy podle hráčky by
-  // rozbilo zarovnání datasetů — tam se volá beze změny, se všemi osami.
-  const activeAtk=p?activeAttackMetricId(p):null;
+  // Kolo 21 — Útok jako jedna sloučená osa "Útok" (nahrazuje Kolo 20 řešení,
+  // co jednu z os podle hráčky úplně schovávalo). Obě definice (utok_cil i
+  // utok_pole) se sloučí do jednoho slotu na místě té první z nich; appka pro
+  // KAŽDOU session zvlášť dohledá skutečnou variantu (sessionAttackMetric),
+  // ne jen podle aktuálního stavu hráčky. `atkIdx`/`atkVariant` appka vrací
+  // navíc, aby si mkRadar()/cmpRadar() mohly na ten jeden bod nastavit
+  // hvězdu a zlatou barvu, když jde o těžší variantu — viz tam.
   const isAtk=id=>id==="utok_cil"||id==="utok_pole";
-  const gm=S.config.game.filter(m=>m.active!==false&&(!isAtk(m.id)||!activeAtk||m.id===activeAtk));
+  const gm=[];
+  let atkSeen=false;
+  S.config.game.filter(m=>m.active!==false).forEach(m=>{
+    if(isAtk(m.id)){if(!atkSeen){gm.push({id:"utok_merged",label:"Útok"});atkSeen=true;}}
+    else gm.push(m);
+  });
+  const atkVariant=atkSeen?sessionAttackMetric(sess,p):null;
   const gL=gm.map(m=>m.label);
-  const gD=gm.map(m=>{const gs=gameScore(sess.game,m.id);return tScore(gamePct(gs),norms[m.id]);});
-  return{pL,pD,gL,gD};
+  const gD=gm.map(m=>{
+    const mid=m.id==="utok_merged"?(atkVariant||"utok_pole"):m.id;
+    return tScore(gamePct(gameScore(sess.game,mid)),norms[mid]);
+  });
+  const atkIdx=gm.findIndex(m=>m.id==="utok_merged");
+  return{pL,pD,gL,gD,atkIdx,atkVariant};
 }
-function mkRadar(id,labels,cur,prev){
+function mkRadar(id,labels,cur,prev,atk){
   const cv=document.getElementById(id);if(!cv)return;
   if(!labels?.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
   const threshold=((75-20)/60*100);
-  const ptColors=(cur||[]).map(v=>v>=threshold?CACC:CGREEN);
+  // Kolo 21 — na ose "Útok" (atk.idx) appka odliší těžší variantu (utok_cil)
+  // hvězdou a zlatou barvou, bez ohledu na to, jestli T-skóre zrovna překročilo
+  // práh "legendy" — je to signál o OBTÍŽNOSTI, ne o VÝKONU. Lehčí varianta i
+  // ostatní osy se chovají jako dřív (zlatě jen nad prahem). `atk` je volitelný
+  // (fyzický pavouk ho vůbec neposílá) — bez něj se appka chová přesně jako dřív.
+  const atkIdx=atk?.idx??-1;
+  const isCilAt=(i,variant)=>i===atkIdx&&variant==="utok_cil";
+  const ptColors=(cur||[]).map((v,i)=>isCilAt(i,atk?.curVariant)?CACC:(v>=threshold?CACC:CGREEN));
+  const ptStyles=(cur||[]).map((v,i)=>isCilAt(i,atk?.curVariant)?"star":"circle");
+  const ptRadii=(cur||[]).map((v,i)=>isCilAt(i,atk?.curVariant)?7:5);
   const ds=[
-    {label:"Aktuální",data:cur||labels.map(()=>0),borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.15)",pointBackgroundColor:ptColors,pointRadius:5,borderWidth:2},
+    {label:"Aktuální",data:cur||labels.map(()=>0),borderColor:CGREEN,backgroundColor:"rgba(61,184,74,0.15)",pointBackgroundColor:ptColors,pointBorderColor:ptColors,pointStyle:ptStyles,pointRadius:ptRadii,borderWidth:2},
   ];
-  if(prev)ds.push({label:"Předchozí",data:prev,borderColor:"#555",backgroundColor:"rgba(80,80,80,0.05)",pointBackgroundColor:"#555",pointRadius:3,borderWidth:1,borderDash:[4,4]});
+  if(prev){
+    const pStyles=prev.map((v,i)=>isCilAt(i,atk?.prevVariant)?"star":"circle");
+    const pColors=prev.map((v,i)=>isCilAt(i,atk?.prevVariant)?CACC:"#555");
+    const pRadii=prev.map((v,i)=>isCilAt(i,atk?.prevVariant)?6:3);
+    ds.push({label:"Předchozí",data:prev,borderColor:"#555",backgroundColor:"rgba(80,80,80,0.05)",pointBackgroundColor:pColors,pointBorderColor:pColors,pointStyle:pStyles,pointRadius:pRadii,borderWidth:1,borderDash:[4,4]});
+  }
   // "Průměr" (Kolo 18) — referenční prstenec přesně na T=50, tj. průměr AKTUÁLNÍHO
   // referenčního poolu (Tým/Databáze, podle scopeChip). T-skóre je z definice
   // postavené tak, že průměr poolu vždy vychází na 50 na téhle 0–100 zobrazovací
@@ -1469,7 +1508,10 @@ function mkRadar(id,labels,cur,prev){
   // Přidává se AŽ NAKONEC pole (kreslí se navrch) a barvou CLEG (ne CTICK) —
   // ověřeno pixel-sample testem, že jinak splývá pod translucentní výplní Aktuální.
   ds.push({label:"Průměr",data:labels.map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
-  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
+  // Popisek osy "Útok" zlatě, jen když se v grafu fakticky ukazuje hvězda —
+  // stejná podmínka appka používá i na vysvětlivku pod grafem (viz buildGame).
+  const hasStar=atkIdx>=0&&(atk?.curVariant==="utok_cil"||atk?.prevVariant==="utok_cil");
+  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:ctx=>(hasStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
 }
 function drawSpider(){
   const showP=document.getElementById("prevTog")?.checked;
@@ -1478,8 +1520,9 @@ function drawSpider(){
   const cur=spiderData(lS(),norms,_sp),prev=showP?spiderData(pS(),norms,_sp):null;
   if(CH.rPhys){CH.rPhys.destroy();delete CH.rPhys;}
   if(CH.rGame){CH.rGame.destroy();delete CH.rGame;}
+  if(CH.tsTimelineC){CH.tsTimelineC.destroy();delete CH.tsTimelineC;}
   mkRadar("rPhys",cur?.pL,cur?.pD,prev?.pD);
-  mkRadar("rGame",cur?.gL,cur?.gD,prev?.gD);
+  mkRadar("rGame",cur?.gL,cur?.gD,prev?.gD,cur?{idx:cur.atkIdx,curVariant:cur.atkVariant,prevVariant:prev?.atkVariant}:null);
   const p2=gP();if(p2)drawTsTimeline(p2,norms);
 }
 
@@ -1561,13 +1604,34 @@ function drawCmp(sel,norms){
   gaAct.forEach(m=>multiLine("c_ga_"+m.id,sel.map(p=>({name:playerLabel(p),ls:p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null).map(s=>fmtDate(s.date,true))||[],vs:p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null).map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100))||[]})),false));
   function cmpRadar(id,lk,dk){
     const cv=document.getElementById(id);if(!cv)return;
-    const f=spiderData(lS(sel[0]),norms);if(!f){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
-    const ds=sel.map((p,i)=>{const d=spiderData(lS(p),norms);if(!d)return null;return{label:playerLabel(p),data:d[dk],borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+"22",pointRadius:4,borderWidth:2};}).filter(Boolean);
+    const f=spiderData(lS(sel[0]),norms,sel[0]);if(!f){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
+    // Kolo 21 — Porovnání teď taky ukazuje jen jednu osu "Útok" (dřív appka
+    // schválně nechávala obě, protože při vyloučení jedné z nich podle JEDNÉ
+    // hráčky by se rozjely osy mezi datasety — se sloučenou osou z Kola 21 už
+    // je osa vždycky stejná pro všechny, mění se jen bod na ní). Platí jen pro
+    // herní pavouk (dk==="gD") — fyzický nemá s Útokem nic společného.
+    const isGame=dk==="gD";
+    const atkIdx=isGame?f.atkIdx:-1;
+    let anyStar=false;
+    const ds=sel.map((p,i)=>{
+      const d=spiderData(lS(p),norms,p);if(!d)return null;
+      const color=COLORS[i%COLORS.length];
+      const base={label:playerLabel(p),data:d[dk],borderColor:color,backgroundColor:color+"22",borderWidth:2,pointRadius:4};
+      if(isGame&&atkIdx>=0){
+        const isCil=d.atkVariant==="utok_cil";
+        if(isCil)anyStar=true;
+        base.pointStyle=d[dk].map((_,idx)=>idx===atkIdx&&isCil?"star":"circle");
+        base.pointRadius=d[dk].map((_,idx)=>idx===atkIdx&&isCil?7:4);
+        base.pointBackgroundColor=d[dk].map((_,idx)=>idx===atkIdx&&isCil?CACC:color);
+        base.pointBorderColor=d[dk].map((_,idx)=>idx===atkIdx&&isCil?CACC:color);
+      }
+      return base;
+    }).filter(Boolean);
     if(!ds.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
     // "Průměr" (Kolo 18) — stejný princip jako mkRadar(), viz komentář tam. Přidává
     // se až nakonec (kreslí se navrch přes hráčky), barva CLEG.
     ds.push({label:"Průměr",data:f[lk].map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
-    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:CLEG,font:{size:10}},ticks:{display:false}}}}});
+    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:ctx=>(isGame&&anyStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
   }
   cmpRadar("cRPh","pL","pD");cmpRadar("cRGa","gL","gD");
 
@@ -2319,7 +2383,7 @@ function drawTsTimeline(p,norms){
     })),
   ];
   const refLinePlugin={id:'refLine',afterDraw(chart){const{ctx,chartArea,scales}=chart;if(!scales.y)return;const y50=scales.y.getPixelForValue(50);ctx.save();ctx.strokeStyle='rgba(120,120,120,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(chartArea.left,y50);ctx.lineTo(chartArea.right,y50);ctx.stroke();ctx.fillStyle='#666';ctx.font='9px sans-serif';ctx.fillText('T=50',chartArea.right+4,y50+4);ctx.restore();}};
-  CH['tsTimeline']=new Chart(cv,{type:'line',plugins:[refLinePlugin],data:{labels,datasets},options:{
+  CH['tsTimelineC']=new Chart(cv,{type:'line',plugins:[refLinePlugin],data:{labels,datasets},options:{
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:CLEG,font:{size:9},boxWidth:12}}},
     scales:{
