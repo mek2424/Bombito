@@ -1,9 +1,20 @@
-const CACHE = 'bombito-v32';
+const CACHE = 'bombito-v34';
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
   './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  // Cachovat každý soubor ZVLÁŠŤ, ne přes jedno cache.addAll(ASSETS) — addAll je
+  // všechno-nebo-nic, takže kdyby chyběl třeba jen jeden z icons/*.png (appka je
+  // nedodává v balíčku, spravuje si je uživatel sám ve svém nasazení), celá instalace
+  // service workera by selhala a appka by pak nefungovala offline VŮBEC, ani pro
+  // index.html/chart.umd.min.js, které appka sama spolehlivě dodává. Selhání jednoho
+  // souboru se teď jen zaloguje a zbytek se stejně nacachuje. (Kolo 30, oprava reálně
+  // nahlášené chyby "appka nefunguje offline".)
+  e.waitUntil(
+    caches.open(CACHE).then(c => Promise.all(
+      ASSETS.map(url => c.add(url).catch(err => console.warn('SW: nepodařilo se nacachovat', url, err)))
+    ))
+  );
   self.skipWaiting();
 });
 

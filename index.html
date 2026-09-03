@@ -300,6 +300,9 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .menu-dropdown .btn{width:100%;text-align:left;justify-content:flex-start;padding:10px 14px;font-size:0.85rem}
 .menu-dropdown label.btn{display:block;cursor:pointer}
 .menu-dropdown .sep-line{border:none;border-top:1px solid var(--brd);margin:2px 0}
+.menu-dropdown .btn.hub{display:flex;align-items:center}
+.menu-dropdown .chev{margin-left:auto;opacity:.6;font-size:0.8rem}
+.mnu-eyebrow{font-size:0.62rem;letter-spacing:2px;text-transform:uppercase;color:var(--gm);padding:8px 10px 2px 10px;font-weight:600}
 
 
 /* ═══ MATCH TAB ═══ */
@@ -382,22 +385,21 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   <button id="menuToggle" onclick="toggleMenu()">⋮</button>
   <div class="menu-dropdown" id="menuDropdown">
     <button class="btn btn-o" onclick="goHome();closeMenu()">🏠 Domů</button>
-    <hr class="sep-line">
-    <button class="btn btn-p" onclick="openLiveMatch();closeMenu()">🏆 Spustit zápas</button>
-    <hr class="sep-line">
-    <button class="btn btn-gold" id="scopeChipM" onclick="toggleNormScope();closeMenu()">🗃 Norma: Celá databáze</button>
-    <button class="btn btn-gray" onclick="openEditor();closeMenu()">⚙ Nastavení</button>
     <button class="btn btn-o" id="ovBtnM" onclick="toggleOverview();closeMenu()">📊 Přehled týmu</button>
     <button class="btn btn-o" id="cmpBtnM" onclick="toggleCmp();closeMenu()">⚖ Porovnání</button>
-    <button class="btn btn-o" onclick="openGroupTest();closeMenu()">⚡ Skupinový test</button>
-    <hr class="sep-line">
-    <button class="btn btn-a" onclick="openAddPlayer();closeMenu()">+ Přidat hráčku</button>
-    <hr class="sep-line">
+    <hr class="sep-line"><div class="mnu-eyebrow">Zápasy</div>
+    <button class="btn btn-p" onclick="openLiveMatch();closeMenu()">🏆 Spustit zápas</button>
     <button class="btn btn-o" onclick="openAllMatchesLibrary();closeMenu()">📚 Záznamy zápasů</button>
     <button class="btn btn-o" onclick="openTournaments();closeMenu()">🏟 Turnaje</button>
-    <hr class="sep-line">
-    <button class="btn btn-o" onclick="exportData();closeMenu()">⬇ Exportovat JSON</button>
-    <label class="btn btn-o" style="cursor:pointer">⬆ Importovat JSON<input type="file" accept=".json" style="display:none" onchange="importData(event);closeMenu()"></label>
+    <hr class="sep-line"><div class="mnu-eyebrow">Hráčky a testování</div>
+    <button class="btn btn-a" onclick="openAddPlayer();closeMenu()">+ Přidat hráčku</button>
+    <button class="btn btn-o" onclick="openGroupTest();closeMenu()">⚡ Skupinový test</button>
+    <hr class="sep-line"><div class="mnu-eyebrow">Sezóna a data</div>
+    <button class="btn btn-o hub" onclick="openSeasonHub();closeMenu()">📦 Sezóna<span class="chev">›</span></button>
+    <button class="btn btn-o hub" onclick="openDataHub();closeMenu()">💾 Data a zálohy<span class="chev">›</span></button>
+    <hr class="sep-line"><div class="mnu-eyebrow">Nastavení</div>
+    <button class="btn btn-gold" id="scopeChipM" onclick="toggleNormScope();closeMenu()">🗃 Norma: Celá databáze</button>
+    <button class="btn btn-gray hub" onclick="openEditor();closeMenu()">⚙ Nastavení<span class="chev">›</span></button>
   </div>
 </header>
 <div id="sidebarBackdrop" onclick="closeSidebar()"></div>
@@ -1181,17 +1183,35 @@ function trElPct(c,pv){if(c==null||pv==null)return"";const diff=c-pv;const cls=d
 // ═══ EDITOR ═══
 function openEditor(){
   openModal(`<h2>⚙ Nastavení</h2>
+    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Definice metrik, milníků a odznaků — co appka měří a jak.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-o" onclick="openPhysEd()">💪 Fyzické metriky</button>
       <button class="btn btn-o" onclick="openGameEd()">🎯 Herní metriky</button>
       <button class="btn btn-o" onclick="openMilEd()">🎖 Milníky</button>
       <button class="btn btn-o" onclick="openBadgeEd()">🏅 Odznaky</button>
-      <hr class="sep" style="margin:4px 0">
+    </div>
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+}
+// Kolo 31: nová podobrazovka menu — dřív žily oba řádky schované v Nastavení,
+// teď jsou přímo v ⋮ menu pod "Sezóna a data" (viz schválený mock-up).
+function openSeasonHub(){
+  openModal(`<h2>📦 Sezóna</h2>
+    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Uzavření sezóny a přístup k archivu.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-o" onclick="openArchiveWizard()">📦 Uzavřít sezónu a archivovat</button>
       <button class="btn btn-o" onclick="openArchiveView()">🗂 Archiv sezón</button>
-      <hr class="sep" style="margin:4px 0">
+    </div>
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+}
+// Kolo 31: nová podobrazovka menu — sjednocuje export/import (dřív duplicitně
+// v menu i v Nastavení) s bezpečnostními akcemi z Nastavení (vrátit/reset).
+function openDataHub(){
+  openModal(`<h2>💾 Data a zálohy</h2>
+    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Export, import a bezpečnostní akce nad daty appky.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-o" onclick="exportData();closeModal()">⬇ Exportovat data (JSON)</button>
       <label class="btn btn-o" style="cursor:pointer;text-align:center">⬆ Importovat data (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+      <hr class="sep" style="margin:4px 0">
       <button class="btn btn-gray" onclick="undoLastImport()">↩ Vrátit stav před posledním importem</button>
       <button class="btn btn-d" onclick="openResetConfirm()">🗑 Resetovat paměť</button>
     </div>
