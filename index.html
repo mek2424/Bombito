@@ -881,6 +881,42 @@ function showOverallBreakdown(pid){
   const norms=activeNorms(),ovMax=teamMaxCovered(getActiveP(),norms);
   openModal(overallBreakdownHtml(p,norms,ovMax));
 }
+// ═══ Kolo 28: stejný rozpad, ale za celý tým — z Průměru týmu na domovské obrazovce ═══
+// Bar segmenty (Fyzické/Herní/Zápasy) = průměr hráččiných VLASTNÍCH hodnot daného bloku
+// napříč aktivními hráčkami, které v tom bloku vůbec nějaká data mají — stejný princip,
+// jakým je nahoře postavené i samotné číslo Průměru týmu (průměr hráččiných vlastních
+// tAvg, ne přepočet z týmových bloků), jen o úroveň níž. Váhy segmentů (OVERALL_W_*) i
+// vzhled baru jsou schválně identické s overallBreakdownHtml() pro jednu hráčku — je to
+// to samé okno, jen na tým místo na jednu hráčku.
+function showTeamOverallBreakdown(){
+  const active=getActiveP();if(!active.length)return;
+  const norms=activeNorms();
+  const ovMax=teamMaxCovered(active,norms);
+  const ovList=active.map(p=>overallForPlayer(p,norms,ovMax));
+  const tAvgs=ovList.map(o=>o.tAvg).filter(v=>v!=null);
+  const teamTAvg=tAvgs.length?tAvgs.reduce((a,b)=>a+b,0)/tAvgs.length:null;
+  const teamScore=teamTAvg!=null?overallDisplay(teamTAvg):null;
+  openModal(teamOverallBreakdownHtml(active,ovList,teamTAvg,teamScore));
+}
+function teamOverallBreakdownHtml(active,ovList,teamTAvg,teamScore){
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:null;
+  const physAvg=avg(ovList.map(o=>o.physAvg).filter(v=>v!=null));
+  const gameAvg=avg(ovList.map(o=>o.gameAvg).filter(v=>v!=null));
+  const matchAvg=avg(ovList.map(o=>o.matchAvg).filter(v=>v!=null));
+  const blocks=[];
+  if(physAvg!=null)blocks.push({label:'Fyzické',w:OVERALL_W_PHYS,score:overallDisplay(physAvg),color:"#4a9ee8"});
+  if(gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(gameAvg),color:CGREEN});
+  if(matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(matchAvg),color:CACC});
+  const wSum=blocks.reduce((s,b)=>s+b.w,0);
+  const barHtml=blocks.length>1
+    ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
+    :blocks.length===1?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
+    :'';
+  return`<h2>📊 Overall — rozpad</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${active.length} hráček v týmu</p>
+    <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${teamScore!=null?overallColor(teamTAvg):'var(--gm)'}">${teamScore??'–'}</div></div>
+    ${barHtml}
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`;
+}
 function overallColor(tAvg){
   const cls=tBadgeCls(tAvg==null?null:Math.round(tAvg));
   return cls==='ts-legend'?'var(--acc)':cls==='ts-great'?'var(--gl)':cls==='ts-avg'?'#7ab87a':cls==='ts-low'?'#e8a030':cls==='ts-vlow'?'#e06010':'var(--gm)';
@@ -1341,7 +1377,7 @@ function renderHome(){
   el.innerHTML=`
     <div class="home-hero">
       <div style="text-align:center;flex-shrink:0">
-        <div class="mv" style="font-size:2.2rem;color:${teamScore!=null?overallColor(teamTAvg):"var(--gm)"}">${teamScore??"–"}</div>
+        <div class="mv" style="font-size:2.2rem;color:${teamScore!=null?overallColor(teamTAvg):"var(--gm)"}${teamScore!=null?";cursor:pointer":""}" ${teamScore!=null?`onclick="showTeamOverallBreakdown()" title="Klepni pro rozpad na fyzické/herní/zápasy"`:""}>${teamScore??"–"}</div>
         <div style="font-size:0.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gm);margin-top:2px;white-space:nowrap">Průměr týmu</div>
       </div>
       <div style="width:1px;align-self:stretch;background:var(--brd)"></div>
