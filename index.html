@@ -295,7 +295,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
    garantovaně kompletní seznam akcí, bez ohledu na šířku obrazovky. */
 #menuToggle{display:flex;background:transparent;border:none;cursor:pointer;color:var(--w);font-size:1.3rem;padding:6px 8px;border-radius:6px;flex-shrink:0;margin-left:auto}
 #menuToggle:hover{background:rgba(255,255,255,.1)}
-.menu-dropdown{display:none;position:fixed;top:62px;right:0;background:#0f1a10;border:1px solid var(--brd);border-top:none;border-radius:0 0 12px 12px;padding:8px;min-width:200px;z-index:199;box-shadow:0 8px 30px rgba(0,0,0,.6);flex-direction:column;gap:6px}
+.menu-dropdown{display:none;position:fixed;top:62px;right:0;background:#0f1a10;border:1px solid var(--brd);border-top:none;border-radius:0 0 12px 12px;padding:8px;min-width:200px;z-index:199;box-shadow:0 8px 30px rgba(0,0,0,.6);flex-direction:column;gap:6px;max-height:calc(100vh - 74px);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .menu-dropdown.open{display:flex}
 .menu-dropdown .btn{width:100%;text-align:left;justify-content:flex-start;padding:10px 14px;font-size:0.85rem}
 .menu-dropdown label.btn{display:block;cursor:pointer}
