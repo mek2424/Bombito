@@ -364,7 +364,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 // Sdílené barvy pro Chart.js grafy — CSS proměnné (var(--x)) canvas nepřečte,
 // takže se stejné odstíny drží tady v JS konstantách místo opisování hexu v každém grafu.
 // Musí být definované dřív než COLORS/BADGE_COLORS, které je taky používají.
-const CGRID='#1a2a1a', CTICK='#828278', CLEG='#b8b8b4', CGREEN='#3db84a', CACC='#e8c840', CG='#2a7a35', CW='#f5f7f5';
+const CGRID='#1a2a1a', CTICK='#828278', CLEG='#b8b8b4', CGREEN='#3db84a', CACC='#e8c840', CG='#2a7a35', CW='#f5f7f5', CRGRID='#2a3a2a';
 const COLORS=[CGREEN,"#4a9ee8","#e87a4a","#c84ae8",CACC,"#4ae8c8","#e84a4a","#9ae84a","#e8624a","#e8a24a","#cfe84a","#6ae84a","#4ae891","#4ad3e8","#5f4ae8","#e84aa9"];
 const BADGE_COLORS=[CACC,CGREEN,"#4a9ee8","#e87a4a","#c84ae8","#ff6b6b","#4ae8c8","#ffffff","#ff69b4","#ffa500"];
 
@@ -393,6 +393,16 @@ Chart.defaults.plugins.legend.labels.generateLabels=chart=>{
   items.forEach(it=>{if(_weakFill(it.fillStyle)&&it.strokeStyle)it.fillStyle=it.strokeStyle;});
   return items;
 };
+// Kolo 25: barvy os/mřížky přes globální Chart.js defaults (úkol #20), stejný princip
+// jako legenda výš — appka měla CGRID/CTICK jako pojmenované konstanty už od začátku,
+// ale skoro každý graf si `grid:{color:CGRID},ticks:{color:CTICK}` psal znovu ručně.
+// Nastaveno tu JEDNOU, každý jednotlivý graf to teď dědí, pokud si výslovně nenastaví
+// jinak (PDF export má schválně svou vlastní světlou paletu pro tištěnou stránku,
+// vodorovné sloupcové grafy mají schválně `ticks:{color:CW}` na popisky kategorií bez
+// mřížky — obojí zůstává nedotčené, protože jde o vědomě odlišné, ne opomenuté barvy).
+Chart.defaults.scale.grid.color=CGRID;
+Chart.defaults.scale.ticks.color=CTICK;
+Chart.defaults.scale.title.color=CTICK;
 
 // Zaokrouhlení čísel v popiscích os a tooltipech grafů na max 2 desetinná místa.
 // Chart.js si mezikroky osy počítá binární aritmetikou (dělení/násobení desetinných
@@ -1345,8 +1355,8 @@ function lineC(labels,data,rev,unitLabel,avg,swing){
       subtitle:subParts.length?{display:true,text:subParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}
     },
     scales:{
-      x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+(unitLabel?" "+unitLabel:"")},reverse:!!rev}
+      x:{ticks:{font:{size:10}}},
+      y:{ticks:{font:{size:10},callback:v=>roundN(v)+(unitLabel?" "+unitLabel:"")},reverse:!!rev}
     }
   }};
 }
@@ -1438,7 +1448,7 @@ function drawGame(){
     if(showBand)subtitleParts.push("šedé pásmo = typický rozptyl mezi testy");
     const datasets=[{type:"bar",data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:"#1a4a22"),borderRadius:4,borderWidth:0,order:1}];
     if(showTrend)datasets.push({type:"line",data:movingAvg3(pcts),borderColor:CACC,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false,order:0});
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[swingBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[swingBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
   });
 }
 // Sloučený graf "Útok na cíl" / "Útok do pole" pro hráčku, která přešla na těžší
@@ -1489,8 +1499,8 @@ function drawAttackMerged(cv,p,norms){
     pointRadius,pointStyle,pointBackgroundColor:pointColor,pointBorderColor:pointColor,pointBorderWidth:1.5,
   }]},options:{responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},subtitle:{display:true,text:"šedá = lehčí varianta · zelená = těžší · ⭐ = přechod",color:CTICK,font:{size:9},padding:{bottom:4}}},
-    scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},min:20,max:80,
+    scales:{x:{ticks:{font:{size:10}}},
+      y:{ticks:{font:{size:10}},min:20,max:80,
         afterBuildTicks:axis=>{axis.ticks=[{value:20},{value:30},{value:45},{value:50},{value:60},{value:75},{value:80}];}}}
   }});
 }
@@ -1627,7 +1637,7 @@ function mkRadar(id,labels,cur,prev,atk){
   // Popisek osy "Útok" zlatě, jen když se v grafu fakticky ukazuje hvězda —
   // stejná podmínka appka používá i na vysvětlivku pod grafem (viz buildGame).
   const hasStar=atkIdx>=0&&(atk?.curVariant==="utok_cil"||atk?.prevVariant==="utok_cil");
-  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:ctx=>(hasStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
+  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>(hasStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
 }
 function drawSpider(){
   const showP=document.getElementById("prevTog")?.checked;
@@ -1708,8 +1718,8 @@ function multiLine(cid,datasets,lowerBetter){
       plugins:{legend:{labels:{color:CLEG,font:{size:10}}},
         subtitle:lowerBetter?{display:true,text:'↑ lepší výkon (osa obrácena)',color:CTICK,font:{size:9},padding:{bottom:2}}:{display:false}},
       scales:{
-        x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-        y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},reverse:!!lowerBetter}
+        x:{ticks:{font:{size:10}}},
+        y:{ticks:{font:{size:10}},reverse:!!lowerBetter}
       }}});
 }
 function drawCmp(sel,norms){
@@ -1747,7 +1757,7 @@ function drawCmp(sel,norms){
     // "Průměr" (Kolo 18) — stejný princip jako mkRadar(), viz komentář tam. Přidává
     // se až nakonec (kreslí se navrch přes hráčky), barva CLEG.
     ds.push({label:"Průměr",data:f[lk].map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
-    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:"#2a3a2a"},angleLines:{color:"#2a3a2a"},pointLabels:{color:ctx=>(isGame&&anyStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
+    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>(isGame&&anyStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
   }
   cmpRadar("cRPh","pL","pD");cmpRadar("cRGa","gL","gD");
 
@@ -1770,7 +1780,7 @@ function drawCmp(sel,norms){
           datasets:[{data:bodyTotals,backgroundColor:bodyTotals.map((v,i)=>COLORS[i%COLORS.length]),borderRadius:5,borderWidth:0}]},
         options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false}},
-          scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+          scales:{x:{ticks:{font:{size:10}}},
                   y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
@@ -1784,7 +1794,7 @@ function drawCmp(sel,norms){
           datasets:[{data:recvAvgs.map(v=>v??0),backgroundColor:colors,borderRadius:5,borderWidth:0}]},
         options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
           plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},
-          scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},
+          scales:{x:{ticks:{font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},
                   y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
@@ -2507,8 +2517,8 @@ function drawTsTimeline(p,norms){
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:CLEG,font:{size:9},boxWidth:12}}},
     scales:{
-      x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-      y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},
+      x:{ticks:{font:{size:10}}},
+      y:{ticks:{font:{size:10}},
         min:20,max:80,
         afterBuildTicks:axis=>{axis.ticks=[{value:20},{value:30},{value:45},{value:50},{value:60},{value:75},{value:80}];},
       }
@@ -2960,7 +2970,7 @@ function drawLiveCharts(set){
         datasets:[{data:scores,backgroundColor:colors,borderRadius:5,borderWidth:0}]
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
+        scales:{x:{ticks:{font:{size:10}}},
                 y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
 
@@ -2980,8 +2990,8 @@ function drawLiveCharts(set){
       LCH.line=new Chart(cv2,{type:'line',data:{labels,datasets},options:{
         responsive:true,maintainAspectRatio:false,
         plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},
-        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},
-                y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
+        scales:{x:{ticks:{font:{size:9}}},
+                y:{ticks:{font:{size:10}}}}}});
     }
   }
 
@@ -2999,7 +3009,7 @@ function drawLiveCharts(set){
         datasets:[{data:pcts,backgroundColor:colors3,borderRadius:5,borderWidth:0}]
       },options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
         plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+roundN(ctx.parsed.x)+'% ('+avgs[ctx.dataIndex]+')'}}},
-        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},
+        scales:{x:{ticks:{font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},
                 y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
     }
   }
@@ -3027,10 +3037,10 @@ function drawLiveCharts(set){
         plugins:{legend:{labels:{color:CLEG,font:{size:10},boxWidth:10}},
           tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: body ${ctx.parsed.x>0?'+':''}${roundN(ctx.parsed.x)}, příjem ${roundN(ctx.parsed.y)}%`}}},
         scales:{
-          x:{title:{display:true,text:'Body (+/−)',color:CTICK,font:{size:10}},
-             grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},
-          y:{title:{display:true,text:'Příjem %',color:CTICK,font:{size:10}},
-             grid:{color:CGRID},ticks:{color:CTICK,font:{size:9},callback:v=>roundN(v)+'%'},min:0,max:100}
+          x:{title:{display:true,text:'Body (+/−)',font:{size:10}},
+             ticks:{font:{size:9}}},
+          y:{title:{display:true,text:'Příjem %',font:{size:10}},
+             ticks:{font:{size:9},callback:v=>roundN(v)+'%'},min:0,max:100}
         }
       }});
     }
@@ -3122,8 +3132,8 @@ function buildZapasTab(){
           backgroundColor:histBodyData.map(d=>d.y>0?CG:d.y<0?'#7a2a2a':'#444'),
           borderRadius:4,borderWidth:0}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-                y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
+        scales:{x:{ticks:{font:{size:10}}},
+                y:{ticks:{font:{size:10}}}}}});
     }
     const cvr=document.getElementById('zh_recv');
     if(cvr&&histRecvData.length>1){
@@ -3132,8 +3142,8 @@ function buildZapasTab(){
         datasets:[{data:histRecvData.map(d=>d.y),borderColor:'#4a9ee8',
           backgroundColor:'rgba(74,158,232,0.08)',tension:0.35,pointRadius:4,fill:true,borderWidth:2}]
       },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}},
-                y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}},reverse:true,min:1,max:5}}}});
+        scales:{x:{ticks:{font:{size:10}}},
+                y:{ticks:{font:{size:10}},reverse:true,min:1,max:5}}}});
     }
   },80);
 
@@ -3255,7 +3265,7 @@ function openMatchStatsModal(title, sets, players, isSet, extraHtml, closeScreen
           const data=bodyActions.map(a=>{if(a.pid===pid)cum+=a.value;return cum;});
           return{label:p?playerLabel(p):pid,data,borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',tension:0.3,pointRadius:3,borderWidth:2,spanGaps:true};
         });
-        new Chart(cv,{type:'line',data:{labels:bodyActions.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
+        new Chart(cv,{type:'line',data:{labels:bodyActions.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:10}}}}}});
       }
     }
     // Recv bar
@@ -3268,7 +3278,7 @@ function openMatchStatsModal(title, sets, players, isSet, extraHtml, closeScreen
           const avgs=recvPlayers.map(p=>calcRecvAvg(p.id,{actions:allActions}));
           const pcts=avgs.map(a=>recvPct(a));
           const colors=pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a');
-          new Chart(cv2,{type:'bar',data:{labels:recvPlayers.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:colors,borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
+          new Chart(cv2,{type:'bar',data:{labels:recvPlayers.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:colors,borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},scales:{x:{ticks:{font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
         } else cv2.parentElement.innerHTML='<div class="no-data">Žádná data</div>';
       }
     }
@@ -3346,7 +3356,7 @@ function renderMatchStats(m, actions, players, mode){
       const ba=actions.filter(a=>a.type==='body');
       const pids=[...new Set(ba.map(a=>a.pid))];
       const ds=pids.map((pid,i)=>{const p=players.find(x=>x.id===pid);let cum=0;const data=ba.map(a=>{if(a.pid===pid)cum+=a.value;return cum;});return{label:p?playerLabel(p):pid,data,borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',tension:0.3,pointRadius:3,borderWidth:2,spanGaps:true};});
-      new Chart(cv,{type:'line',data:{labels:ba.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:9}}},y:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10}}}}}});
+      new Chart(cv,{type:'line',data:{labels:ba.map((_,i)=>'#'+(i+1)),datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10}}}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{font:{size:10}}}}}});
     }
   }
   if(showRecv){
@@ -3356,7 +3366,7 @@ function renderMatchStats(m, actions, players, mode){
       if(rp.length){
         const avgs=rp.map(p=>{const rv=actions.filter(a=>a.pid===p.id&&a.type==='prijem').map(a=>a.value);return rv.length?rv.reduce((s,v)=>s+v,0)/rv.length:null;});
         const pcts=avgs.map(a=>recvPct(a)??0);
-        new Chart(cv2,{type:'bar',data:{labels:rp.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a'),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},scales:{x:{grid:{color:CGRID},ticks:{color:CTICK,font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
+        new Chart(cv2,{type:'bar',data:{labels:rp.map(p=>playerLabel(p)),datasets:[{data:pcts,backgroundColor:pcts.map(v=>v>=80?CG:v>=50?'#787820':'#7a2a2a'),borderRadius:4,borderWidth:0}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>roundN(ctx.parsed.x)+'%'}}},scales:{x:{ticks:{font:{size:10},callback:v=>roundN(v)+'%'},min:0,max:100},y:{grid:{display:false},ticks:{color:CW,font:{size:11}}}}}});
       }
     }
   }
