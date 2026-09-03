@@ -59,8 +59,14 @@ header{background:linear-gradient(135deg,#1a4d22,#0f2e14);border-bottom:2px soli
 .bc.sp{background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--acc),var(--gold-2),var(--gold-1));background-size:300%;animation:shimmer 5s linear infinite;color:#000;border:none;font-weight:700}
 #sidebarBackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:149;backdrop-filter:blur(2px)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:100%;-webkit-overflow-scrolling:touch}
-.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:55vh;gap:14px;color:var(--gm);text-align:center}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:14px;color:var(--gm);text-align:center}
 .empty .ei{font-size:3.5rem}
+.home-hero{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:14px 16px;width:100%;max-width:460px}
+.home-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;max-width:460px}
+.home-card{background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;cursor:pointer;transition:all .15s}
+.home-card:hover{border-color:var(--g);background:#131d13}
+.home-card-nodata{opacity:0.55}
+@media(min-width:640px){.home-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-width:620px}.home-hero{max-width:620px}}
 .pdh{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap}
 .pav{width:48px;height:48px;border-radius:50%;background:var(--gd);border:3px solid var(--g);display:flex;align-items:center;justify-content:center;font-size:1.15rem;font-weight:700;flex-shrink:0}
 .pdi{flex:1;min-width:0}
@@ -314,6 +320,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
     <input id="subtitleEl" type="text" value="SK Meteor Praha" title="Klikni pro úpravu" onchange="saveSubtitle(this.value)">
   </div>
   <div class="hact">
+    <button class="btn btn-o sm" id="homeBtn" onclick="goHome()" title="Domů">🏠</button>
     <button class="btn btn-gold sm" id="scopeChip" onclick="toggleNormScope()" title="Referenční skupina pro Overall a T-skóre. Klikni pro přepnutí.">🗃 Databáze</button>
     <button class="btn btn-gray sm" onclick="openEditor()">⚙</button>
     <button class="btn btn-o sm" id="liveMatchBtn" onclick="openLiveMatch()">🏐 Zápas</button>
@@ -324,6 +331,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   </div>
   <button id="menuToggle" onclick="toggleMenu()">⋮</button>
   <div class="menu-dropdown" id="menuDropdown">
+    <button class="btn btn-o" onclick="goHome();closeMenu()">🏠 Domů</button>
+    <hr class="sep-line">
     <button class="btn btn-p" onclick="openLiveMatch();closeMenu()">🏆 Spustit zápas</button>
     <hr class="sep-line">
     <button class="btn btn-gold" id="scopeChipM" onclick="toggleNormScope();closeMenu()">🗃 Norma: Celá databáze</button>
@@ -1196,7 +1205,7 @@ function addMil(){const label=document.getElementById("nl")?.value.trim();if(!la
 function addBadge(){const icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if(!icon||!label){toast("Zadej ikonu i název!","err");return;}S.config.badges.push({id:"b_"+Date.now(),label,icon,color:document.getElementById("newBadgeColor")?.value||CGREEN,special:document.getElementById("nsp2")?.checked||false});save();toast("Přidán ✓");openBadgeEd();}
 
 // ═══ COMPARE ═══
-function toggleCmp(){S.cmpMode=!S.cmpMode;document.getElementById("cmpBtn").className=S.cmpMode?"btn btn-a sm":"btn btn-o sm";const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
+function toggleCmp(){S.cmpMode=!S.cmpMode;if(S.cmpMode)setNavActive('cmp');else document.getElementById("cmpBtn").className="btn btn-o sm";const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
 function toggleCmpP(id){if(S.cmpIds.includes(id))S.cmpIds=S.cmpIds.filter(x=>x!==id);else S.cmpIds.push(id);save();renderCmp();renderPL();}
 
 // ═══ RENDER ═══
@@ -1209,8 +1218,65 @@ function render(){
   document.getElementById("ovView").style.display="none";
   if(S.cmpMode){document.getElementById("cmpView").style.display="block";renderCmp();}
   else if(S.activeId&&gP())renderDetail();
-  else document.getElementById("emptyState").style.display="flex";
+  else{setNavActive('home');document.getElementById("emptyState").style.display="flex";renderHome();}
   updateScopeChip();
+}
+// Domovská obrazovka (Kolo 26) — nahrazuje obsah #emptyState, když není vybraná
+// hráčka, není zapnuté Porovnání a není otevřený Přehled týmu. Stejný princip jako
+// zbytek appky: skutečná data přes overallForPlayer()/activeNorms(), žádná zvlášť
+// počítaná logika. Prázdný tým (0 aktivních hráček) dostane zpátky původní statickou
+// zprávu "Vyber nebo přidej hráčku".
+function renderHome(){
+  const el=document.getElementById('emptyState');if(!el)return;
+  const active=getActiveP();
+  if(!active.length){
+    el.innerHTML=`<div class="ei">🏐</div><div style="font-size:1.05rem;font-weight:600">Vyber nebo přidej hráčku</div><div style="font-size:0.8rem;max-width:260px;line-height:1.5;text-align:center">Na mobilu otevři seznam tlačítkem ☰</div><button class="btn btn-a" onclick="openAddPlayer()" style="margin-top:8px">+ Přidat hráčku</button>`;
+    return;
+  }
+  const norms=activeNorms();
+  const ovMax=teamMaxCovered(active,norms);
+  const ovs=active.map(p=>({p,ov:overallForPlayer(p,norms,ovMax)}));
+  const tAvgs=ovs.map(x=>x.ov.tAvg).filter(v=>v!=null);
+  const teamTAvg=tAvgs.length?tAvgs.reduce((a,b)=>a+b,0)/tAvgs.length:null;
+  const teamScore=teamTAvg!=null?overallDisplay(teamTAvg):null;
+  const dates=active.flatMap(p=>(p.testSessions||[]).map(s=>s.date));
+  const lastTested=dates.length?fmtDate(dates.sort().slice(-1)[0]):null;
+
+  const cards=ovs.map(({p,ov})=>{
+    const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    const hasData=ov.score!=null;
+    const badges=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";return`<span title="${b.label}">${b.icon}</span>`;}).join(" ");
+    const star=hasData&&ov.incomplete?`<sup style="color:var(--acc);font-size:0.6rem" title="Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})">*</sup>`:"";
+    return`<div class="home-card${hasData?"":" home-card-nodata"}" onclick="selectPlayer('${p.id}')">
+      <div class="pav" style="width:44px;height:44px;font-size:1rem">${ini}</div>
+      <div style="font-size:0.84rem;font-weight:600;color:var(--w);display:flex;align-items:center;gap:1px">${p.name}${staleDot(p)}</div>
+      <div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}</div>
+      ${badges?`<div style="font-size:0.85rem">${badges}</div>`:""}
+    </div>`;
+  }).join("");
+
+  el.innerHTML=`
+    <div class="home-hero">
+      <div style="text-align:center;flex-shrink:0">
+        <div class="mv" style="font-size:2.2rem;color:${teamScore!=null?overallColor(teamTAvg):"var(--gm)"}">${teamScore??"–"}</div>
+        <div style="font-size:0.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gm);margin-top:2px;white-space:nowrap">Průměr týmu</div>
+      </div>
+      <div style="width:1px;align-self:stretch;background:var(--brd)"></div>
+      <div style="display:flex;flex-direction:column;gap:5px;font-size:0.78rem;color:var(--gm)">
+        <div><span style="color:var(--w);font-weight:600">${active.length}</span>&nbsp;hráček v týmu</div>
+        ${lastTested?`<div>naposledy testováno <span style="color:var(--w)">${lastTested}</span></div>`:""}
+      </div>
+    </div>
+    <div class="home-grid">${cards}</div>
+  `;
+}
+// Sjednocené nastavení, které ze 3 přepínacích tlačítek v horní liště (Domů/Přehled
+// týmu/Porovnání) je právě aktivní — vždycky nastaví přesně jedno na btn-a a zbylá
+// dvě na btn-o, takže není šance nechat viset zastaralý zvýrazněný stav.
+function setNavActive(which){
+  const map={home:'homeBtn',ov:'ovBtn',cmp:'cmpBtn'};
+  Object.values(map).forEach(id=>{const btn=document.getElementById(id);if(btn)btn.className='btn btn-o sm';});
+  if(which&&map[which]){const btn=document.getElementById(map[which]);if(btn)btn.className='btn btn-a sm';}
 }
 function renderPL(){
   document.getElementById("playerList").innerHTML=getActiveP().map(p=>{
@@ -1223,17 +1289,14 @@ function renderPL(){
 function goHome(){
   S.activeId=null;
   S.cmpMode=false;
-  document.getElementById('cmpBtn')?.classList.remove('btn-a');
-  document.getElementById('cmpBtn')?.classList.add('btn-o');
   const ov=document.getElementById('ovView');
   if(ov)ov.style.display='none';
-  document.getElementById('ovBtn')?.classList.remove('btn-a');
-  document.getElementById('ovBtn')?.classList.add('btn-o');
+  setNavActive('home');
   closeSidebar();
   render();
 }
 
-function selectPlayer(id){S.activeId=id;S.activeTab="physical";closeSidebar();const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
+function selectPlayer(id){S.activeId=id;S.activeTab="physical";closeSidebar();const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none")ov.style.display="none";setNavActive(null);render();}
 const TABS=[{id:"physical",label:"💪 Fyzické"},{id:"game",label:"🎯 Herní"},{id:"spider",label:"🕸 Pavouk"},{id:"milestones",label:"🎖 Milníky"},{id:"zapas",label:"📋 Zápas"}];
 function renderDetail(){
   const p=gP();if(!p)return;
@@ -2316,15 +2379,14 @@ function toggleOverview(){
     document.getElementById('ovView').style.display='none';
     document.getElementById('ovBtn').className='btn btn-o sm';
     if(S.activeId&&gP()) renderDetail();
-    else document.getElementById('emptyState').style.display='flex';
+    else{setNavActive('home');document.getElementById('emptyState').style.display='flex';renderHome();}
   } else {
     document.getElementById('emptyState').style.display='none';
     document.getElementById('playerDetail').style.display='none';
     document.getElementById('cmpView').style.display='none';
     document.getElementById('ovView').style.display='block';
-    document.getElementById('ovBtn').className='btn btn-a sm';
     S.cmpMode=false;
-    document.getElementById('cmpBtn').className='btn btn-o sm';
+    setNavActive('ov');
     renderOverview();
   }
 }
@@ -3750,7 +3812,7 @@ function closeModalConfirm(msg){
   else closeModal();
 }
 
-load();loadLM();render();setTimeout(checkBackupReminder,2000);
+load();S.activeId=null;S.cmpMode=false;loadLM();render();setTimeout(checkBackupReminder,2000);
 
 </script>
 <script>
