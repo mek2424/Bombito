@@ -59,6 +59,11 @@ header{background:linear-gradient(135deg,#1a4d22,#0f2e14);border-bottom:2px soli
 .bc.sp{background:linear-gradient(90deg,var(--gold-1),var(--gold-2),var(--acc),var(--gold-2),var(--gold-1));background-size:300%;animation:shimmer 5s linear infinite;color:#000;border:none;font-weight:700}
 #sidebarBackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:149;backdrop-filter:blur(2px)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:100%;-webkit-overflow-scrolling:touch}
+.nav-bottom-bar{display:none}
+.nav-bottom-bar button{flex:1;background:transparent;border:none;color:var(--w);font-size:0.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:'DM Sans',sans-serif;padding:0}
+#navBackBtn:disabled,#navFwdBtn:disabled,#navBackBtnM:disabled,#navFwdBtnM:disabled{opacity:0.35;cursor:default;pointer-events:none}
+.nbb-div{width:1px;background:var(--brd);margin:12px 0}
+.backup-bubble{position:fixed;left:16px;bottom:20px;max-width:calc(100% - 32px);background:rgba(15,26,16,.95);border:1px solid #2a3a2a;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5);backdrop-filter:blur(6px);padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:0.82rem;z-index:191;flex-wrap:wrap}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:14px;color:var(--gm);text-align:center}
 .empty .ei{font-size:3.5rem}
 .home-hero{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--brd);border-radius:12px;padding:14px 16px;width:100%;max-width:460px}
@@ -171,8 +176,10 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   #sidebar{position:fixed;left:0;top:0;bottom:0;z-index:150;transform:translateX(-100%);height:100dvh;padding-top:62px}
   #sidebar.open{transform:translateX(0);box-shadow:4px 0 30px rgba(0,0,0,.5)}
   #sidebarBackdrop.open{display:block}
-  main{padding:13px}
+  main{padding:13px;padding-bottom:78px}
   .hact{display:none}
+  .nav-bottom-bar{display:flex;position:fixed;left:0;right:0;bottom:0;height:56px;background:#090f09;border-top:1px solid var(--brd);z-index:190;align-items:stretch}
+  .backup-bubble{bottom:84px;left:12px;right:12px;max-width:none}
 }
 
 /* PDF PRINT */
@@ -320,6 +327,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
     <input id="subtitleEl" type="text" value="SK Meteor Praha" title="Klikni pro úpravu" onchange="saveSubtitle(this.value)">
   </div>
   <div class="hact">
+    <button class="btn btn-o sm" id="navBackBtn" onclick="navBack()" title="Zpět">←</button>
+    <button class="btn btn-o sm" id="navFwdBtn" onclick="navForward()" title="Dopředu">→</button>
     <button class="btn btn-o sm" id="homeBtn" onclick="goHome()" title="Domů">🏠</button>
     <button class="btn btn-gold sm" id="scopeChip" onclick="toggleNormScope()" title="Referenční skupina pro Overall a T-skóre. Klikni pro přepnutí.">🗃 Databáze</button>
     <button class="btn btn-gray sm" onclick="openEditor()">⚙</button>
@@ -369,6 +378,11 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   </main>
 </div>
 <div class="mo" id="modal" style="display:none"><div class="md" id="modalContent"></div></div>
+<div class="nav-bottom-bar" id="navBottomBar">
+  <button id="navBackBtnM" onclick="navBack()"><span>←</span> Zpět</button>
+  <div class="nbb-div"></div>
+  <button id="navFwdBtnM" onclick="navForward()">Dopředu <span>→</span></button>
+</div>
 <script>
 // Sdílené barvy pro Chart.js grafy — CSS proměnné (var(--x)) canvas nepřečte,
 // takže se stejné odstíny drží tady v JS konstantách místo opisování hexu v každém grafu.
@@ -1220,6 +1234,75 @@ function render(){
   else if(S.activeId&&gP())renderDetail();
   else{setNavActive('home');document.getElementById("emptyState").style.display="flex";renderHome();}
   updateScopeChip();
+  pushHistory(S.cmpMode?{type:'cmp'}:(S.activeId&&gP()?{type:'player',id:S.activeId}:{type:'home'}));
+}
+// ══════════════════════════════════════════════════════════
+// HISTORIE NAVIGACE — Zpět/Dopředu (Kolo 27)
+// "Krok" v historii = velké přepnutí obrazovky (hráčka / Domů / Přehled
+// týmu / Porovnání). Přepínání tabů uvnitř jedné hráčky historii NEmění
+// (viz switchTab — volá jen renderDetail(), nikdy render()/pushHistory()).
+// Historie žije jen v paměti (ne v S/localStorage) — po každém startu appky
+// se, stejně jako S.activeId, začíná od nuly na Domů.
+// ══════════════════════════════════════════════════════════
+let NAV_HIST=[],NAV_POS=-1,NAV_SUPPRESS=false;
+function screensEqual(a,b){return !!a&&!!b&&a.type===b.type&&a.id===b.id;}
+function pushHistory(screen){
+  if(NAV_SUPPRESS)return;
+  if(NAV_POS>=0&&screensEqual(NAV_HIST[NAV_POS],screen)){updateNavButtons();return;}
+  NAV_HIST=NAV_HIST.slice(0,NAV_POS+1);
+  NAV_HIST.push(screen);
+  NAV_POS=NAV_HIST.length-1;
+  if(NAV_HIST.length>60){const cut=NAV_HIST.length-60;NAV_HIST=NAV_HIST.slice(cut);NAV_POS-=cut;}
+  updateNavButtons();
+}
+function applyScreen(screen){
+  NAV_SUPPRESS=true;
+  if(screen.type==='home'){
+    S.activeId=null;S.cmpMode=false;
+    document.getElementById('ovView').style.display='none';
+    closeSidebar();render();
+  }else if(screen.type==='player'){
+    S.activeId=screen.id;S.activeTab='physical';S.cmpMode=false;
+    document.getElementById('ovView').style.display='none';
+    closeSidebar();render();
+  }else if(screen.type==='cmp'){
+    S.cmpMode=true;
+    document.getElementById('ovView').style.display='none';
+    closeSidebar();render();
+  }else if(screen.type==='ov'){
+    document.getElementById('emptyState').style.display='none';
+    document.getElementById('playerDetail').style.display='none';
+    document.getElementById('cmpView').style.display='none';
+    document.getElementById('ovView').style.display='block';
+    S.cmpMode=false;
+    renderOverview();
+  }
+  setNavActive(screen.type==='home'?'home':screen.type==='ov'?'ov':screen.type==='cmp'?'cmp':null);
+  NAV_SUPPRESS=false;
+  updateNavButtons();
+}
+function screenValid(s){return s.type!=='player'||S.players.some(p=>p.id===s.id);}
+function navBack(){
+  if(NAV_POS<=0)return;
+  let i=NAV_POS-1;
+  while(i>0&&!screenValid(NAV_HIST[i]))i--;
+  if(!screenValid(NAV_HIST[i]))return;
+  NAV_POS=i;
+  applyScreen(NAV_HIST[NAV_POS]);
+}
+function navForward(){
+  if(NAV_POS>=NAV_HIST.length-1)return;
+  let i=NAV_POS+1;
+  while(i<NAV_HIST.length-1&&!screenValid(NAV_HIST[i]))i++;
+  if(!screenValid(NAV_HIST[i]))return;
+  NAV_POS=i;
+  applyScreen(NAV_HIST[NAV_POS]);
+}
+function setNavBtnState(id,enabled){const el=document.getElementById(id);if(el)el.disabled=!enabled;}
+function updateNavButtons(){
+  const backOk=NAV_POS>0,fwdOk=NAV_POS<NAV_HIST.length-1;
+  setNavBtnState('navBackBtn',backOk);setNavBtnState('navFwdBtn',fwdOk);
+  setNavBtnState('navBackBtnM',backOk);setNavBtnState('navFwdBtnM',fwdOk);
 }
 // Domovská obrazovka (Kolo 26) — nahrazuje obsah #emptyState, když není vybraná
 // hráčka, není zapnuté Porovnání a není otevřený Přehled týmu. Stejný princip jako
@@ -2380,6 +2463,7 @@ function toggleOverview(){
     document.getElementById('ovBtn').className='btn btn-o sm';
     if(S.activeId&&gP()) renderDetail();
     else{setNavActive('home');document.getElementById('emptyState').style.display='flex';renderHome();}
+    pushHistory(S.activeId&&gP()?{type:'player',id:S.activeId}:{type:'home'});
   } else {
     document.getElementById('emptyState').style.display='none';
     document.getElementById('playerDetail').style.display='none';
@@ -2388,6 +2472,7 @@ function toggleOverview(){
     S.cmpMode=false;
     setNavActive('ov');
     renderOverview();
+    pushHistory({type:'ov'});
   }
 }
 
@@ -2600,8 +2685,8 @@ function checkBackupReminder(){
   if(!show)return;
   const label=last?`Poslední záloha před ${days} ${days===1?'dnem':days<5?'dny':'dny'}`:'Zatím bez zálohy';
   const banner=document.createElement('div');
-  banner.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#1a3a1e;border-top:2px solid var(--g);padding:10px 16px;display:flex;align-items:center;gap:12px;z-index:190;font-size:0.82rem';
-  banner.innerHTML=`<span style="flex:1">💾 ${label} — doporučujeme exportovat data</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout later</button>`;
+  banner.className='backup-bubble';
+  banner.innerHTML=`<span style="flex:1;min-width:180px">💾 ${label} — doporučujeme exportovat data</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout později</button>`;
   document.body.appendChild(banner);
 }
 
