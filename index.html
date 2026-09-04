@@ -731,8 +731,16 @@ function normPlayers(){
   // "current" = only active (non-archived) players; "all" = everyone incl. archived
   return (S.normScope==="all") ? S.players : S.players.filter(p=>!p.archived);
 }
-function computeNorms(){
+// `matchScope` (Kolo 38): 'season' (výchozí, i při vynechání) = zápasová norma jen
+// z AKTUÁLNÍ sezóny; 'all' = celá historie bez ohledu na sezónu — schválně používá
+// computeSeasonWrapped() níž, ne živé UI. Bez toho by norma zápasů v momentě UZAVŘENÍ
+// sezóny (S.seasons už obsahuje tu právě zavíranou, currentSeasonStart() proto ukazuje
+// na její konec) vyšla z prázdné množiny — sezóna, co se dopočítává, ještě žádné svoje
+// "nové" zápasy nemá. Wrapped proto vždycky žádá 'all', ať dostane normu ze stabilní,
+// kompletní historie bez ohledu na to, kdy přesně appka Wrapped počítá.
+function computeNorms(matchScope){
   const pool=normPlayers();
+  const matches=matchScope==='all'?realMatches():seasonRealMatches();
   const norms={};
   // "swing" (Kolo 16 u herních metrik, Kolo 17 i tady) = typická velikost výkyvu
   // mezi dvěma po sobě jdoucími testy TÉŽE hráčky (průměr absolutních rozdílů),
@@ -786,15 +794,16 @@ function computeNorms(){
     norms[m.id]={mu,sigma,n:vals.length,lowerBetter:false,isPct:true,swing,swingN:deltas.length};
   });
   // Zápasové metriky pro Overall fázi 2 (Kolo 22): "body na zápas" a "příjem na zápas".
-  // Norma (mu/sigma) se staví stejně jako u testů výše — ze VŠECH reálných zápasů VŠECH
-  // hráček v poolu, bez ohledu na stáří (žádný strop) — konzistentní s tím, jak appka
-  // staví normy všude jinde. Strop na posledních N zápasech (viz OVERALL_MATCH_CAP u
-  // overallMatchRaw) se týká jen DOTAZU na konkrétní hráčku, ne referenční normy samotné.
-  // Swing se tu záměrně nepočítá — nic ho zatím nepotřebuje (na rozdíl od testů výše).
+  // Norma (mu/sigma) se staví stejně jako u testů výše — ze zápasů VŠECH hráček v poolu.
+  // Od Kola 38 podle `matchScope` výše (viz komentář nad funkcí) — výchozí "jen aktuální
+  // sezóna", Wrapped žádá "all". Strop na posledních N zápasech KONKRÉTNÍ hráčky (viz
+  // OVERALL_MATCH_CAP u overallMatchRaw) je samostatná, doplňková věc — týká se jen dotazu
+  // na jednu hráčku, ne referenční normy samotné. Swing se tu záměrně nepočítá — nic ho
+  // zatím nepotřebuje (na rozdíl od testů výše).
   [["body_zapas","body"],["prijem_zapas","prijem"]].forEach(([key,type])=>{
     const vals=[];
     pool.forEach(p=>{
-      realMatches().forEach(m=>{
+      matches.forEach(m=>{
         const v=playerMatchMetric(p,m,type);
         if(v!=null)vals.push(v);
       });
@@ -822,7 +831,7 @@ function toggleNormScope(){
     if(S.activeTab==="spider"&&!S.cmpMode){killCH();scheduleDraw(drawSpider);}
   }
 }
-function activeNorms(){return S.lockedNorms?.norms||computeNorms();}
+function activeNorms(matchScope){return S.lockedNorms?.norms||computeNorms(matchScope);}
 function scopeChipHtml(){return S.normScope==="current"?"👥 Tým":"🗃 Databáze";}
 function scopeChipTitle(){return `Referenční skupina pro Overall a T-skóre: ${S.normScope==="current"?"aktuální tým":"celá databáze (všechny ročníky)"}. Klikni pro přepnutí.`;}
 function scopeChipMHtml(){return S.normScope==="current"?"👥 Norma: Aktuální tým":"🗃 Norma: Celá databáze";}
@@ -904,7 +913,7 @@ function overallDisplay(tAvg){
 // Chybějící blok (kterýkoli z tří) se pořád úplně vynechá a váhy zbylých přítomných bloků
 // se PROPORČNĚ přepočítají tak, aby daly dohromady 100 % — princip "vynechat, ne penalizovat"
 // z Kola 22, teď zobecněný na libovolný počet chybějících bloků (viz overallForPlayer níž).
-const OVERALL_MATCH_CAP=12; // kolik posledních reálných zápasů hráčky se bere do průměru
+const OVERALL_MATCH_CAP=12; // kolik posledních reálných zápasů hráčky (z AKTUÁLNÍ sezóny, Kolo 38) se bere do průměru
 const OVERALL_W_PHYS=0.25, OVERALL_W_GAME=0.35, OVERALL_W_MATCH=0.40; // startovní váhy, snadno doladitelné později
 function overallMatchRaw(p,norms){
   const types=[["body","body_zapas"],["prijem","prijem_zapas"]];
@@ -913,7 +922,10 @@ function overallMatchRaw(p,norms){
     const avg=playerRecentMatchAvg(p,type,OVERALL_MATCH_CAP);
     if(avg!=null)vals.push(tRaw(avg,norms[key]));
   });
-  const matchCount=realMatches().filter(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null).length;
+  // Kolo 38: jen zápasy AKTUÁLNÍ sezóny (seasonRealMatches()) — ať "posledních N zápasů"
+  // v popiscích (matchNote/matchGapBadge níž) neukazuje na zápasy z minulé sezóny, které se
+  // do vlastního průměru výše (playerRecentMatchAvg) taky už nepočítají.
+  const matchCount=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null).length;
   return{vals,n:vals.length,total:types.length,matchCount};
 }
 // Nejvyšší počet naměřených overall-metrik (fyzické + herní + zápasy dohromady) v týmu —
@@ -962,8 +974,8 @@ function matchGapBadge(ov){
   if(ov.gameAvg==null||ov.matchAvg==null||ov.matchCount<OVERALL_GAP_MIN_MATCHES)return null;
   const gap=ov.matchAvg-ov.gameAvg;
   const usedN=Math.min(ov.matchCount,OVERALL_MATCH_CAP);
-  if(gap>=OVERALL_GAP_THRESHOLD)return{icon:'⚡',title:`V zápasech o ${Math.round(gap)} bodů lepší, než herní testy naznačují (z posledních ${usedN} zápasů)`};
-  if(gap<=-OVERALL_GAP_THRESHOLD)return{icon:'🧪',title:`V herních testech o ${Math.round(-gap)} bodů lepší, než ukazují zápasy (z posledních ${usedN} zápasů)`};
+  if(gap>=OVERALL_GAP_THRESHOLD)return{icon:'⚡',title:`V zápasech o ${Math.round(gap)} bodů lepší, než herní testy naznačují (z posledních ${usedN} zápasů aktuální sezóny)`};
+  if(gap<=-OVERALL_GAP_THRESHOLD)return{icon:'🧪',title:`V herních testech o ${Math.round(-gap)} bodů lepší, než ukazují zápasy (z posledních ${usedN} zápasů aktuální sezóny)`};
   return null;
 }
 function overallBreakdownHtml(p,norms,ovMax){
@@ -986,7 +998,7 @@ function overallBreakdownHtml(p,norms,ovMax){
     :'';
   const gapBadge=matchGapBadge(ov);
   const gapHtml=gapBadge?`<p style="font-size:0.8rem;color:var(--acc);margin-top:6px">${gapBadge.icon} ${gapBadge.title}</p>`:'';
-  const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů (appka bere max ${OVERALL_MATCH_CAP}).</p>`:'';
+  const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů aktuální sezóny (appka bere max ${OVERALL_MATCH_CAP}).</p>`:'';
   return`<h2>📊 Overall — rozpad</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${p.name}</p>
     <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${overallColor(ov.tAvg)}">${ov.score??'–'}</div></div>
     ${barHtml}${matchNote}${gapHtml}
@@ -2402,7 +2414,10 @@ function pdfLinePctSvg(pts){
   return`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none"><polygon points="${poly}" fill="#1a4d8a18"/><polyline points="${mainPts}" fill="none" stroke="#1a4d8a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${circles}</svg>`;
 }
 function pdfZapasyHtml(p){
-  const matches=(S.matches||[]).filter(m=>m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
+  // Kolo 38: jen zápasy AKTUÁLNÍ sezóny (na rozdíl od zbytku appky — mirrorovaná
+  // buildZapasTab() na živém tabu 📋 Zápas dál ukazuje celou kariéru hráčky beze změny).
+  const seasonStart=currentSeasonStart();
+  const matches=(S.matches||[]).filter(m=>m.date>=seasonStart&&m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
   if(!matches.length)return'';
   const allActions=matches.flatMap(m=>m.sets.flatMap(s=>s.actions.filter(a=>a.pid===p.id)));
   const totalBody=allActions.filter(a=>a.type==='body').reduce((s,a)=>s+a.value,0);
@@ -2425,9 +2440,10 @@ function pdfZapasyHtml(p){
     ${recvPts.length>1?`<div class="pdf-card"><div class="pdf-card-lbl">Příjem — vývoj v čase (%)</div>${pdfLinePctSvg(recvPts)}<div class="pdf-card-note" style="display:flex;justify-content:space-between">${'<span>'+fmtDate(recvPts[0].date,true)+'</span><span>'+fmtDate(recvPts[recvPts.length-1].date,true)+'</span>'}</div></div>`:''}
   </div>`:'';
 
+  const seasonNote=seasonStart?`<p class="pdf-card-note" style="margin:-2px 0 8px">Jen aktuální sezóna (od ${fmtDate(seasonStart,true)}) — zápasy z minulé sezóny appka do těchto čísel nepočítá.</p>`:'';
   return`<div class="pdf-sec pdf-sec-flow">
     <h2>Zápasy</h2>
-    ${statBoxes}${charts}
+    ${seasonNote}${statBoxes}${charts}
   </div>`;
 }
 
@@ -2869,7 +2885,10 @@ function computeSeasonWrapped(si){
   const season=S.seasons[si];
   const{start,end}=seasonRange(si);
   const roster=S.players.filter(p=>season.playerIds.includes(p.id));
-  const norms=activeNorms();
+  // 'all' (Kolo 38): Wrapped potřebuje stabilní normu z celé historie, ne jen z "aktuální
+  // sezóny" — v okamžiku uzavírání TÉHLE sezóny by "aktuální sezóna" už mířila na tu příští,
+  // zatím bez jediného zápasu (viz komentář u computeNorms()).
+  const norms=activeNorms('all');
   const growth=roster.map(p=>{
     let s=overallAt(p,norms,start);
     if(s==null){
@@ -4332,6 +4351,18 @@ function showMatchSetStats(mid,setIdx){
 // Skutečné, dohrané zápasy — bez živě rozehraných autosave-snapshotů.
 function realMatches(){return (S.matches||[]).filter(m=>m.finished!==false&&!m._autosave);}
 
+// Datum začátku AKTUÁLNÍ (ještě neuzavřené) sezóny — stejná konvence jako seasonRange()
+// pro už uzavřené sezóny (Kolo 29): datum poslední uzavřené sezóny, nebo "" (= úplný
+// začátek), pokud appka ještě žádnou sezónu neuzavřela.
+function currentSeasonStart(){return(S.seasons&&S.seasons.length)?S.seasons[S.seasons.length-1].date:"";}
+// Reálné zápasy jen z AKTUÁLNÍ (ještě neuzavřené) sezóny (Kolo 38) — použito jen tam, kde
+// appka počítá "jak na tom hráčka/tým JE TEĎ" (živé Overall skóre, jeho norma, PDF sekce
+// Zápasy), aby zápasy z minulé, už uzavřené sezóny nezkreslovaly aktuální hodnocení. Zbytek
+// appky (živý tab 📋 Zápas, knihovna zápasů, Turnaje/forma, Wrapped) zůstává na realMatches()
+// beze změny — to jsou buď záměrně celoživotní/historické pohledy, nebo mají svoje vlastní,
+// jiné datové hranice (sezóna při Wrapped přes seasonRange(), turnaj u formy).
+function seasonRealMatches(){const start=currentSeasonStart();return realMatches().filter(m=>m.date>=start);}
+
 function tournamentMatches(tid){
   return realMatches().filter(m=>m.tournamentId===tid).sort((a,b)=>a.date.localeCompare(b.date));
 }
@@ -4424,13 +4455,18 @@ function playerMatchMetric(p,m,type){
   return recvPct(actions.reduce((s,a)=>s+a.value,0)/actions.length); // 'prijem' → %, vyšší = lepší
 }
 
-// Průměr hráččiných posledních `cap` reálných zápasů (jen ty, kde má pro `type` data),
-// řazeno od nejnovějšího. Pro Overall fázi 2 (Kolo 22) — jeden zápas je podle literatury
-// (Winkelman: výkon ≠ učení) i podle zkušenosti trenérky šum, ne trend, proto průměr
-// z víc zápasů; strop na `cap` zase brání tomu, aby staré zápasy zbytečně táhly číslo
-// (bez ohledu na sezónu — appka sezóny jako pole nemá, viz diskuze v Progressu).
+// Průměr hráččiných posledních `cap` reálných zápasů AKTUÁLNÍ sezóny (jen ty, kde má pro
+// `type` data), řazeno od nejnovějšího. Pro Overall fázi 2 (Kolo 22) — jeden zápas je podle
+// literatury (Winkelman: výkon ≠ učení) i podle zkušenosti trenérky šum, ne trend, proto
+// průměr z víc zápasů; strop na `cap` zase brání tomu, aby staré zápasy zbytečně táhly
+// číslo. Od Kola 38 navíc `seasonRealMatches()` místo `realMatches()` — zápasy z MINULÉ,
+// už uzavřené sezóny se do průměru nové sezóny vůbec nepočítají (appka mezitím dostala
+// pojem sezóny přes S.seasons, Kolo 29 — dřívější poznámka "appka sezóny nemá" už neplatí).
+// Na úplném začátku nové sezóny appka počítá klidně i jen z hrstky zápasů (bez vlastního
+// minima) — stejně jako jinde appka nízkou spolehlivost neblokuje, jen ji tiše promítne do
+// menšího `matchCount` (viz overallMatchRaw), který drží prahy jako OVERALL_GAP_MIN_MATCHES.
 function playerRecentMatchAvg(p,type,cap){
-  const ms=realMatches().filter(m=>playerMatchMetric(p,m,type)!=null)
+  const ms=seasonRealMatches().filter(m=>playerMatchMetric(p,m,type)!=null)
     .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,cap);
   return ms.length?mean(ms.map(m=>playerMatchMetric(p,m,type))):null;
 }
