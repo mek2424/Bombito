@@ -272,8 +272,46 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   canvas{display:none!important}
   .pdf-chart-img{display:block!important;width:100%!important;height:auto!important;max-height:110px!important;object-fit:contain}
   .pdf-mil-row{break-inside:avoid}
+  .pdf-card{break-inside:avoid;page-break-inside:avoid}
+  .pdf-ovbox{break-inside:avoid;page-break-inside:avoid}
+  .pdf-statbox{break-inside:avoid;page-break-inside:avoid}
+  /* Fyzické/Herní/Zápasy sekce jsou teď (Kolo 5) vyšší než celá stránka (karty s grafy) —
+     `.pdf-sec` výše by celou sekci (i s 10 kartami) natlačilo vcelku na další stránku a nechalo
+     nahoře prázdno. `.pdf-sec-flow` to pro tyhle 3 velké sekce ruší, ať se sekce může lámat mezi
+     řádky karet; jednotlivá karta (.pdf-card výše) se přesto nikdy nerozlomí napůl. */
+  .pdf-sec-flow{break-inside:auto;page-break-inside:auto}
+  .pdf-sec-flow h2,.pdf-sec-flow .pdf-legend{break-after:avoid;page-break-after:avoid}
 }
 .pdf-chart-img{display:none}
+/* ═══ PDF v2 (Kolo 5) — karty s grafem + dvojí referenční čára tým/databáze ═══ */
+.pdf-cardgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+.pdf-cardgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pdf-card{border:1px solid #eee;border-radius:8px;padding:8px 9px 6px}
+.pdf-card-gold{border:2px solid var(--gold-1);background:#fffdf5;padding:7px 9px 6px}
+.pdf-card-lbl{font-size:0.68rem;font-weight:700;color:#333;margin-bottom:2px}
+.pdf-card-vals{display:flex;align-items:baseline;justify-content:space-between;margin-top:3px}
+.pdf-card-v{font-size:1rem;font-weight:800;color:#111}
+.pdf-card-d{font-size:0.68rem;font-weight:700}
+.pdf-card-t{margin-top:3px}
+.pdf-card-note{margin-top:3px;font-size:0.6rem;color:#aaa;line-height:1.4}
+.pdf-card-trophy{margin-top:3px;font-size:0.58rem;color:#a08000;line-height:1.45}
+.pdf-legend{font-size:0.58rem;color:#999;margin-bottom:8px;line-height:1.4}
+.pdf-ovbox{border:1.5px solid #eee;border-radius:10px;padding:14px 16px;background:#fafcfa;margin-bottom:14px}
+.pdf-ov-row{display:flex;align-items:center;gap:14px}
+.pdf-ov-chart{flex:1;min-width:0}
+.pdf-ov-legend{display:flex;flex-direction:column;gap:7px;flex-shrink:0;padding-left:12px;border-left:1px solid #e5e5e0}
+.pdf-ov-num{display:flex;align-items:center;gap:5px;font-family:'Bebas Neue',sans-serif;font-size:1.15rem;white-space:nowrap}
+.pdf-dotlg{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.pdf-ov-numlbl{font-family:'DM Sans',sans-serif;font-size:0.58rem;color:#999}
+.pdf-ov-bar-row{margin-top:10px;display:flex;align-items:center;gap:7px}
+.pdf-ov-bar-tag{font-size:0.53rem;color:#aaa;white-space:nowrap;line-height:1.3}
+.pdf-ov-bar{flex:1;display:flex;height:30px;border-radius:6px;overflow:hidden}
+.pdf-ov-bar>div{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:0.66rem;font-weight:700;line-height:1.2}
+.pdf-ov-gap{margin-top:8px;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:7px;background:#e8c84018;border:1px solid #e8c84055;font-size:0.68rem;color:#8a6d00;font-weight:600}
+.pdf-statbox{border:1px solid #eee;border-radius:8px;padding:12px 14px;text-align:center}
+.pdf-statbox-lbl{font-size:0.64rem;letter-spacing:1px;text-transform:uppercase;color:#888}
+.pdf-statbox-v{font-size:1.4rem;font-weight:800;margin-top:2px}
+.pdf-statbox-sub{font-size:0.62rem;color:#888;margin-top:2px}
 
 
 /* STALE WARNING */
@@ -2112,52 +2150,301 @@ function tBadgeStyle(t){
   return'background:#ffe0c0;color:#8b2500';
 }
 
+// ═══ PDF v2 (Kolo 5) — dvě referenční čáry (tým/databáze) na kartách + Overall v čase ═══
+// Appka pro jednu kartu potřebuje SROVNÁNÍ PODLE OBOU NOREM najednou (šedá čárkovaná
+// čára = nejlepší z týmu, zlatá = nejlepší v celé databázi), ale S.normScope je globální
+// přepínač jedné aktivní normy — proto se tady na chvilku přehodí tam a zpět a hned zase
+// vrátí zpátky. Nic jiného (save/render/toast) se přitom nevolá, takže to nemá žádný
+// vedlejší efekt na zbytek appky — uživatel svůj přepínač 👥/🗃 najde po exportu beze změny.
+function pdfBestOther(roster,cutoff,getVal,excludeId,lowerBetter){
+  let best=null;
+  roster.forEach(pl=>{
+    if(pl.id===excludeId)return;
+    const s=sessionAtOrBefore(pl,cutoff);if(!s)return;
+    const v=getVal(s);if(v==null)return;
+    const better=lowerBetter?(!best||v<best.v):(!best||v>best.v);
+    if(better)best={v,id:pl.id};
+  });
+  return best;
+}
+function pdfBetterOrEq(v,other,lowerBetter){
+  if(other==null)return true;
+  return lowerBetter?v<=other:v>=other;
+}
+// Pro hráčku p a metriku (getVal(session)->číslo|null) spočítá její vlastní řadu hodnot
+// a k ní pod OBĚMA normami: nejlepší z ostatních k danému datu, jestli teď (na posledním
+// testování) vede, a od kdy nepřetržitě. Funguje pro libovolný počet testování (i 1) —
+// nic tu není napevno na 7 bodů jako v mock-upu.
+function pdfCardSeries(p,getVal,lowerBetter){
+  const sessions=(p.testSessions||[]).filter(s=>getVal(s)!=null);
+  if(!sessions.length)return null;
+  const savedScope=S.normScope;
+  const perScope={};
+  ['current','all'].forEach(scope=>{
+    S.normScope=scope;
+    const roster=normPlayers();
+    const rows=sessions.map(s=>{
+      const v=getVal(s);
+      const best=pdfBestOther(roster,s.date,getVal,p.id,lowerBetter);
+      return{date:s.date,v,bestOtherVal:best?best.v:null,isBest:pdfBetterOrEq(v,best?best.v:null,lowerBetter)};
+    });
+    const latestV=rows[rows.length-1].v;
+    const currBest=pdfBestOther(roster,today(),getVal,p.id,lowerBetter);
+    const nowBest=pdfBetterOrEq(latestV,currBest?currBest.v:null,lowerBetter);
+    let since=null;
+    for(let i=rows.length-1;i>=0;i--){if(rows[i].isBest)since=rows[i].date;else break;}
+    perScope[scope]={rows,nowBest,since};
+  });
+  S.normScope=savedScope;
+  return{sessions,values:sessions.map(s=>getVal(s)),perScope,goldNow:perScope.current.nowBest&&perScope.all.nowBest};
+}
+function pdfDecimalsOf(v){if(v==null)return 0;const s=String(v);const i=s.indexOf('.');return i<0?0:Math.min(2,s.length-i-1);}
+function pdfMetricDecimals(p,fieldId){
+  let max=0;
+  (p.testSessions||[]).forEach(s=>{const v=s.physical?.[fieldId];if(v!=null)max=Math.max(max,pdfDecimalsOf(v));});
+  return max;
+}
+function pdfFmtVal(v,decimals){return decimals>0?v.toFixed(decimals).replace('.',','):String(Math.round(v));}
+// Vykreslí jednu kartu: mini-graf (vlastní křivka + volitelně dvě čárkované referenční
+// čáry) + hodnota/delta + T-skóre nebo poznámka. `opts.noRefLines`+`opts.note` = karta
+// vědomě bez srovnání (Útok na cíl — dvě neslučitelné varianty testu). `opts.trailingNote`
+// se použije jen u karet bez T-skóre, které zrovna nevedou (Výška/Dosah).
+function pdfCardHtml(label,unit,series,opts){
+  opts=opts||{};
+  const lowerBetter=!!opts.lowerBetter, noRefLines=!!opts.noRefLines, isPct=!!opts.isPct;
+  const tNorm=opts.tNorm||null, mainColor=opts.color||CG, decimals=isPct?0:(opts.decimals||0);
+  const titleTxt=label+(isPct?' (%)':(unit?' ('+unit+')':''));
+  if(!series)return`<div class="pdf-card"><div class="pdf-card-lbl">${titleTxt}</div><p class="pdf-card-note">Bez dat</p></div>`;
+
+  const rawVals=series.values;
+  const vals=isPct?rawVals.map(v=>v*100):rawVals;
+  const n=vals.length;
+  const xs=n>1?vals.map((_,i)=>Math.round(8+i*184/(n-1))):[100];
+  const scaleFor=r=>r.bestOtherVal==null?null:(isPct?r.bestOtherVal*100:r.bestOtherVal);
+  const tymPts=noRefLines?[]:series.perScope.current.rows.map((r,i)=>({x:xs[i],v:scaleFor(r)})).filter(pt=>pt.v!=null);
+  const dbPts=noRefLines?[]:series.perScope.all.rows.map((r,i)=>({x:xs[i],v:scaleFor(r)})).filter(pt=>pt.v!=null);
+  const scaleVals=vals.concat(tymPts.map(pt=>pt.v),dbPts.map(pt=>pt.v));
+  const vmin=Math.min(...scaleVals),vmax=Math.max(...scaleVals);
+  const yOf=v=>{if(vmax===vmin)return 31;const frac=lowerBetter?(v-vmin)/(vmax-vmin):(vmax-v)/(vmax-vmin);return Math.round(8+frac*46);};
+
+  let svg;
+  if(n<2){
+    svg=`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none"><circle cx="100" cy="${yOf(vals[0])}" r="3.6" fill="${mainColor}"/></svg>`;
+  }else{
+    const mainPts=xs.map((x,i)=>`${x},${yOf(vals[i])}`).join(' ');
+    const poly=`${mainPts} ${xs[n-1]},60 ${xs[0]},60`;
+    const tymLine=tymPts.length>1?`<polyline points="${tymPts.map(pt=>`${pt.x},${yOf(pt.v)}`).join(' ')}" fill="none" stroke="#828278" stroke-width="1.3" stroke-dasharray="3,2.5"/>`:'';
+    const dbLine=dbPts.length>1?`<polyline points="${dbPts.map(pt=>`${pt.x},${yOf(pt.v)}`).join(' ')}" fill="none" stroke="#c8a820" stroke-width="1.3" stroke-dasharray="3,2.5"/>`:'';
+    const circles=xs.map((x,i)=>`<circle cx="${x}" cy="${yOf(vals[i])}" r="${i===n-1?3.2:2.6}" fill="${mainColor}"/>`).join('');
+    svg=`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none"><polygon points="${poly}" fill="${mainColor}18"/>${tymLine}${dbLine}<polyline points="${mainPts}" fill="none" stroke="${mainColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${circles}</svg>`;
+  }
+
+  const lastRaw=rawVals[n-1],firstRaw=rawVals[0];
+  const fmtDisplay=v=>isPct?`${Math.round(v*100)} %`:`${pdfFmtVal(v,decimals)} ${unit}`;
+  const fmtDeltaAbs=v=>isPct?`${Math.round(Math.abs(v)*100)} %`:`${pdfFmtVal(Math.abs(v),decimals)} ${unit}`;
+  const diffRaw=lastRaw-firstRaw;
+  const diffRounded=isPct?Math.round(diffRaw*100):Math.round(diffRaw*Math.pow(10,decimals))/Math.pow(10,decimals);
+  const noChange=diffRounded===0;
+  const better=lowerBetter?diffRaw<0:diffRaw>0;
+  const tc=noChange?'':(better?'pdf-up':'pdf-dn');
+  const arrow=noChange?'':(diffRaw>0?'▲':'▼');
+  const deltaHtml=noChange?'':`<span class="pdf-card-d ${tc}">${arrow} ${fmtDeltaAbs(diffRaw)}</span>`;
+
+  const t=tNorm?tRaw(lastRaw,tNorm):null;
+  const tBadgeHtml=t!=null?`<div class="pdf-card-t"><span class="pdf-badge-inline" style="${tBadgeStyle(t)}">T=${t}</span></div>`:'';
+
+  const gold=!noRefLines&&series.goldNow;
+  const bits=[];
+  if(!tNorm)bits.push('biometrický údaj, bez T-score');
+  if(noRefLines&&opts.note)bits.push(opts.note);
+  else if(!gold&&!tNorm&&opts.trailingNote)bits.push(opts.trailingNote);
+  const noteHtml=bits.length?`<div class="pdf-card-note">${bits.join(' · ')}</div>`:'';
+  let trophyHtml='';
+  if(gold){
+    const firstDate=series.sessions[0].date;
+    const curSince=series.perScope.current.since,allSince=series.perScope.all.since;
+    const tymTxt=curSince===firstDate?'v týmu od začátku sledování':`nad týmem od ${fmtDate(curSince,true)}`;
+    const dbTxt=curSince===firstDate?`v databázi od ${fmtDate(allSince,true)}`:`nad databází od ${fmtDate(allSince,true)}`;
+    trophyHtml=`<div class="pdf-card-trophy">🏆 nejlepší z týmu i&nbsp;z&nbsp;databáze (teď)<br>${tymTxt} · ${dbTxt}</div>`;
+  }
+
+  return`<div class="pdf-card${gold?' pdf-card-gold':''}">
+    <div class="pdf-card-lbl">${titleTxt}</div>
+    ${svg}
+    <div class="pdf-card-vals"><span class="pdf-card-v">${fmtDisplay(lastRaw)}</span>${deltaHtml}</div>
+    ${tBadgeHtml}${noteHtml}${trophyHtml}
+  </div>`;
+}
+function pdfPhysCardsHtml(p,norms){
+  const cards=[];
+  S.config.physical.filter(m=>m.active!==false).forEach(m=>{
+    if(m.id==='dosah_vyskoku'){
+      const series=pdfCardSeries(p,ss=>ss.physical?.[m.id],false);
+      cards.push(pdfCardHtml(m.label,m.unit,series,{decimals:pdfMetricDecimals(p,m.id),lowerBetter:false,color:CG,tNorm:null,trailingNote:'tady zrovna nevede'}));
+      const vysSeries=pdfCardSeries(p,ss=>calcVys(ss),false);
+      cards.push(pdfCardHtml('Výskok','cm',vysSeries,{decimals:0,lowerBetter:false,color:'#1a6e5a',tNorm:norms['vyskok']||null,trailingNote:'tady zrovna nevede'}));
+      return;
+    }
+    const series=pdfCardSeries(p,ss=>ss.physical?.[m.id],!!m.lowerBetter);
+    cards.push(pdfCardHtml(m.label,m.unit,series,{decimals:pdfMetricDecimals(p,m.id),lowerBetter:!!m.lowerBetter,color:CG,tNorm:norms[m.id]||null,trailingNote:'tady zrovna nevede'}));
+  });
+  return cards.join('');
+}
+function pdfGameCardsHtml(p,norms){
+  const attackId=activeAttackMetricId(p);
+  const cards=[];
+  S.config.game.filter(m=>m.active!==false).forEach(m=>{
+    if(m.id==='utok_pole'&&attackId!=='utok_pole')return;
+    if(m.id==='utok_cil'&&attackId!=='utok_cil')return;
+    const isAttack=m.id==='utok_cil'||m.id==='utok_pole';
+    const series=pdfCardSeries(p,ss=>gamePct(gameScore(ss.game,m.id)),false);
+    cards.push(pdfCardHtml(m.label,'',series,{
+      decimals:0,lowerBetter:false,color:'#1a4d8a',tNorm:norms[m.id]||null,isPct:true,
+      noRefLines:isAttack,
+      note:isAttack?'bez referenčních čar — appka tu má dvě varianty testu (lehčí/těžší), % mezi nimi nejde přímo srovnat':'',
+      trailingNote:'tady zrovna nevede'
+    }));
+  });
+  return cards.join('');
+}
+// ═══ Overall v čase — dvě čáry (tým/databáze) přímo v hlavičce PDF, nahrazuje starší
+// "83 / 84 dle týmu" (matoucí, zpětná vazba) jedním grafem s rovnocennými čísly. ═══
+function pdfOverallHtml(p){
+  const savedScope=S.normScope;
+  S.normScope='current';const normsCur=computeNorms();
+  S.normScope='all';const normsAll=computeNorms();
+  const rosterAll=normPlayers();
+  const maxCovered=teamMaxCovered(rosterAll,normsAll);
+  const ovAll=overallForPlayer(p,normsAll,maxCovered);
+  S.normScope=savedScope;
+
+  const dates=new Set();
+  (p.testSessions||[]).forEach(s=>dates.add(s.date));
+  realMatches().forEach(m=>{if(playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null)dates.add(m.date);});
+  const sorted=[...dates].sort();
+  if(!sorted.length)return'';
+  const rowsCur=sorted.map(d=>({date:d,score:overallAt(p,normsCur,d)?.score??null}));
+  const rowsAll=sorted.map(d=>({date:d,score:overallAt(p,normsAll,d)?.score??null}));
+  const lastCurIdx=[...rowsCur.keys()].reverse().find(i=>rowsCur[i].score!=null);
+  const lastAllIdx=[...rowsAll.keys()].reverse().find(i=>rowsAll[i].score!=null);
+  const curScore=lastCurIdx!=null?rowsCur[lastCurIdx].score:null;
+  const allScore=lastAllIdx!=null?rowsAll[lastAllIdx].score:null;
+  if(curScore==null&&allScore==null)return'';
+
+  const n=sorted.length;
+  let chartHtml='<p class="pdf-card-note">Zatím jen jedno měření — graf se ukáže od druhého.</p>';
+  const coveredIdx=sorted.map((_,i)=>i).filter(i=>rowsCur[i].score!=null||rowsAll[i].score!=null);
+  if(n>1&&coveredIdx.length>1){
+    const xs=sorted.map((_,i)=>Math.round(8+i*376/(n-1)));
+    const allVals=[...rowsCur.map(r=>r.score),...rowsAll.map(r=>r.score)].filter(v=>v!=null);
+    const vmin=Math.min(...allVals),vmax=Math.max(...allVals);
+    const yOf=v=>vmax===vmin?24:Math.round(6+(vmax-v)/(vmax-vmin)*36);
+    const curPts=rowsCur.map((r,i)=>r.score!=null?`${xs[i]},${yOf(r.score)}`:null).filter(Boolean).join(' ');
+    const allPts=rowsAll.map((r,i)=>r.score!=null?`${xs[i]},${yOf(r.score)}`:null).filter(Boolean).join(' ');
+    chartHtml=`<svg viewBox="0 0 400 50" width="100%" height="40" preserveAspectRatio="none">
+      ${curPts?`<polyline points="${curPts}" fill="none" stroke="#828278" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`:''}
+      ${allPts?`<polyline points="${allPts}" fill="none" stroke="#c8a820" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`:''}
+      ${lastCurIdx!=null?`<circle cx="${xs[lastCurIdx]}" cy="${yOf(rowsCur[lastCurIdx].score)}" r="3.6" fill="#828278"/>`:''}
+      ${lastAllIdx!=null?`<circle cx="${xs[lastAllIdx]}" cy="${yOf(rowsAll[lastAllIdx].score)}" r="3.6" fill="#c8a820"/>`:''}
+    </svg>`;
+  }
+  const legendHtml=`<div class="pdf-ov-legend">
+    ${curScore!=null?`<div class="pdf-ov-num"><span class="pdf-dotlg" style="background:#828278"></span><span style="color:#666">${curScore}</span><span class="pdf-ov-numlbl">👥 tým</span></div>`:''}
+    ${allScore!=null?`<div class="pdf-ov-num"><span class="pdf-dotlg" style="background:#c8a820"></span><span style="color:#a08000">${allScore}</span><span class="pdf-ov-numlbl">🗃 databáze</span></div>`:''}
+  </div>`;
+
+  const blocks=[];
+  if(ovAll.physAvg!=null)blocks.push({label:'Fyzické',w:OVERALL_W_PHYS,score:overallDisplay(ovAll.physAvg),color:'#4a9ee8'});
+  if(ovAll.gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(ovAll.gameAvg),color:CGREEN});
+  if(ovAll.matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(ovAll.matchAvg),color:CACC});
+  const wSum=blocks.reduce((s,b)=>s+b.w,0);
+  const barHtml=blocks.length?`<div class="pdf-ov-bar-row"><span class="pdf-ov-bar-tag">Rozpad<br>🗃 dle&nbsp;dat.:</span><div class="pdf-ov-bar">${blocks.map(b=>`<div style="width:${(b.w/wSum*100).toFixed(1)}%;background:${b.color}22;border-bottom:3px solid ${b.color};color:${b.color}"><span>${b.label}</span><span style="opacity:.8">${b.score}</span></div>`).join('')}</div></div>`:'';
+  const gapBadge=matchGapBadge(ovAll);
+  const gapHtml=gapBadge?`<div class="pdf-ov-gap">${gapBadge.icon} ${gapBadge.title}</div>`:'';
+
+  return`<div class="pdf-ovbox">
+    <div style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:7px">Overall v čase</div>
+    <div class="pdf-ov-row"><div class="pdf-ov-chart">${chartHtml}</div>${legendHtml}</div>
+    ${barHtml}${gapHtml}
+  </div>`;
+}
+// ═══ Zápasy — nová stránka v PDF (Kolo 5). Stejná data/výpočty jako appčin tab 📋 Zápas
+// (buildZapasTab) — jen přenesené do PDF jako SVG karty místo Chart.js canvasů, ať jsou
+// vizuálně stejné jako zbytek nového PDF. Sekce se v PDF vůbec nezobrazí, pokud hráčka
+// nemá žádný zápasový záznam (ať dokument nekončí prázdnou kartou).
+function pdfBarSvg(pts){
+  const vals=pts.map(pt=>pt.v);
+  const vmax=Math.max(...vals,0),vmin=Math.min(...vals,0);
+  const span=(vmax-vmin)||1;
+  const n=pts.length;
+  const slot=184/n;
+  const barW=Math.min(20,slot*0.6);
+  const zeroY=8+(vmax/span)*46;
+  const bars=pts.map((pt,i)=>{
+    const x=8+i*slot+(slot-barW)/2;
+    const h=Math.max(2,Math.abs(pt.v)/span*46);
+    const y=pt.v>=0?zeroY-h:zeroY;
+    const color=pt.v>0?CG:(pt.v<0?'#a04030':'#828278');
+    return`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${color}"/>`;
+  }).join('');
+  return`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none">${bars}<line x1="8" y1="${zeroY.toFixed(1)}" x2="192" y2="${zeroY.toFixed(1)}" stroke="#e8e8e8" stroke-width="1"/></svg>`;
+}
+function pdfLinePctSvg(pts){
+  const pctVals=pts.map(pt=>recvPct(pt.v));
+  const n=pctVals.length;
+  const xs=n>1?pctVals.map((_,i)=>Math.round(8+i*184/(n-1))):[100];
+  const vmin=Math.min(...pctVals),vmax=Math.max(...pctVals);
+  const yOf=v=>vmax===vmin?31:Math.round(8+(vmax-v)/(vmax-vmin)*46);
+  if(n<2)return`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none"><circle cx="100" cy="${yOf(pctVals[0])}" r="3.6" fill="#1a4d8a"/></svg>`;
+  const mainPts=xs.map((x,i)=>`${x},${yOf(pctVals[i])}`).join(' ');
+  const poly=`${mainPts} ${xs[n-1]},60 ${xs[0]},60`;
+  const circles=xs.map((x,i)=>`<circle cx="${x}" cy="${yOf(pctVals[i])}" r="${i===n-1?3.2:2.6}" fill="#1a4d8a"/>`).join('');
+  return`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none"><polygon points="${poly}" fill="#1a4d8a18"/><polyline points="${mainPts}" fill="none" stroke="#1a4d8a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${circles}</svg>`;
+}
+function pdfZapasyHtml(p){
+  const matches=(S.matches||[]).filter(m=>m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
+  if(!matches.length)return'';
+  const allActions=matches.flatMap(m=>m.sets.flatMap(s=>s.actions.filter(a=>a.pid===p.id)));
+  const totalBody=allActions.filter(a=>a.type==='body').reduce((s,a)=>s+a.value,0);
+  const recvVals=allActions.filter(a=>a.type==='prijem').map(a=>a.value);
+  const recvAvg=recvVals.length?(recvVals.reduce((s,v)=>s+v,0)/recvVals.length):null;
+  const sortedM=matches.slice().sort((a,b)=>a.date.localeCompare(b.date));
+  const bodyPts=sortedM.map(m=>({date:m.date,v:m.sets.flatMap(s=>s.actions).filter(a=>a.pid===p.id&&a.type==='body').reduce((s,a)=>s+a.value,0)}));
+  const recvPts=sortedM.map(m=>{
+    const vs=m.sets.flatMap(s=>s.actions).filter(a=>a.pid===p.id&&a.type==='prijem').map(a=>a.value);
+    return vs.length?{date:m.date,v:Math.round(vs.reduce((s,v)=>s+v,0)/vs.length*10)/10}:null;
+  }).filter(Boolean);
+
+  const statBoxes=`<div class="pdf-cardgrid2">
+    <div class="pdf-statbox"><div class="pdf-statbox-lbl">Celkové body</div><div class="pdf-statbox-v" style="color:${totalBody>=0?CG:'#c0392b'}">${totalBody>0?'+':''}${totalBody}</div><div class="pdf-statbox-sub">${matches.length} zápasů · ${allActions.filter(a=>a.type==='body').length} bodovaných akcí</div></div>
+    ${recvAvg!=null?`<div class="pdf-statbox"><div class="pdf-statbox-lbl">Průměr příjem</div><div class="pdf-statbox-v" style="color:#1a4d8a">${recvPct(recvAvg)}&nbsp;%</div><div class="pdf-statbox-sub">${recvVals.length} hodnocení</div></div>`:'<div class="pdf-statbox"><div class="pdf-statbox-lbl">Příjem</div><p class="pdf-card-note">Žádná data</p></div>'}
+  </div>`;
+
+  const charts=(bodyPts.length>1||recvPts.length>1)?`<div class="pdf-cardgrid2" style="margin-top:10px">
+    ${bodyPts.length>1?`<div class="pdf-card"><div class="pdf-card-lbl">Body — vývoj v čase</div>${pdfBarSvg(bodyPts)}<div class="pdf-card-note" style="display:flex;justify-content:space-between">${'<span>'+fmtDate(bodyPts[0].date,true)+'</span><span>'+fmtDate(bodyPts[bodyPts.length-1].date,true)+'</span>'}</div></div>`:''}
+    ${recvPts.length>1?`<div class="pdf-card"><div class="pdf-card-lbl">Příjem — vývoj v čase (%)</div>${pdfLinePctSvg(recvPts)}<div class="pdf-card-note" style="display:flex;justify-content:space-between">${'<span>'+fmtDate(recvPts[0].date,true)+'</span><span>'+fmtDate(recvPts[recvPts.length-1].date,true)+'</span>'}</div></div>`:''}
+  </div>`:'';
+
+  return`<div class="pdf-sec pdf-sec-flow">
+    <h2>Zápasy</h2>
+    ${statBoxes}${charts}
+  </div>`;
+}
+
 function exportPDF(){
   const p=gP();if(!p)return;
   const sessions=p.testSessions||[];
   if(!sessions.length){toast("Hráčka nemá žádné testy","err");return;}
   const norms=activeNorms();
-  const s=lS(p);
-  const first=sessions[0];
 
-  // BADGES
+  // BADGES (beze změny)
   const badgesHtml=p.badges.map(id=>{
     const b=S.config.badges.find(x=>x.id===id);
     if(!b)return'';
     return`<span class="pdf-badge-inline" style="background:${b.color}33;border:1.5px solid ${b.color};color:${b.color}">${b.icon} ${b.label}</span>`;
   }).join('')||'<span style="color:#aaa">–</span>';
 
-  // PHYSICAL TABLE
-  const physRows=S.config.physical.filter(m=>m.active!==false).map(m=>{
-    if(m.id==='dosah_vyskoku'){
-      const vals=sessions.map(ss=>calcVys(ss)).filter(v=>v!=null);
-      if(!vals.length)return`<tr><td>Výskok (dopočítaný)</td><td colspan="3" style="color:#aaa">Bez dat</td></tr>`;
-      const diff=Math.round((vals[vals.length-1]-vals[0])*10)/10;
-      const tc=diff>0?'pdf-up':diff<0?'pdf-dn':'';
-      const t=tRaw(vals[vals.length-1],norms['vyskok']);
-      return`<tr><td>Výskok</td><td>${vals[0]} cm</td><td><b>${vals[vals.length-1]} cm</b></td><td class="${tc}">${diff>0?'+':''}${diff} cm</td><td>${t!=null?`<span class="pdf-badge-inline" style="${tBadgeStyle(t)}">T=${t}</span>`:''}</td></tr>`;
-    }
-    const vals=sessions.map(ss=>ss.physical?.[m.id]).filter(v=>v!=null);
-    if(!vals.length)return`<tr><td>${m.label}</td><td colspan="4" style="color:#aaa">Bez dat</td></tr>`;
-    const diff=Math.round((vals[vals.length-1]-vals[0])*100)/100;
-    const better=m.lowerBetter?diff<0:diff>0;
-    const tc=diff===0?'':better?'pdf-up':'pdf-dn';
-    const t=tRaw(vals[vals.length-1],norms[m.id]);
-    return`<tr><td>${m.label}</td><td>${vals[0]} ${m.unit}</td><td><b>${vals[vals.length-1]} ${m.unit}</b></td><td class="${tc}">${diff>0?'+':''}${diff} ${m.unit}</td><td>${t!=null?`<span class="pdf-badge-inline" style="${tBadgeStyle(t)}">T=${t}</span>`:''}</td></tr>`;
-  }).join('');
-
-  // GAME TABLE
-  const gameRows=S.config.game.filter(m=>m.active!==false).map(m=>{
-    const vals=sessions.map(ss=>{const gs=gameScore(ss.game,m.id);const pct=gamePct(gs);return pct!=null?{pct,gs}:null;}).filter(Boolean);
-    if(!vals.length)return`<tr><td>${m.label}</td><td colspan="4" style="color:#aaa">Bez dat</td></tr>`;
-    const f=vals[0],l=vals[vals.length-1];
-    const diffP=Math.round((l.pct-f.pct)*100);
-    const tc=diffP===0?'':diffP>0?'pdf-up':'pdf-dn';
-    const t=tRaw(l.pct,norms[m.id]);
-    return`<tr><td>${m.label}</td><td><b>${Math.round(f.pct*100)}%</b> <span style="font-size:0.75em;color:#888">${f.gs.score}/${f.gs.attempts}</span></td><td><b>${Math.round(l.pct*100)}%</b> <span style="font-size:0.75em;color:#888">${l.gs.score}/${l.gs.attempts}</span></td><td class="${tc}">${diffP>0?'+':''}${diffP}%</td><td>${t!=null?`<span class="pdf-badge-inline" style="${tBadgeStyle(t)}">T=${t}</span>`:''}</td></tr>`;
-  }).join('');
-
-  // MILESTONES
+  // MILESTONES (beze změny)
   const milHtml=S.config.milestones.filter(m=>m.active!==false).map(m=>{
     const done=!!p.milestones?.[m.id];const dt=p.milestones?.[m.id]||'';
     return`<div class="pdf-mil-row"><div class="pdf-dot" style="background:${done?CG:'none'};border:2px solid ${done?CG:'#ccc'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem">${done?'✓':''}</div><div style="flex:1">${m.label}</div>${done?`<div style="font-size:0.73rem;color:#666">${fmtDate(dt)}</div>`:''}</div>`;
@@ -2166,6 +2453,13 @@ function exportPDF(){
   const dateRange=sessions.length>1?`${fmtDate(sessions[0].date)} – ${fmtDate(sessions[sessions.length-1].date)}`:fmtDate(sessions[0].date);
   const normInfo=S.lockedNorms?`Uzamčená norma ${S.lockedNorms.ts}`:`Dynamická norma · ${S.normScope==="current"?"aktuální tým":"celá databáze"} (${normPlayers().length} hráček)`;
   const printDate=today();
+  const firstName=p.name.split(' ')[0];
+  const legendHtml=`<div class="pdf-legend">Čárkované čáry v grafu = nejlepší z týmu <span style="color:#828278">┈┈</span> / nejlepší v celé databázi <span style="color:#c8a820">┈┈</span> (vždy jiná hráčka). Zlatý rámeček navíc = ${firstName} teď vede v obojím.</div>`;
+
+  const overallHtml=pdfOverallHtml(p);
+  const physCards=pdfPhysCardsHtml(p,norms);
+  const gameCards=pdfGameCardsHtml(p,norms);
+  const zapasyHtml=pdfZapasyHtml(p);
 
   const html=`<div class="pdf-wrap" id="pdfOverlay">
     <div class="pdf-doc" id="pdfContent">
@@ -2178,24 +2472,21 @@ function exportPDF(){
       </div>
 
       <div class="pdf-sec">
-        <h2>Odznaky</h2>
         <div>${badgesHtml}</div>
       </div>
 
-      <div class="pdf-sec">
-        <h2>Fyzické testy — přehled vývoje</h2>
-        <table class="pdf-tbl">
-          <thead><tr><th>Metrika</th><th>První testování</th><th>Poslední testování</th><th>Změna</th><th>T-score</th></tr></thead>
-          <tbody>${physRows||'<tr><td colspan="5" style="color:#aaa">Bez dat</td></tr>'}</tbody>
-        </table>
+      ${overallHtml?`<div class="pdf-sec">${overallHtml}</div>`:''}
+
+      <div class="pdf-sec pdf-sec-flow">
+        <h2>Fyzické testy</h2>
+        ${legendHtml}
+        <div class="pdf-cardgrid">${physCards}</div>
       </div>
 
-      <div class="pdf-sec">
-        <h2>Herní testy — přehled vývoje</h2>
-        <table class="pdf-tbl">
-          <thead><tr><th>Metrika</th><th>První testování</th><th>Poslední testování</th><th>Změna</th><th>T-score</th></tr></thead>
-          <tbody>${gameRows||'<tr><td colspan="5" style="color:#aaa">Bez dat</td></tr>'}</tbody>
-        </table>
+      <div class="pdf-sec pdf-sec-flow">
+        <h2>Herní testy</h2>
+        ${legendHtml}
+        <div class="pdf-cardgrid">${gameCards}</div>
       </div>
 
       <div class="pdf-sec">
@@ -2203,22 +2494,8 @@ function exportPDF(){
         ${milHtml||'<p style="color:#aaa;font-size:0.81rem">Žádné milníky</p>'}
       </div>
 
-      <div class="pdf-sec">
-        <h2>Historie testování</h2>
-        <table class="pdf-tbl">
-          <thead><tr><th>Datum</th>${S.config.physical.filter(m=>m.active!==false&&m.id!=='dosah_vyskoku').map(m=>`<th>${m.label.split(' ')[0]}</th>`).join('')}<th>Výskok</th>${S.config.game.filter(m=>m.active!==false).map(m=>`<th>${m.label.split(' ')[0]}</th>`).join('')}</tr></thead>
-          <tbody>${sessions.map(ss=>`<tr><td>${fmtDate(ss.date)}</td>${S.config.physical.filter(m=>m.active!==false&&m.id!=='dosah_vyskoku').map(m=>`<td>${ss.physical?.[m.id]!=null?ss.physical[m.id]+' '+m.unit:'–'}</td>`).join('')}<td>${calcVys(ss)!=null?calcVys(ss)+' cm':'–'}</td>${S.config.game.filter(m=>m.active!==false).map(m=>{const gs=gameScore(ss.game,m.id);return`<td>${gs?gs.score+'/'+gs.attempts:'–'}</td>`;}).join('')}</tr>`).join('')}</tbody>
-        </table>
-      </div>
+      ${zapasyHtml}
 
-      <div class="pdf-sec" id="pdfTop5Section">
-        <h2>Silné stránky — Top 5 metrik (vs. průměr týmu)</h2>
-        <div id="pdfTop5Container"></div>
-      </div>
-      <div class="pdf-sec" id="pdfChartsSection">
-        <h2>Grafy vývoje</h2>
-        <div id="pdfChartsGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px"></div>
-      </div>
       <div class="pdf-actions">
         <button class="btn btn-gray" onclick="document.getElementById('pdfOverlay').remove()">✕ Zavřít</button>
         <button class="btn btn-p" onclick="printPDF()">🖨 Tisknout / Uložit jako PDF</button>
@@ -2229,8 +2506,6 @@ function exportPDF(){
   const div=document.createElement('div');
   div.innerHTML=html;
   document.body.appendChild(div.firstElementChild);
-  // Render charts after DOM is attached
-  setTimeout(()=>renderPDFCharts(p,sessions),80);
 }
 
 function printPDF(){
@@ -2267,103 +2542,9 @@ function printPDF(){
   setTimeout(doPrint,800);
 }
 
-function renderPDFTop5(p){
-  const container=document.getElementById('pdfTop5Container');
-  if(!container)return;
-  const norms=activeNorms();
-  const s=lS(p);
-  if(!s){container.innerHTML='<p style="color:#aaa;font-size:0.81rem">Žádný test</p>';return;}
-  // Collect all T-scores
-  const metrics=[];
-  S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=='dosah_vyskoku').forEach(m=>{
-    const val=s.physical?.[m.id];const t=tRaw(val,norms[m.id]);
-    if(t!=null)metrics.push({label:m.label,t,val:val+' '+m.unit,norm:norms[m.id]});
-  });
-  const vysVal=calcVys(s);
-  const tVys=tRaw(vysVal,norms['vyskok']);
-  if(tVys!=null)metrics.push({label:'Výskok',t:tVys,val:vysVal+' cm',norm:norms['vyskok']});
-  S.config.game.filter(m=>m.active!==false).forEach(m=>{
-    const gs=gameScore(s.game,m.id);const pct=gamePct(gs);const t=tRaw(pct,norms[m.id]);
-    if(t!=null)metrics.push({label:m.label,t,val:gs?Math.round(pct*100)+'%':'–',norm:norms[m.id]});
-  });
-  if(!metrics.length){container.innerHTML='<p style="color:#aaa;font-size:0.81rem">Nedostatek dat pro T-score</p>';return;}
-  metrics.sort((a,b)=>b.t-a.t);
-  const top5=metrics.slice(0,5);
-  // Bar chart comparing player T vs 50 (team average)
-  const html=top5.map(m=>{
-    const pct=Math.max(0,Math.min(100,((Math.max(20,Math.min(80,m.t))-20)/60)*100));
-    const color=m.t>=75?'#c8a820':m.t>=60?CG:m.t>=45?'#3a7a3a':m.t>=30?'#a05000':'#8b2500';
-    const avgPct=((50-20)/60*100); // T=50 mapped to 0-100
-    return`<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:3px">
-        <span>${m.label}</span>
-        <span style="color:${color};font-weight:700">${m.val} &nbsp; T=${m.t}</span>
-      </div>
-      <div style="background:#eee;border-radius:6px;height:18px;position:relative;overflow:hidden">
-        <!-- team average marker -->
-        <div style="position:absolute;left:${avgPct}%;top:0;bottom:0;width:2px;background:#999;z-index:2"></div>
-        <!-- player bar -->
-        <div style="width:${pct}%;height:100%;background:${color}33;border-right:3px solid ${color};border-radius:6px;transition:width .4s;position:relative;z-index:1"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:#999;margin-top:2px"><span>0</span><span>↑ průměr týmu (T=50)</span><span>100</span></div>
-    </div>`;
-  }).join('');
-  container.innerHTML=html;
-}
-
-function renderPDFCharts(p,sessions){
-  renderPDFTop5(p);
-  const grid=document.getElementById('pdfChartsGrid');
-  if(!grid)return;
-  const chartDefs=[];
-  // Physical metrics with graphs
-  S.config.physical.filter(m=>m.active!==false&&m.showGraph!==false&&m.id!=='dosah_vyskoku').forEach(m=>{
-    const vals=sessions.filter(s=>s.physical?.[m.id]!=null);
-    if(vals.length<2)return;
-    chartDefs.push({label:m.label+' ('+m.unit+')',labels:vals.map(s=>fmtDate(s.date,true)),data:vals.map(s=>s.physical[m.id]),color:CG,reverse:!!m.lowerBetter,unit:m.unit});
-  });
-  // Výskok
-  const vysVals=sessions.filter(s=>calcVys(s)!=null);
-  if(vysVals.length>=2)chartDefs.push({label:'Výskok (cm)',labels:vysVals.map(s=>fmtDate(s.date,true)),data:vysVals.map(s=>calcVys(s)),color:'#1a6e5a',reverse:false,unit:'cm'});
-  // Game metrics
-  S.config.game.filter(m=>m.active!==false).forEach(m=>{
-    const vals=sessions.filter(s=>gamePct(gameScore(s.game,m.id))!=null);
-    if(vals.length<2)return;
-    chartDefs.push({label:m.label+' (%)',labels:vals.map(s=>fmtDate(s.date,true)),data:vals.map(s=>Math.round(gamePct(gameScore(s.game,m.id))*100)),color:'#1a4d8a',ymax:100,unit:'%'});
-  });
-  if(!chartDefs.length){
-    grid.innerHTML='<p style="color:#aaa;font-size:0.81rem;grid-column:1/-1">Alespoň 2 testování jsou potřeba pro zobrazení grafů.</p>';
-    return;
-  }
-  chartDefs.forEach((def,ci)=>{
-    const wrap=document.createElement('div');
-    wrap.className='pdf-chart-box';wrap.style.cssText='background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:10px 10px 4px;break-inside:avoid';
-    wrap.innerHTML=`<h3>${def.label}</h3><canvas id="pdfC_${ci}" style="display:block;width:100%;height:130px"></canvas>`;
-    grid.appendChild(wrap);
-    const cv=document.getElementById('pdfC_'+ci);
-    const minV=Math.min(...def.data);const maxV=Math.max(...def.data);
-    const pad=(maxV-minV)*0.15||1;
-    new Chart(cv,{type:'line',data:{labels:def.labels,datasets:[{
-      data:def.data,
-      borderColor:def.color,
-      backgroundColor:def.color+'22',
-      tension:0.35,pointRadius:5,pointBackgroundColor:def.color,
-      fill:true,borderWidth:2.5,
-      pointStyle:'circle',
-    }]},options:{responsive:false,maintainAspectRatio:false,
-      animation:{onComplete:function(){try{cv.dataset.url=cv.toDataURL('image/png');}catch(e){}}},
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+roundN(ctx.parsed.y)+(def.ymax?'%':'')}}},
-      scales:{
-        x:{grid:{color:'#e8e8e8'},ticks:{color:'#666',font:{size:10}}},
-        y:{grid:{color:'#e8e8e8'},ticks:{color:'#666',font:{size:10}},
-          reverse:def.reverse||false,
-          min:def.ymax?0:(def.reverse?minV-pad:minV-pad),
-          max:def.ymax?def.ymax:(def.reverse?maxV+pad:maxV+pad),
-        }
-      }
-    }});
-  });
-}
+// Pozn. (Kolo 5): dřívější renderPDFTop5()/renderPDFCharts() (Top 5 T-skóre + samostatná
+// mřížka Chart.js grafů) appka zrušila — nový PDF v2 výš (pdfPhysCardsHtml/pdfGameCardsHtml)
+// ukazuje graf u KAŽDÉ karty rovnou, takže samostatná sekce grafů byla duplicitní.
 
 // ══════════════════════════════════════════════
 // ARCHIVE
