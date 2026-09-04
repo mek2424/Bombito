@@ -2410,16 +2410,49 @@ function archSelectAll(val){
   });
 }
 
+// Kolo 36 (úkol #47): dočasně drží {name,ids} rozpracovaného uzavření sezóny mezi
+// měkkým varováním u malého počtu hráček (confirmSmallArchive) a samotným zápisem
+// (doArchiveConfirmed) — ať se hodnoty z formuláře nemusí protahovat přes onclick
+// atributy (název sezóny je volný text uživatele, mohl by obsahovat uvozovky).
+let _pendingArchive=null;
 function doArchive(){
   const name=document.getElementById('archSeasonName')?.value.trim()||'Archiv';
   const toArchive=getActiveP().filter(p=>document.getElementById('arch_'+p.id)?.checked);
   if(!toArchive.length){toast("Nevybral jsi žádnou hráčku k archivaci","err");return;}
+  // Měkká pojistka: uzavření sezóny jen s hrstkou hráček bývá buď zapomenuté
+  // zaškrtnutí, nebo přesně situace (viz restorePlayer výše), po které v Archivu
+  // vznikaly matoucí podobné záznamy. Nic neblokuje, jen se přeptá.
+  if(toArchive.length<=2){
+    _pendingArchive={name,ids:toArchive.map(p=>p.id)};
+    confirmSmallArchive(toArchive.length);
+    return;
+  }
+  doArchiveConfirmed(name,toArchive.map(p=>p.id));
+}
+function confirmSmallArchive(n){
+  openModal(`<div style="text-align:center;padding:8px 0">
+    <div style="font-size:2rem;margin-bottom:10px">🤔</div>
+    <h2 style="margin-bottom:8px">Uzavřít sezónu jen s ${n} ${n===1?'hráčkou':'hráčkami'}?</h2>
+    <p style="color:var(--gm);font-size:0.82rem;margin-bottom:20px">Zkontroluj, že nezůstala nezaškrtnutá nějaká další aktivní hráčka, co měla do sezóny patřit taky. Výběr jde kdykoliv upravit a hráčku vrátíš zpátky tlačítkem „↩ Obnovit" v Archivu.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-o" style="min-width:100px" onclick="openArchiveWizard()">← Zkontrolovat</button>
+      <button class="btn btn-p" style="min-width:100px" onclick="confirmArchiveAnyway()">Ano, uzavřít</button>
+    </div>
+  </div>`);
+}
+function confirmArchiveAnyway(){
+  if(!_pendingArchive)return;
+  const{name,ids}=_pendingArchive;
+  _pendingArchive=null;
+  doArchiveConfirmed(name,ids);
+}
+function doArchiveConfirmed(name,ids){
   const archDate=today();
   // Save season record
   if(!S.seasons)S.seasons=[];
-  S.seasons.push({name,date:archDate,playerIds:toArchive.map(p=>p.id)});
+  S.seasons.push({name,date:archDate,playerIds:ids});
   // Mark players as archived
-  toArchive.forEach(p=>{p.archived=true;});
+  ids.forEach(id=>{const p=S.players.find(x=>x.id===id);if(p)p.archived=true;});
   // Reset active selection if archived
   if(S.activeId&&!getActiveP().find(p=>p.id===S.activeId)){
     S.activeId=getActiveP()[0]?.id||null;
@@ -2427,7 +2460,7 @@ function doArchive(){
   const newSi=S.seasons.length-1;
   S.seasons[newSi].wrapped=computeSeasonWrapped(newSi);
   save();closeModal();render();
-  toast(`Sezóna "${name}" archivována — ${toArchive.length} hráček`);
+  toast(`Sezóna "${name}" archivována — ${ids.length} hráček`);
   showSeasonWrapped(newSi);
 }
 
@@ -2470,6 +2503,16 @@ function restorePlayer(id){
   const p=S.players.find(x=>x.id===id);
   if(!p)return;
   delete p.archived;
+  // Kolo 36 (úkol #47): odebrat hráčku i ze seznamu playerIds staré sezóny, ze které
+  // se obnovuje — dřív tam zůstávala navždy zapsaná, takže když appka později vytvořila
+  // nový záznam sezóny (typicky když zbylo aktivních jen pár hráček), vypadalo to
+  // v Archivu jako matoucí duplicita — hráčka "patřila" do dvou sezón najednou.
+  // Historie staré sezóny (Wrapped shrnutí i cokoli jiného) zůstává beze změny — jen
+  // bez ní v seznamu, protože se vrátila do hry. Bez efektu na uzavřené Wrapped
+  // snímky, ty jsou natrvalo zamrazené a jména do nich mají zapsaná napevno jako text.
+  (S.seasons||[]).forEach(s=>{
+    if(s.playerIds)s.playerIds=s.playerIds.filter(pid=>pid!==id);
+  });
   save();render();toast(p.name+' obnovena do aktivního seznamu');
 }
 
