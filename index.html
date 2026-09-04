@@ -978,6 +978,42 @@ function matchGapBadge(ov){
   if(gap<=-OVERALL_GAP_THRESHOLD)return{icon:'🧪',title:`V herních testech o ${Math.round(-gap)} bodů lepší, než ukazují zápasy (z posledních ${usedN} zápasů aktuální sezóny)`};
   return null;
 }
+// Kolo 40 (úkol #55): tenký graf Overallu v čase na kartě hráčky — stejná myšlenka jako
+// pdfOverallHtml() v PDF exportu (Kolo 37), ale jen JEDNA křivka (aktuální scope tým/databáze,
+// appka scope stejně všude jinde v appce taky neukazuje obě najednou), appčiny tmavé barvy
+// místo PDF světlé stránky. Datumy = testování + zápasy, kde má hráčka body/příjem — stejná
+// logika jako v PDF. Historie je vždycky ÚPLNÁ bez ohledu na sezónní hranici (Kolo 38) —
+// overallAt() je "k datu" rodina funkcí, sezónní scoping se jí netýká, viz komentáře tam.
+function overallTimelineHtml(p,norms){
+  const dates=new Set();
+  (p.testSessions||[]).forEach(s=>dates.add(s.date));
+  realMatches().forEach(m=>{if(playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null)dates.add(m.date);});
+  const sorted=[...dates].sort();
+  if(!sorted.length)return'';
+  const rows=sorted.map(d=>({date:d,score:overallAt(p,norms,d)?.score??null}));
+  const coveredIdx=rows.map((r,i)=>i).filter(i=>rows[i].score!=null);
+  const n=sorted.length;
+  let body;
+  if(n>1&&coveredIdx.length>1){
+    const xs=sorted.map((_,i)=>Math.round(8+i*376/(n-1)));
+    const vals=coveredIdx.map(i=>rows[i].score);
+    const vmin=Math.min(...vals),vmax=Math.max(...vals);
+    const yOf=v=>vmax===vmin?24:Math.round(6+(vmax-v)/(vmax-vmin)*36);
+    const firstI=coveredIdx[0],lastI=coveredIdx[coveredIdx.length-1];
+    const pts=coveredIdx.map(i=>`${xs[i]},${yOf(rows[i].score)}`);
+    const areaPoly=`${pts.join(' ')} ${xs[lastI]},48 ${xs[firstI]},48`;
+    const circles=coveredIdx.map(i=>`<circle cx="${xs[i]}" cy="${yOf(rows[i].score)}" r="${i===lastI?3.6:2.4}" fill="${CACC}"/>`).join('');
+    body=`<svg viewBox="0 0 400 50" width="100%" height="42" preserveAspectRatio="none">
+      <polygon points="${areaPoly}" fill="${CACC}22"/>
+      <polyline points="${pts.join(' ')}" fill="none" stroke="${CACC}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      ${circles}
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--gm);margin-top:2px"><span>${fmtDate(sorted[firstI],true)}</span><span>${fmtDate(sorted[lastI],true)}</span></div>`;
+  }else{
+    body=`<p style="font-size:0.78rem;color:var(--gm);margin:4px 0 0">Zatím jen jedno měření — graf se ukáže od druhého.</p>`;
+  }
+  return`<div style="margin:10px 0 0"><div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gm);margin-bottom:4px">Overall v čase</div>${body}</div>`;
+}
 function overallBreakdownHtml(p,norms,ovMax){
   const ov=overallForPlayer(p,norms,ovMax);
   const blocks=[];
@@ -1001,6 +1037,7 @@ function overallBreakdownHtml(p,norms,ovMax){
   const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů aktuální sezóny (appka bere max ${OVERALL_MATCH_CAP}).</p>`:'';
   return`<h2>📊 Overall — rozpad</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${p.name}</p>
     <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${overallColor(ov.tAvg)}">${ov.score??'–'}</div></div>
+    ${overallTimelineHtml(p,norms)}
     ${barHtml}${matchNote}${gapHtml}
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`;
 }
@@ -2906,6 +2943,17 @@ function computeSeasonWrapped(si){
   const teamEnd=growth.length?Math.round(mean(growth.map(g=>g.endScore))):null;
   const matchInfo=seasonMatchRecords(roster,start,end);
   const realMs=realMatches().filter(m=>m.date>=start&&m.date<=end);
+  // Kolo 40 (úkol #55): tenká křivka průběhu týmového průměru Overallu napříč CELOU sezónou
+  // (ne jen start/konec, jak už appka měla) — datumy = sjednocení testování + zápasů celého
+  // rosteru uvnitř sezóny, v každém bodě průměr overallAt() přes hráčky, co k tomu datu mají
+  // nějaké skóre (stejný "graceful partial average" princip appka používá i jinde).
+  const teamDates=new Set();
+  roster.forEach(p=>(p.testSessions||[]).forEach(s=>{if(s.date>=start&&s.date<=end)teamDates.add(s.date);}));
+  realMs.forEach(m=>teamDates.add(m.date));
+  const teamTimeline=[...teamDates].sort().map(d=>{
+    const scores=roster.map(p=>overallAt(p,norms,d)?.score).filter(v=>v!=null);
+    return scores.length?{date:d,score:Math.round(mean(scores))}:null;
+  }).filter(Boolean);
   const badges=roster.map(p=>({pid:p.id,name:playerLabel(p),initials:wrInitials(p.name),badgeIds:[...(p.badges||[])]}));
   const milestones=S.config.milestones.filter(m=>m.active!==false).map(m=>{
     const completed=roster.filter(p=>{const d=p.milestones?.[m.id];return d&&d>=start&&d<=end;});
@@ -2923,7 +2971,7 @@ function computeSeasonWrapped(si){
     computedAt:today(),
     rangeStart:start,rangeEnd:end,
     rosterSize:roster.length,
-    team:{startScore:teamStart,endScore:teamEnd,delta:(teamStart!=null&&teamEnd!=null)?(teamEnd-teamStart):null},
+    team:{startScore:teamStart,endScore:teamEnd,delta:(teamStart!=null&&teamEnd!=null)?(teamEnd-teamStart):null,timeline:teamTimeline},
     mostImproved:growth.length?growth[0]:null,
     matches:{count:matchInfo.matchCount,sets:matchInfo.setCount},
     records:{physical:seasonPhysicalRecords(roster,start,end),game:seasonGameRecords(roster,start,end),matches:matchInfo.records},
@@ -2966,13 +3014,32 @@ function wcTeamGrowth(w){
     return `<div class="wr-center"><div class="wr-eyebrow">Růst týmu</div><div class="no-data">Zatím nedostatek dat na porovnání</div></div>`;
   }
   const up=w.team.delta>=0;
+  const lineColor=up?'#3db84a':'#d05555'; // = var(--gl)/var(--red), literal hex pro SVG
+  // Kolo 40: tenká křivka průběhu (ne jen start/konec) — jen když appka má aspoň 2 body,
+  // jinak by čára byla jen zbytečná rovná spojnice týchž dvou čísel co jsou nad ní vypsaná.
+  const tl=w.team.timeline||[];
+  let curveHtml='';
+  if(tl.length>1){
+    const vals=tl.map(t=>t.score);
+    const vmin=Math.min(...vals),vmax=Math.max(...vals);
+    const n=tl.length;
+    const xs=tl.map((_,i)=>Math.round(6+i*308/(n-1)));
+    const yOf=v=>vmax===vmin?18:Math.round(4+(vmax-v)/(vmax-vmin)*28);
+    const pts=xs.map((x,i)=>`${x},${yOf(vals[i])}`).join(' ');
+    const poly=`${pts} ${xs[n-1]},36 ${xs[0]},36`;
+    curveHtml=`<svg viewBox="0 0 320 36" width="100%" height="32" preserveAspectRatio="none" style="margin:2px 0 0">
+      <polygon points="${poly}" fill="${lineColor}18"/>
+      <polyline points="${pts}" fill="none" stroke="${lineColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
   return `<div class="wr-center" style="gap:10px">
     <div class="wr-eyebrow" style="color:#6aaa70">Tým rostl celou sezónu</div>
-    <div style="display:flex;align-items:baseline;gap:14px;margin:14px 0">
+    <div style="display:flex;align-items:baseline;gap:14px;margin:14px 0 0">
       <div class="wr-h1" style="font-size:3rem;color:rgba(255,255,255,.4)">${w.team.startScore}</div>
       <div style="font-size:1.5rem;color:rgba(255,255,255,.4)">→</div>
       <div class="wr-h1" style="font-size:4.5rem;color:${up?'var(--gl)':'var(--red)'}">${w.team.endScore}</div>
     </div>
+    ${curveHtml}
     <div class="wr-pill ${up?'g':'n'}" style="font-size:0.95rem;padding:6px 18px">${up?'+':''}${w.team.delta} bodů</div>
     <div style="font-size:0.78rem;color:rgba(255,255,255,.5);margin-top:8px">Průměr týmu, ${fmtDate(w.rangeStart)||'začátek'} → ${fmtDate(w.rangeEnd)}</div>
   </div>`;
