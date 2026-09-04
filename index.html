@@ -2267,6 +2267,7 @@ function pdfCardHtml(label,unit,series,opts){
 
   const gold=!noRefLines&&series.goldNow;
   const bits=[];
+  if(n<2)bits.push('Zatím jen jedno měření — graf se ukáže od druhého');
   if(!tNorm)bits.push('biometrický údaj, bez T-score');
   if(noRefLines&&opts.note)bits.push(opts.note);
   else if(!gold&&!tNorm&&opts.trailingNote)bits.push(opts.trailingNote);
