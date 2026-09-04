@@ -230,6 +230,10 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   #sidebar.open{transform:translateX(0);box-shadow:4px 0 30px rgba(0,0,0,.5)}
   #sidebarBackdrop.open{display:block}
   main{padding:13px;padding-bottom:78px}
+  /* Kolo 35: seznam hráček v postranním panelu appka nechávala zajíždět pod pevnou
+     spodní lištu Zpět/Dopředu (.nav-bottom-bar, z-index nad #sidebar) — poslední
+     hráčky tak byly vidět jen z půlky nebo vůbec. Stejná oprava jako main výše. */
+  .pl{padding-bottom:78px}
   .hact{display:none}
   .nav-bottom-bar{display:flex;position:fixed;left:0;right:0;bottom:0;height:56px;background:#090f09;border-top:1px solid var(--brd);z-index:190;align-items:stretch}
   .backup-bubble{bottom:84px;left:12px;right:12px;max-width:none}
