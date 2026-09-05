@@ -421,6 +421,25 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 /* Quadrant */
 .quad-wrap{position:relative;height:260px;width:100%;margin-top:8px}
 
+/* ═══ MINIHRY ═══ */
+.pill{border-radius:12px;padding:3px 10px;font-size:0.72rem;font-weight:700;flex-shrink:0;display:inline-block}
+.mh-eyebrow{font-size:0.66rem;letter-spacing:2px;text-transform:uppercase;color:var(--gm);margin-bottom:4px;font-weight:700}
+.mh-h1{font-weight:800;font-size:1.45rem;letter-spacing:0.3px;margin:0}
+.mh-sub{color:var(--gm);font-size:0.78rem;margin:4px 0 14px}
+.mh-qhead{font-weight:700;margin-bottom:2px;font-size:0.92rem}
+.mh-qsub{font-size:0.72rem;color:var(--gm);margin-bottom:10px}
+.mh-cond{font-size:0.64rem;color:var(--acc);letter-spacing:.5px;text-transform:uppercase;font-weight:700;margin-bottom:2px}
+.mh-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;border:1px solid var(--brd);margin-bottom:8px;cursor:pointer}
+.mh-row.picked{opacity:.45}
+.mh-row.sel{border-color:var(--acc);background:rgba(232,200,64,.06)}
+.mh-radio{width:18px;height:18px;border-radius:50%;border:2px solid #3a3a3a;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mh-row.sel .mh-radio{border-color:var(--acc)}
+.mh-radio i{width:9px;height:9px;border-radius:50%;background:var(--acc);display:none;font-style:normal}
+.mh-row.sel .mh-radio i{display:block}
+.mh-num{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+.mh-slot{flex:1;text-align:center}
+.mh-tag{color:var(--acc);font-size:0.66rem;font-weight:700}
+
 </style>
 </head>
 <body>
@@ -443,11 +462,12 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
     <button class="btn btn-o sm" onclick="openGroupTest()">⚡ Test</button>
     <button class="btn btn-a sm" onclick="openAddPlayer()">+</button>
   </div>
-  <button id="menuToggle" onclick="toggleMenu()">⋮</button>
+  <button id="menuToggle" onclick="toggleMenu()">⋮<span class="stale-dot mh-dot" style="display:none"></span></button>
   <div class="menu-dropdown" id="menuDropdown">
     <button class="btn btn-o" onclick="goHome();closeMenu()">🏠 Domů</button>
     <button class="btn btn-o" id="ovBtnM" onclick="toggleOverview();closeMenu()">📊 Přehled týmu</button>
     <button class="btn btn-o" id="cmpBtnM" onclick="toggleCmp();closeMenu()">⚖ Porovnání</button>
+    <button class="btn btn-o" onclick="openMinihry();closeMenu()">🎮 Minihry<span class="stale-dot mh-dot" style="display:none"></span></button>
     <hr class="sep-line"><div class="mnu-eyebrow">Zápasy</div>
     <button class="btn btn-p" onclick="openLiveMatch();closeMenu()">🏆 Spustit zápas</button>
     <button class="btn btn-o" onclick="openAllMatchesLibrary();closeMenu()">📚 Záznamy zápasů</button>
@@ -613,7 +633,7 @@ const DEF_BADGES=[
   {id:"kapitanka",   label:"Kapitánka",  icon:"👑", color:CACC, special:true},
 ];
 
-let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[],tournaments:[]};
+let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[],tournaments:[],minihry:[]};
 const CH={};
 let _modalSnap=null;
 
@@ -658,6 +678,7 @@ function load(){
   if(!S.normScope)S.normScope="all";
   if(!S.matches)S.matches=[];
   if(!S.tournaments)S.tournaments=[];
+  if(!S.minihry)S.minihry=[];
   // Migrate: rename "Balony zadarmo" → "Zdarma"
   if(S.config.game){S.config.game.forEach(m=>{if(m.id==='balony_zadarmo'&&m.label==='Balony zadarmo')m.label='Zdarma';});}
   // Migrate: rename "Útok v poli" → "Útok do pole (lehčí varianta)"
@@ -679,6 +700,22 @@ function load(){
       const tid='t_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
       S.tournaments.push({id:tid,name:'Turnaj '+fmtDate(group[0].date)});
       group.forEach(m=>{m.tournamentId=tid;});
+    });
+  }
+  // MINIHRY — zpětný backfill: appka po zapnutí funkce doplní minihry pro existující
+  // testování/zápasy/uzavřené turnaje, co je ještě nemají. Idempotentní (mhAdd níž
+  // kontroluje duplicity přes type+refId), takže běží klidně při každém načtení.
+  // Omezeno na aktuální sezónu — jinak by po zapnutí appka jednorázově zaplavila
+  // seznam Minihry i starými odehranými akcemi z minulých sezón.
+  {
+    const mhStart=currentSeasonStart();
+    const testDates=new Set();
+    S.players.forEach(p=>(p.testSessions||[]).forEach(s=>{if(s.date>=mhStart)testDates.add(s.date);}));
+    testDates.forEach(d=>mhAdd('test',d,d));
+    S.matches.filter(m=>m.finished!==false&&!m._autosave&&m.date>=mhStart).forEach(m=>mhAdd('zapas',m.id,m.date));
+    (S.tournaments||[]).filter(t=>t.closed).forEach(t=>{
+      const last=tournamentMatches(t.id).slice(-1)[0];
+      if(last&&last.date>=mhStart)mhAdd('turnaj',t.id,last.date);
     });
   }
 }
@@ -1453,6 +1490,7 @@ function render(){
   else if(S.activeId&&gP())renderDetail();
   else{setNavActive('home');document.getElementById("emptyState").style.display="flex";renderHome();}
   updateScopeChip();
+  updateMhDot();
   pushHistory(S.cmpMode?{type:'cmp'}:(S.activeId&&gP()?{type:'player',id:S.activeId}:{type:'home'}));
 }
 // ══════════════════════════════════════════════════════════
@@ -3314,7 +3352,8 @@ function saveGroupTest(){
     p.testSessions.sort((a,b)=>a.date.localeCompare(b.date));
     saved++;
   });
-  save();closeModal();
+  if(saved>0)mhAdd('test',date,date);
+  save();updateMhDot();closeModal();
   if(S.activeId&&gP())renderDetail();
   toast(`Uloženo pro ${saved} hráček ✓`);
 }
@@ -3879,7 +3918,8 @@ function addNewSet(){
 
 function finishMatch(){
   confirmAction('Ukončit zápas?',()=>{
-    LM.finished=true;autoAssignTournament(LM);upsertMatch(LM);save();
+    LM.finished=true;autoAssignTournament(LM);upsertMatch(LM);
+    mhAdd('zapas',LM.id,LM.date);updateMhDot();save();
     localStorage.removeItem(lmKey());
     const finished=JSON.parse(JSON.stringify(LM));LM=null;
     renderLiveContent();showMatchSummary(finished);
@@ -4507,6 +4547,20 @@ function deleteTournament(tid){
   });
 }
 
+// Uzavření turnaje (Minihry): zamkne zápasy/formu proti dalším úpravám a vygeneruje
+// turnajovou typovačku (mhAdd níž je idempotentní přes type+refId, takže i kdyby se
+// tohle omylem zavolalo dvakrát, minihra vznikne jen jednou).
+function closeTournament(tid){
+  const t=(S.tournaments||[]).find(x=>x.id===tid);if(!t)return;
+  confirmAction('Uzavřít turnaj? Zápasy a forma se pak dál nedají měnit.',()=>{
+    t.closed=true;
+    const last=tournamentMatches(tid).slice(-1)[0];
+    mhAdd('turnaj',tid,last?last.date:today());
+    save();updateMhDot();closeModal();openTournamentDetail(tid);
+    toast('Turnaj uzavřen 🏁');
+  });
+}
+
 // ---- Forma: výkon hráčky v tomhle turnaji vs. její vlastní dlouhodobý
 // průměr MIMO tenhle turnaj, v kontextu jejího vlastního obvyklého
 // kolísání mezi zápasy. Stejný princip jako "swing" u testů (Kolo 16/17,
@@ -4617,9 +4671,9 @@ function openTournamentDetail(tid,backMid){
         ${m.mode!=='prijem'?`Body: <b style="color:${totalBody>0?'var(--gl)':totalBody<0?'var(--red)':'var(--gm)'}">${totalBody>0?'+':''}${totalBody}</b>`:''}
         ${recvAvgPct!=null?` Příjem: <b>${recvAvgPct}%</b>`:''}
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:6px">
+      ${t.closed?'':`<div style="display:flex;justify-content:flex-end;margin-top:6px">
         <button class="btn btn-o sm" style="font-size:0.7rem" onclick="event.stopPropagation();removeMatchFromTournament('${m.id}','${tid}','${bm}')">↩ Vyjmout z turnaje</button>
-      </div>
+      </div>`}
     </div>`;
   }).join('');
 
@@ -4652,8 +4706,11 @@ function openTournamentDetail(tid,backMid){
   }).join(''):'<div class="no-data">Zatím žádná hráčka s odehraným zápasem v tomto turnaji</div>';
 
   const backHtml=bm?`<button class="btn btn-o sm" onclick="closeModal();showMatchSummaryById('${bm}')">← Zpět na zápas</button>`:'';
+  const closedPill=t.closed?'<span class="pill" style="background:#222;color:var(--gm);vertical-align:middle;margin-left:8px">🔒 Uzavřeno</span>':'';
+  const addMatchHtml=t.closed?'':`<button class="btn btn-o" style="width:100%;margin-top:4px" onclick="openTournamentMatchPicker('${tid}','${bm}')">+ Přidat zápas do turnaje</button>`;
+  const closeBtnHtml=t.closed?'':`<button class="btn btn-a sm" onclick="closeTournament('${tid}')">🏁 Uzavřít turnaj</button>`;
 
-  openModal(`<h2>🏟 <input id="tourNameEl" type="text" value="${t.name}" title="Klikni pro úpravu názvu" onchange="renameTournament('${tid}',this.value)" style="font-family:inherit;font-size:1.05rem;font-weight:700;border:none;border-bottom:1px dashed var(--brd);background:transparent;color:inherit;width:auto;max-width:65%"></h2>
+  openModal(`<h2>🏟 <input id="tourNameEl" type="text" value="${t.name}" title="Klikni pro úpravu názvu" onchange="renameTournament('${tid}',this.value)" style="font-family:inherit;font-size:1.05rem;font-weight:700;border:none;border-bottom:1px dashed var(--brd);background:transparent;color:inherit;width:auto;max-width:65%">${closedPill}</h2>
     <p style="color:var(--gm);font-size:0.78rem;margin-bottom:14px">${tournamentDateRange(tid)} · ${ms.length} ${ms.length===1?'zápas':ms.length<5?'zápasy':'zápasů'}</p>
     <div class="card" style="margin-bottom:12px">
       <h3>📈 Forma hráček</h3>
@@ -4663,10 +4720,11 @@ function openTournamentDetail(tid,backMid){
     <div class="card" style="margin-bottom:12px">
       <h3>Zápasy turnaje</h3>
       ${matchCards||'<div class="no-data">Žádné zápasy</div>'}
-      <button class="btn btn-o" style="width:100%;margin-top:4px" onclick="openTournamentMatchPicker('${tid}','${bm}')">+ Přidat zápas do turnaje</button>
+      ${addMatchHtml}
     </div>
     <div class="ma">
       ${backHtml}
+      ${closeBtnHtml}
       <button class="btn btn-d sm" onclick="deleteTournament('${tid}')">🗑 Zrušit turnaj</button>
       <button class="btn btn-p" onclick="closeModal()">Zavřít</button>
     </div>`);
@@ -4780,6 +4838,625 @@ function closeModalConfirm(msg){
   const changed=_modalSnap?cur.some((v,i)=>v!==_modalSnap[i]):cur.some(v=>v!==''&&v!==false);
   if(changed)confirmAction(msg||'Zahodit rozepsané údaje?',closeModal);
   else closeModal();
+}
+
+// ══════════════════════════════════════════════════════════
+// MINIHRY — tipovací minihry pro trenérku (testování/zápas/turnaj)
+// ══════════════════════════════════════════════════════════
+// Datový model: S.minihry = [{id,type:'test'|'zapas'|'turnaj',refId,date,played,playedAt,answers}]
+// refId = datum testování / id zápasu / id turnaje — spolu s type drží dedupe (mhExists,
+// viz load() výš). Nic se dopředu nepočítá ani neukládá — predikce i odhalení se vždycky
+// počítají naživo z aktuálních dat (stejně jako zbytek appky normy/T-skóre nikdy nezamrazuje,
+// viz activeNorms), takže se minihra "nerozjede", i když si ji trenérka nechá pár dní ležet.
+
+function mhExists(type,refId){return(S.minihry||[]).some(x=>x.type===type&&x.refId===refId);}
+function mhAdd(type,refId,date){
+  if(mhExists(type,refId))return;
+  S.minihry.push({id:'mh_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),type,refId,date,played:false,playedAt:null,answers:null});
+}
+function mhHasUnplayed(){return(S.minihry||[]).some(m=>!m.played);}
+function updateMhDot(){
+  const has=mhHasUnplayed();
+  document.querySelectorAll('.mh-dot').forEach(el=>{el.style.display=has?'inline-block':'none';});
+}
+function mhSortedList(){return(S.minihry||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));}
+
+// ---- sdílené UI kousky (stejné třídy jako zbytek appky — .card/.me/.ml/.tr/.match-card…,
+// jen pár nových `mh-*` tříd pro věci, co appka dřív neměla — otázky, terčík na tip) ----
+function mhNumCircle(n,active,size){
+  size=size||26;
+  const bg=active?'rgba(232,200,64,.15)':'#16241a',bd=active?'var(--acc)':'#2a4a2a',fg=active?'var(--acc)':'#c8d0c8';
+  return`<div class="mh-num" style="width:${size}px;height:${size}px;font-size:${size>=40?'1.2rem':'0.8rem'};background:${bg};border:1.5px solid ${bd};color:${fg}">${n}</div>`;
+}
+function mhSlot(n,label,filled){
+  return`<div class="mh-slot">
+    <div class="mh-num" style="width:44px;height:44px;font-size:1.2rem;margin:0 auto 6px;${filled?'background:rgba(232,200,64,.15);border:2px solid var(--acc);color:var(--acc)':'background:transparent;border:2px dashed #333;color:#444'}">${n}</div>
+    <div style="font-size:0.72rem;color:${filled?'var(--w)':'var(--gm)'};font-weight:${filled?'600':'400'}">${label||'—'}</div>
+  </div>`;
+}
+function mhRowSelect(qkey,id,label,selected){
+  return`<div class="mh-row ${selected?'sel':''}" onclick="mhPickSingle('${qkey}','${id}')">
+    <div style="flex:1;font-size:0.85rem;font-weight:600">${label}</div>
+    <div class="mh-radio">${selected?'<i></i>':''}</div>
+  </div>`;
+}
+function mhRowTapSlot(qkey,id,label,picked){
+  return`<div class="mh-row ${picked?'picked':''}" onclick="mhPickSlot('${qkey}','${id}')">
+    <div style="flex:1;font-size:0.85rem;font-weight:600">${label}</div>
+    ${picked?'<div style="color:var(--acc);font-weight:800">✓</div>':''}
+  </div>`;
+}
+function mhDeltaHtml(kind,amount){
+  if(kind==='up')return`<span style="color:var(--gl)">▲ +${amount}</span>`;
+  if(kind==='down')return`<span style="color:var(--red)">▼ ${amount}</span>`;
+  if(kind==='same')return`<span style="color:var(--gm)">— beze změny</span>`;
+  if(kind==='new')return`<span style="color:var(--gm)">• nová</span>`;
+  return'';
+}
+function mhRankRow(pos,name,valueLabel,extraHtml,isPick){
+  return`<div class="me" style="${isPick?'background:rgba(232,200,64,.06);border-radius:8px;padding-left:6px;padding-right:6px':''}">
+    ${mhNumCircle(pos,isPick,28)}
+    <div class="ml" style="margin-left:10px">${name}${isPick?' <span class="mh-tag">· tvůj tip</span>':''}</div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-weight:800;font-size:0.88rem">${valueLabel}</div>
+      ${extraHtml?`<div style="font-size:0.66rem;margin-top:1px">${extraHtml}</div>`:''}
+    </div>
+  </div>`;
+}
+function mhRecap(label){return`<div class="card"><div style="font-size:0.78rem;color:var(--gm)">Tvůj tip: <span style="color:var(--w)">${label}</span></div></div>`;}
+function mhOutlierCard(icon,label,color,name,metricLabel,valueTxt,avgTxt,isPick){
+  return`<div class="card">
+    <div class="mh-eyebrow" style="color:${color}">${icon} ${label}</div>
+    <div style="font-weight:800;font-size:1.02rem;margin-bottom:2px">${name}${isPick?' <span class="mh-tag">· tvůj tip</span>':''}</div>
+    <div style="font-size:0.84rem;color:var(--w)">${metricLabel}: <b style="color:${color}">${valueTxt}</b> <span style="color:var(--gm)">(běžně kolem ${avgTxt})</span></div>
+  </div>`;
+}
+function mhRecordCard(name,metricLabel,valueTxt,prevTxt,isPick){
+  return`<div class="card">
+    <div class="mh-eyebrow" style="color:var(--acc)">🏅 Osobní rekord!</div>
+    <div style="font-weight:800;font-size:1.02rem;margin-bottom:2px">${name}${isPick?' <span class="mh-tag">· tvůj tip</span>':''}</div>
+    <div style="font-size:0.84rem;color:var(--w)">${metricLabel}: <b style="color:var(--acc)">${valueTxt}</b> <span style="color:var(--gm)">(dosavadní rekord: ${prevTxt})</span></div>
+  </div>`;
+}
+function mhFormaRowHtml(name,txt,cls,isPick){
+  return`<div class="me"><div class="ml">${name}${isPick?' <span class="mh-tag">· tvůj tip</span>':''}</div><span class="tr ${cls}" style="font-size:0.78rem;padding:4px 9px">${txt}</span></div>`;
+}
+function mhFmtMetricVal(entry,val){
+  if(val==null)return'–';
+  if(entry.isPct)return Math.round(val*100)+' %';
+  const dec=entry.unit==='s'?2:entry.unit==='ks'?0:1;
+  return roundN(val,dec)+(entry.unit?' '+entry.unit:'');
+}
+
+// ---- rozehraná predikce (dočasný stav, jen dokud je modál otevřený) ----
+let _mhDraft=null; // {mh,questions,answers}
+
+function mhBuildQuestions(mh){
+  if(mh.type==='test')return mhBuildTestQuestions(mh.refId);
+  if(mh.type==='zapas')return mhBuildZapasQuestions(mh.refId);
+  return mhBuildTurnajQuestions(mh.refId);
+}
+function mhOpen(id){
+  const mh=(S.minihry||[]).find(x=>x.id===id);
+  if(!mh)return;
+  if(mh.played)mhOpenReveal(mh);
+  else mhOpenPredikce(mh);
+}
+function mhOpenPredikce(mh){
+  const questions=mhBuildQuestions(mh);
+  const answers={};
+  questions.forEach(q=>{answers[q.key]=q.type==='rank3'?[null,null,null]:null;});
+  _mhDraft={mh,questions,answers};
+  openModal(mhRenderPredikce());
+}
+function mhIsAnswered(q,answers){
+  const v=answers[q.key];
+  if(q.type==='rank3')return!!(v[0]&&v[1]&&v[2]);
+  return v!=null;
+}
+function mhAllAnswered(){
+  const{questions,answers}=_mhDraft;
+  return questions.every(q=>mhIsAnswered(q,answers));
+}
+function mhLabelOf(pool,id){const o=pool.find(x=>x.id===id);return o?o.label:'';}
+function mhRenderQuestion(q,answers){
+  const condHtml=q.cond?`<div class="mh-cond">${q.cond}</div>`:'';
+  if(q.type==='rank3'){
+    const v=answers[q.key];
+    const rows=q.pool.map(o=>mhRowTapSlot(q.key,o.id,o.label,v.includes(o.id))).join('');
+    return`<div class="card">
+      ${condHtml}
+      <div class="mh-qhead">${q.title}</div>
+      ${q.sub?`<div class="mh-qsub">${q.sub}</div>`:''}
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        ${mhSlot(1,mhLabelOf(q.pool,v[0]),!!v[0])}${mhSlot(2,mhLabelOf(q.pool,v[1]),!!v[1])}${mhSlot(3,mhLabelOf(q.pool,v[2]),!!v[2])}
+      </div>
+      ${rows}
+    </div>`;
+  }
+  const sel=answers[q.key];
+  const rows=q.pool.map(o=>mhRowSelect(q.key,o.id,o.label,sel===o.id)).join('');
+  return`<div class="card">
+    ${condHtml}
+    <div class="mh-qhead">${q.title}</div>
+    ${q.sub?`<div class="mh-qsub">${q.sub}</div>`:''}
+    ${rows}
+  </div>`;
+}
+function mhRenderPredikce(){
+  const{mh,questions,answers}=_mhDraft;
+  const meta=mhEventMeta(mh);
+  const qHtml=questions.map(q=>mhRenderQuestion(q,answers)).join('');
+  const allDone=mhAllAnswered();
+  const answeredCount=questions.filter(q=>mhIsAnswered(q,answers)).length;
+  return`<div class="mh-eyebrow">🎮 Typovačka · ${meta.kind}</div>
+    <div class="mh-h1">${meta.title}</div>
+    <div class="mh-sub">${meta.sub}</div>
+    ${qHtml}
+    <div class="ma" style="justify-content:space-between">
+      <button class="btn btn-gray" onclick="closeModal()">Zahrát si jindy</button>
+      <button class="btn ${allDone?'btn-a':'btn-gray'}" style="${allDone?'':'opacity:.5'}" onclick="${allDone?'mhConfirm()':''}">Potvrdit tipy (${answeredCount}/${questions.length})</button>
+    </div>`;
+}
+function mhPickSlot(qkey,id){
+  const v=_mhDraft.answers[qkey];
+  const idx=v.indexOf(id);
+  if(idx>=0)v[idx]=null;
+  else{const empty=v.indexOf(null);if(empty>=0)v[empty]=id;}
+  openModal(mhRenderPredikce());
+}
+function mhPickSingle(qkey,id){
+  _mhDraft.answers[qkey]=(_mhDraft.answers[qkey]===id?null:id);
+  openModal(mhRenderPredikce());
+}
+function mhConfirm(){
+  if(!mhAllAnswered())return;
+  const{mh,answers}=_mhDraft;
+  mh.answers=JSON.parse(JSON.stringify(answers));
+  mh.played=true;mh.playedAt=today();
+  save();updateMhDot();
+  mhOpenReveal(mh);
+}
+function mhOpenReveal(mh){
+  if(mh.type==='test')openModal(mhRenderTestReveal(mh));
+  else if(mh.type==='zapas')openModal(mhRenderZapasReveal(mh));
+  else openModal(mhRenderTurnajReveal(mh));
+}
+function mhEventMeta(mh){
+  if(mh.type==='test'){
+    const n=mhTestParticipants(mh.refId).length;
+    return{kind:'Testování',title:'Otázky k testování',sub:`${mhTestEventLabel(mh.refId)} · ${fmtDate(mh.refId)} · ${n} ${n===1?'hráčka':n<5?'hráčky':'hráček'}`};
+  }
+  if(mh.type==='zapas'){
+    const m=(S.matches||[]).find(x=>x.id===mh.refId);
+    return{kind:'Zápas',title:'Otázky k zápasu',sub:`vs ${m?m.opponent:'?'} · ${fmtDate(mh.date)}`};
+  }
+  const t=(S.tournaments||[]).find(x=>x.id===mh.refId);
+  return{kind:'Turnaj',title:'Otázky k turnaji',sub:`🏟 ${t?t.name:'Turnaj'} · uzavřeno · ${tournamentDateRange(mh.refId)}`};
+}
+
+// ── LIST (⋮ menu → Minihry) ──
+const MH_QLABEL={top3:'pořadí',improved:'zlepšení',talent:'talent',needswork:'prostor růst',leader:'nová jednička',
+  points:'body',reception:'příjem',record:'rekord',forma:'forma'};
+function mhQuestionMetaSummary(questions){
+  if(!questions.length)return'Zatím žádné otázky';
+  const n=questions.length;
+  const countTxt=n+' '+(n===1?'otázka':n<5?'otázky':'otázek');
+  return countTxt+' · '+questions.map(q=>MH_QLABEL[q.key]||q.key).join(', ');
+}
+function mhTitleAndSub(mh){
+  if(mh.type==='test'){
+    return{icon:'📋',title:mhTestEventLabel(mh.refId),sub:mhQuestionMetaSummary(mhBuildTestQuestions(mh.refId))};
+  }
+  if(mh.type==='zapas'){
+    const m=(S.matches||[]).find(x=>x.id===mh.refId);
+    return{icon:'🏐',title:m?('vs '+m.opponent):'Zápas',sub:mhQuestionMetaSummary(mhBuildZapasQuestions(mh.refId))};
+  }
+  const t=(S.tournaments||[]).find(x=>x.id===mh.refId);
+  return{icon:'🏟',title:t?t.name:'Turnaj',sub:mhQuestionMetaSummary(mhBuildTurnajQuestions(mh.refId))};
+}
+function openMinihry(){
+  const list=mhSortedList();
+  const rows=list.map(mh=>{
+    const{icon,title,sub}=mhTitleAndSub(mh);
+    return`<div class="match-card" style="cursor:pointer;${mh.played?'opacity:.45':''}" onclick="closeModal();mhOpen('${mh.id}')">
+      <div class="match-card-head">
+        <span class="match-card-opp">${icon} ${title}</span>
+        <span class="match-card-date">${fmtDate(mh.date)}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--gm)">${sub}</div>
+    </div>`;
+  }).join('');
+  openModal(`<h2>🎮 Minihry</h2>
+    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Tipovací minihry z testování, zápasů a turnajů. Zašedlé jsi už odehrál/a.</p>
+    <div style="max-height:60vh;overflow-y:auto;margin-bottom:12px">${rows||'<div class="no-data">Zatím žádné minihry</div>'}</div>
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+}
+
+// ══════════════ TESTOVÁNÍ ══════════════
+function mhTestParticipants(date){return getActiveP().filter(p=>(p.testSessions||[]).some(s=>s.date===date));}
+function mhTestSession(p,date){return(p.testSessions||[]).find(s=>s.date===date);}
+function mhTestPrevDate(p,date){
+  const ds=(p.testSessions||[]).filter(s=>s.date<date).map(s=>s.date);
+  return ds.length?ds.sort().slice(-1)[0]:null;
+}
+function mhTestEventLabel(date){
+  const withNote=getActiveP().map(p=>mhTestSession(p,date)).find(s=>s&&s.note);
+  return withNote?withNote.note:'Hromadné testování';
+}
+function mhTestTop3Rows(date,norms){
+  return mhTestParticipants(date).map(p=>{
+    const ov=overallAt(p,norms,date);
+    if(ov?.score==null)return null;
+    const prevDate=mhTestPrevDate(p,date);
+    const prevOv=prevDate?overallAt(p,norms,prevDate):null;
+    let delta;
+    if(!prevOv||prevOv.score==null)delta={kind:'new'};
+    else{
+      const d=ov.score-prevOv.score;
+      delta=d>0?{kind:'up',amount:d}:d<0?{kind:'down',amount:-d}:{kind:'same'};
+    }
+    return{p,score:ov.score,delta};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score);
+}
+function mhTestImprovedRows(date,norms){
+  return mhTestParticipants(date).map(p=>{
+    const prevDate=mhTestPrevDate(p,date);
+    if(!prevDate)return null;
+    const ov=overallAt(p,norms,date),prevOv=overallAt(p,norms,prevDate);
+    if(ov?.score==null||prevOv?.score==null)return null;
+    return{p,score:ov.score,prevScore:prevOv.score,delta:ov.score-prevOv.score};
+  }).filter(Boolean).sort((a,b)=>b.delta-a.delta);
+}
+function tRawInverse(t,normObj){
+  if(t==null||!normObj)return null;
+  const{mu,sigma,lowerBetter}=normObj;
+  if(mu==null||!sigma||sigma===0)return mu;
+  let z=(t-50)/10;
+  if(lowerBetter)z=-z;
+  return mu+z*sigma;
+}
+// Stejná identita metrik jako overallPhysRaw/overallGameRaw (Kolo 24), jen si navíc
+// drží KTEROU metriku a její surovou hodnotu — outlier detekce potřebuje vědět,
+// KTERÁ konkrétní disciplína vyčnívá, ne jen souhrnné zprůměrované číslo.
+// Bere hráčku `p` navíc kvůli Útoku na cíl/do pole — appka je (stejně jako všude jinde,
+// viz activeAttackMetricId) čte jako JEDNU disciplínu, ne dvě, takže potřebuje vědět, na
+// které variantě hráčka zrovna je.
+function metricTScoresForCategory(p,sess,norms,category){
+  if(!sess)return[];
+  const out=[];
+  if(category==='physical'){
+    S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku").forEach(m=>{
+      const v=sess.physical?.[m.id];if(v==null)return;
+      const t=tRaw(v,norms[m.id]);if(t==null)return;
+      out.push({id:m.id,label:m.label,unit:m.unit,raw:v,t,norm:norms[m.id]});
+    });
+    const vys=calcVys(sess);
+    if(vys!=null){const t=tRaw(vys,norms["vyskok"]);if(t!=null)out.push({id:"vyskok",label:"Výskok",unit:"cm",raw:vys,t,norm:norms["vyskok"]});}
+  }else{
+    S.config.game.filter(m=>m.active!==false&&m.id!=='utok_cil'&&m.id!=='utok_pole').forEach(m=>{
+      const pct=gamePct(gameScore(sess.game,m.id));if(pct==null)return;
+      const t=tRaw(pct,norms[m.id]);if(t==null)return;
+      out.push({id:m.id,label:m.label,unit:'%',raw:pct,t,norm:norms[m.id],isPct:true});
+    });
+    const attackId=activeAttackMetricId(p);
+    const attackPct=gamePct(gameScore(sess.game,attackId));
+    if(attackPct!=null){
+      const t=tRaw(attackPct,norms[attackId]);
+      if(t!=null)out.push({id:'utok',label:'Útok',unit:'%',raw:attackPct,t,norm:norms[attackId],isPct:true});
+    }
+  }
+  return out;
+}
+// Leave-one-out: pro každou metriku porovná appka její T-skóre s průměrem T-skóre
+// VŠECH OSTATNÍCH metrik TÉ SAMÉ hráčky ve STEJNÉ kategorii (fyzické a herní se podle
+// zadání nemíchá) — "dev" = o kolik je metrika nad/pod hráččin vlastní standard.
+function playerBestDeviation(p,sess,norms,category){
+  const arr=metricTScoresForCategory(p,sess,norms,category);
+  if(arr.length<3)return null;
+  let best=null,worst=null;
+  arr.forEach((entry,i)=>{
+    const others=arr.filter((_,j)=>j!==i).map(x=>x.t);
+    const baseline=mean(others);
+    const dev=entry.t-baseline;
+    if(!best||dev>best.dev)best={entry,dev,baseline};
+    if(!worst||dev<worst.dev)worst={entry,dev,baseline};
+  });
+  return{best,worst};
+}
+const MH_OUTLIER_T=15; // práh v T-bodech (1,5 σ) pro "výrazně" nad/pod vlastním standardem
+function mhFindTalent(date,norms){
+  let win=null;
+  mhTestParticipants(date).forEach(p=>{
+    const sess=mhTestSession(p,date);
+    ['physical','game'].forEach(cat=>{
+      const bd=playerBestDeviation(p,sess,norms,cat);
+      if(bd?.best&&bd.best.dev>MH_OUTLIER_T&&(!win||bd.best.dev>win.dev))win={p,dev:bd.best.dev,entry:bd.best.entry,baseline:bd.best.baseline};
+    });
+  });
+  return win;
+}
+function mhFindNeedsWork(date,norms){
+  let win=null;
+  mhTestParticipants(date).forEach(p=>{
+    const sess=mhTestSession(p,date);
+    ['physical','game'].forEach(cat=>{
+      const bd=playerBestDeviation(p,sess,norms,cat);
+      if(bd?.worst&&bd.worst.dev<-MH_OUTLIER_T&&(!win||bd.worst.dev<win.dev))win={p,dev:bd.worst.dev,entry:bd.worst.entry,baseline:bd.worst.baseline};
+    });
+  });
+  return win;
+}
+// Fyzické (vč. dopočítaného Výskoku) + herní metriky, v tomhle pořadí appka hledá
+// změnu jedničky — kdyby jich náhodou vyšlo víc najednou, appka nabídne jen první
+// nalezenou (jednička v disciplíně je příležitostná OTÁZKA, ne samostatná minihra).
+// Útok na cíl/do pole appka sloučí do jedné "Útok" disciplíny (activeAttackMetricId) —
+// jinak by hráččin přechod na těžší variantu appka mylně přečetla jako "ztrátu jedničky".
+function mhMetricCatalog(){
+  const phys=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku")
+    .map(m=>({id:m.id,label:m.label,unit:m.unit,lowerBetter:!!m.lowerBetter,cat:'physical'}));
+  phys.push({id:'vyskok',label:'Výskok',unit:'cm',lowerBetter:false,cat:'physical'});
+  const game=S.config.game.filter(m=>m.active!==false&&m.id!=='utok_cil'&&m.id!=='utok_pole')
+    .map(m=>({id:m.id,label:m.label,unit:'%',lowerBetter:false,cat:'game'}));
+  if(S.config.game.some(m=>(m.id==='utok_cil'||m.id==='utok_pole')&&m.active!==false)){
+    game.push({id:'utok',label:'Útok',unit:'%',lowerBetter:false,cat:'game',isAttack:true});
+  }
+  return[...phys,...game];
+}
+function mhMetricValue(p,sess,metric){
+  if(!sess)return null;
+  if(metric.id==='vyskok')return calcVys(sess);
+  if(metric.cat==='physical')return sess.physical?.[metric.id];
+  const gid=metric.isAttack?activeAttackMetricId(p):metric.id;
+  const pct=gamePct(gameScore(sess.game,gid));
+  return pct==null?null:Math.round(pct*100);
+}
+// Lídryně disciplíny k danému datu — appka bere u KAŽDÉ hráčky její NEJNOVĚJŠÍ session
+// (stejná logika jako "současný stav" všude jinde v appce, viz lS/overallAt), ne osobní
+// rekord za celou historii. exclusive=true → jen session PŘED cutoff (pro "kdo vedl těsně
+// před dnešním testem"), exclusive=false → včetně cutoff (pro "kdo vede po dnešku").
+function mhLeaderAt(metric,exclusive,cutoff){
+  let best=null;
+  getActiveP().forEach(p=>{
+    const sessions=(p.testSessions||[]).filter(s=>exclusive?s.date<cutoff:s.date<=cutoff);
+    if(!sessions.length)return;
+    const sess=sessions[sessions.length-1];
+    const v=mhMetricValue(p,sess,metric);
+    if(v==null)return;
+    if(!best||(metric.lowerBetter?v<best.value:v>best.value))best={p,value:v};
+  });
+  return best;
+}
+function mhFindDisciplineChange(date){
+  const metrics=mhMetricCatalog();
+  for(const metric of metrics){
+    const prev=mhLeaderAt(metric,true,date);
+    if(!prev)continue; // appka nemá koho srovnávat (např. úplně první test týmu) — přeskočit
+    const curr=mhLeaderAt(metric,false,date);
+    if(curr&&curr.p.id!==prev.p.id)return{metric,prev,curr};
+  }
+  return null;
+}
+function mhBuildTestQuestions(date){
+  const norms=activeNorms();
+  const pool=mhTestParticipants(date).map(p=>({id:p.id,label:playerLabel(p)}));
+  const qs=[];
+  // Méně než 3 účastnice → "TOP 3" nejde ani doplnit (viz mhPickSlot), appka otázku
+  // pro tenhle test tiše vynechá — stejný princip jako u ostatních podmíněných otázek.
+  if(pool.length>=3){
+    qs.push({key:'top3',type:'rank3',title:'Kdo byla v TOP 3 podle Overallu?',
+      sub:'Pořadí podle celkového Overallu z dnešního testování.',pool});
+  }
+  const improvedRows=mhTestImprovedRows(date,norms);
+  if(improvedRows.length>=2){
+    const prevDate=mhTestPrevDate(improvedRows[0].p,date);
+    qs.push({key:'improved',type:'single',title:'Kdo se nejvíc zlepšila od minulého měření?',
+      sub:`Porovnání s testováním z ${fmtDate(prevDate)}.`,
+      pool:improvedRows.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
+  }
+  const talent=mhFindTalent(date,norms);
+  if(talent)qs.push({key:'talent',type:'single',cond:'Objeví se, jen když appka něco najde',
+    title:'U koho appka našla talent?',
+    sub:'Metrika, ve které je hráčka výrazně nad svůj vlastní obvyklý výkon (fyzické a herní se nemíchá).',
+    pool});
+  const needs=mhFindNeedsWork(date,norms);
+  if(needs)qs.push({key:'needswork',type:'single',cond:'Objeví se, jen když appka něco najde',
+    title:'Na čem je podle appky prostor růst?',
+    sub:'Metrika, ve které hráčka nejvíc zaostává za svým vlastním standardem.',
+    pool});
+  const lead=mhFindDisciplineChange(date);
+  if(lead)qs.push({key:'leader',type:'single',cond:'Objeví se, jen když appka najde změnu',
+    title:`Nová jednička – ${lead.metric.label}?`,
+    sub:'Appka zaznamenala změnu vedení v téhle disciplíně.',
+    pool:getActiveP().map(p=>({id:p.id,label:playerLabel(p)}))});
+  return qs;
+}
+function mhRenderTestReveal(mh){
+  const date=mh.refId,norms=activeNorms(),ans=mh.answers||{};
+  const top3=mhTestTop3Rows(date,norms);
+  const top3Html=top3.map((r,i)=>mhRankRow(i+1,playerLabel(r.p),String(r.score),mhDeltaHtml(r.delta.kind,r.delta.amount),(ans.top3||[]).includes(r.p.id))).join('');
+  const top3PickNames=(ans.top3||[]).filter(Boolean).map(id=>playerLabel(getActiveP().find(p=>p.id===id))).join(' · ');
+
+  const improved=mhTestImprovedRows(date,norms);
+  let improvedBlock='';
+  if(improved.length>=2){
+    const rows=improved.map((r,i)=>mhRankRow(i+1,playerLabel(r.p),`<span style="color:var(--gl)">+${r.delta}</span>`,`${r.prevScore} → ${r.score}`,ans.improved===r.p.id)).join('');
+    improvedBlock=`<div class="card"><div class="mh-qhead" style="margin-bottom:8px">Nejvíc zlepšená</div>${rows}</div>${ans.improved?mhRecap(playerLabel(getActiveP().find(p=>p.id===ans.improved))):''}`;
+  }
+
+  const talent=mhFindTalent(date,norms);
+  let talentBlock='';
+  if(talent){
+    const avgRaw=tRawInverse(talent.baseline,talent.entry.norm);
+    talentBlock=mhOutlierCard('🌟','Talent dnešního testování','var(--acc)',playerLabel(talent.p),talent.entry.label,mhFmtMetricVal(talent.entry,talent.entry.raw),mhFmtMetricVal(talent.entry,avgRaw),ans.talent===talent.p.id);
+  }
+
+  const needs=mhFindNeedsWork(date,norms);
+  let needsBlock='';
+  if(needs){
+    const avgRaw=tRawInverse(needs.baseline,needs.entry.norm);
+    needsBlock=mhOutlierCard('🌱','Prostor pro růst','var(--gl)',playerLabel(needs.p),needs.entry.label,mhFmtMetricVal(needs.entry,needs.entry.raw),mhFmtMetricVal(needs.entry,avgRaw),ans.needswork===needs.p.id);
+  }
+
+  const lead=mhFindDisciplineChange(date);
+  let leadBlock='';
+  if(lead){
+    const buildList=(cutoffExclusive)=>getActiveP().map(p=>{
+      const ss=(p.testSessions||[]).filter(s=>cutoffExclusive?s.date<date:s.date<=date);
+      if(!ss.length)return null;
+      const v=mhMetricValue(p,ss[ss.length-1],lead.metric);
+      return v==null?null:{p,v};
+    }).filter(Boolean).sort((a,b)=>lead.metric.lowerBetter?a.v-b.v:b.v-a.v);
+    const currList=buildList(false),prevList=buildList(true);
+    const prevPos={};prevList.forEach((x,i)=>{prevPos[x.p.id]=i+1;});
+    const fmtLeadVal=v=>lead.metric.cat==='game'?(v+' %'):mhFmtMetricVal({unit:lead.metric.unit},v);
+    const rows=currList.map((x,i)=>{
+      const pp=prevPos[x.p.id];
+      const note=(pp&&pp!==i+1)?`dřív ${pp}. místo`:'';
+      return mhRankRow(i+1,playerLabel(x.p),fmtLeadVal(x.v),note,ans.leader===x.p.id);
+    }).join('');
+    leadBlock=`<div class="card"><div class="mh-qhead" style="margin-bottom:8px">Nová jednička – ${lead.metric.label}</div>${rows}</div>`;
+  }
+
+  return`<div class="mh-eyebrow">🎮 Výsledek · Testování</div>
+    <div class="mh-h1">Výsledky testování</div>
+    <div class="mh-sub">${mhTestEventLabel(date)} · ${fmtDate(date)}</div>
+    <div class="card"><div class="mh-qhead" style="margin-bottom:8px">Pořadí podle Overallu</div>${top3Html}</div>
+    ${top3PickNames?mhRecap(top3PickNames):''}
+    ${improvedBlock}
+    ${talentBlock}
+    ${needsBlock}
+    ${leadBlock}
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`;
+}
+
+// ══════════════ ZÁPAS ══════════════
+function mhZapasParticipants(mid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return[];
+  const allActions=m.sets.flatMap(s=>s.actions);
+  return getActiveP().filter(p=>allActions.some(a=>a.pid===p.id));
+}
+function mhZapasPointsRows(mid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return[];
+  const allActions=m.sets.flatMap(s=>s.actions);
+  return mhZapasParticipants(mid).map(p=>{
+    const acts=allActions.filter(a=>a.pid===p.id&&a.type==='body');
+    return acts.length?{p,val:acts.reduce((s,a)=>s+a.value,0)}:null;
+  }).filter(Boolean).sort((a,b)=>b.val-a.val);
+}
+function mhZapasReceptionRows(mid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return[];
+  const allActions=m.sets.flatMap(s=>s.actions);
+  return mhZapasParticipants(mid).map(p=>{
+    const rv=allActions.filter(a=>a.pid===p.id&&a.type==='prijem').map(a=>a.value);
+    return rv.length?{p,val:recvPct(rv.reduce((s,v)=>s+v,0)/rv.length)}:null;
+  }).filter(Boolean).sort((a,b)=>b.val-a.val);
+}
+function mhZapasRecordCandidates(mid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return[];
+  const others=realMatches().filter(x=>x.id!==mid);
+  const out=[];
+  const pointsRows=mhZapasPointsRows(mid),recvRows=mhZapasReceptionRows(mid);
+  mhZapasParticipants(mid).forEach(p=>{
+    const pr=pointsRows.find(r=>r.p.id===p.id);
+    if(pr){
+      const prevVals=others.map(om=>playerMatchMetric(p,om,'body')).filter(v=>v!=null);
+      if(prevVals.length){const prevBest=Math.max(...prevVals);if(pr.val>prevBest)out.push({p,metricLabel:'Body v zápase',val:pr.val,prev:prevBest,unit:''});}
+    }
+    const rr=recvRows.find(r=>r.p.id===p.id);
+    if(rr){
+      const prevVals=others.map(om=>playerMatchMetric(p,om,'prijem')).filter(v=>v!=null);
+      if(prevVals.length){const prevBest=Math.max(...prevVals);if(rr.val>prevBest)out.push({p,metricLabel:'Příjem v zápase',val:rr.val,prev:prevBest,unit:'%'});}
+    }
+  });
+  return out;
+}
+function mhBuildZapasQuestions(mid){
+  const qs=[];
+  const pointsRows=mhZapasPointsRows(mid);
+  if(pointsRows.length)qs.push({key:'points',type:'single',title:'Kdo dala nejvíc bodů?',
+    pool:pointsRows.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
+  const recvRows=mhZapasReceptionRows(mid);
+  if(recvRows.length)qs.push({key:'reception',type:'single',title:'Kdo měla nejlepší příjem?',
+    pool:recvRows.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
+  const records=mhZapasRecordCandidates(mid);
+  if(records.length)qs.push({key:'record',type:'single',cond:'Objeví se, jen když padne',
+    title:'Padl dnes osobní rekord?',sub:'V bodech nebo v příjmu.',
+    pool:[...records.map(r=>({id:r.p.id,label:playerLabel(r.p)})),{id:'none',label:'Nikdo'}]});
+  return qs;
+}
+function mhRenderZapasReveal(mh){
+  const mid=mh.refId,ans=mh.answers||{};
+  const m=(S.matches||[]).find(x=>x.id===mid);
+  const pointsRows=mhZapasPointsRows(mid);
+  const recvRows=mhZapasReceptionRows(mid);
+  const records=mhZapasRecordCandidates(mid);
+  const pointsHtml=pointsRows.length?`<div class="card"><div class="mh-qhead" style="margin-bottom:8px">Nejvíc bodů</div>${pointsRows.map((r,i)=>mhRankRow(i+1,playerLabel(r.p),String(r.val),null,ans.points===r.p.id)).join('')}</div>`:'';
+  const recvHtml=recvRows.length?`<div class="card"><div class="mh-qhead" style="margin-bottom:8px">Nejlepší příjem</div>${recvRows.map((r,i)=>mhRankRow(i+1,playerLabel(r.p),r.val+' %',null,ans.reception===r.p.id)).join('')}</div>`:'';
+  const recordHtml=records.map(r=>mhRecordCard(playerLabel(r.p),r.metricLabel,r.val+(r.unit==='%'?' %':''),r.prev+(r.unit==='%'?' %':''),ans.record===r.p.id)).join('');
+  return`<div class="mh-eyebrow">🎮 Výsledek · Zápas</div>
+    <div class="mh-h1">Výsledky zápasu</div>
+    <div class="mh-sub">vs ${m?m.opponent:'?'} · ${fmtDate(m?m.date:mh.date)}</div>
+    ${pointsHtml}${recvHtml}${recordHtml}
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`;
+}
+
+// ══════════════ TURNAJ ══════════════
+// Globální ekvivalent lokální formaState() uvnitř openTournamentDetail — stejná
+// logika (Kolo 20: 3 stavy, rozpor mezi body/příjmem = Normál), jen jako
+// samostatná funkce pro minihry, ať se nesahá do už hotové openTournamentDetail.
+function formaStateOf(f){
+  const badges=[f.body?.badge,f.recv?.badge].filter(Boolean);
+  const up=badges.includes('up'),down=badges.includes('down');
+  if(up&&!down)return'up';
+  if(down&&!up)return'down';
+  return'normal';
+}
+const MH_FORMA_UI={up:{cls:'tu',txt:'🔥 Forma'},down:{cls:'td',txt:'❄️ Špatenka'},normal:{cls:'ts',txt:'➖ Normál'}};
+function mhTurnajPointsRows(tid){
+  const ms=tournamentMatches(tid);
+  return getActiveP().map(p=>{
+    const vals=ms.map(m=>playerMatchMetric(p,m,'body')).filter(v=>v!=null);
+    return vals.length?{p,val:vals.reduce((s,v)=>s+v,0)}:null;
+  }).filter(Boolean).sort((a,b)=>b.val-a.val);
+}
+function mhTurnajReceptionRows(tid){
+  const ms=tournamentMatches(tid);
+  return getActiveP().map(p=>{
+    const vals=ms.map(m=>playerMatchMetric(p,m,'prijem')).filter(v=>v!=null);
+    return vals.length?{p,val:Math.round(mean(vals))}:null;
+  }).filter(Boolean).sort((a,b)=>b.val-a.val);
+}
+function mhTurnajFormaRows(tid){
+  return getActiveP().map(p=>{
+    const f=computePlayerForma(p,tid);
+    return f?{p,f,state:formaStateOf(f)}:null;
+  }).filter(Boolean);
+}
+function mhBuildTurnajQuestions(tid){
+  const points=mhTurnajPointsRows(tid),recv=mhTurnajReceptionRows(tid),forma=mhTurnajFormaRows(tid);
+  const qs=[];
+  if(points.length)qs.push({key:'points',type:'single',title:'Kdo měla nejvíc bodů z turnaje?',
+    sub:'Součet bodů ze všech zápasů turnaje.',pool:points.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
+  if(recv.length)qs.push({key:'reception',type:'single',title:'Kdo měla nejlepší příjem za turnaj?',
+    pool:recv.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
+  qs.push({key:'forma',type:'single',title:'Kdo skončila v 🔥 Formě?',
+    sub:'Nadprůměrný výkon vs. vlastní standard.',
+    pool:[...forma.filter(x=>x.state==='up').map(x=>({id:x.p.id,label:playerLabel(x.p)})),{id:'none',label:'Nikdo'}]});
+  return qs;
+}
+function mhRenderTurnajReveal(mh){
+  const tid=mh.refId,ans=mh.answers||{};
+  const t=(S.tournaments||[]).find(x=>x.id===tid);
+  const points=mhTurnajPointsRows(tid),recv=mhTurnajReceptionRows(tid),forma=mhTurnajFormaRows(tid);
+  const pointsHtml=points.length?`<div class="card"><div class="mh-qhead" style="margin-bottom:8px">Nejvíc bodů za turnaj</div>${points.map((r,i)=>mhRankRow(i+1,playerLabel(r.p),String(r.val),null,ans.points===r.p.id)).join('')}</div>`:'';
+  const recvHtml=recv.length?`<div class="card"><div class="mh-qhead" style="margin-bottom:8px">Nejlepší příjem za turnaj</div>${recv.map((r,i)=>mhRankRow(i+1,playerLabel(r.p),r.val+' %',null,ans.reception===r.p.id)).join('')}</div>`:'';
+  const formaHtml=forma.length?`<div class="card"><div class="mh-qhead">Forma — všechny hráčky</div>${forma.map(x=>mhFormaRowHtml(playerLabel(x.p),MH_FORMA_UI[x.state].txt,MH_FORMA_UI[x.state].cls,ans.forma===x.p.id)).join('')}</div>`:'';
+  return`<div class="mh-eyebrow">🎮 Výsledek · Turnaj</div>
+    <div class="mh-h1">Výsledky turnaje</div>
+    <div class="mh-sub">🏟 ${t?t.name:'Turnaj'} · ${tournamentDateRange(tid)}</div>
+    ${pointsHtml}${recvHtml}${formaHtml}
+    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`;
 }
 
 load();S.activeId=null;S.cmpMode=false;loadLM();render();setTimeout(checkBackupReminder,2000);
