@@ -1220,6 +1220,22 @@ function showExportModal(json){
   // 4. Poslední záchrana: ukáž JSON v textarei pro ruční kopírování
   openModal('<h2>📋 Záloha dat</h2><p style="font-size:0.8rem;color:var(--gm);margin-bottom:10px">Zkopíruj tento text a ulož ho např. do Poznámek.</p><textarea style="width:100%;height:180px;background:#07100a;border:1px solid var(--brd);color:var(--w);font-size:0.6rem;border-radius:6px;padding:8px;font-family:monospace" readonly>'+json+'</textarea><div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>');
 }
+// Kolo 46: appka dřív před importem ukazovala jen počet hráček v souboru — snadno se
+// tak přehlédlo, že soubor je STARŠÍ než data, co appka má právě teď (typicky při
+// střídání appky mezi telefonem a počítačem). latestDataDate appka bere jako nejnovější
+// datum, co appka v datech vůbec najde (testování, zápasy, poznámky, archivace sezóny) —
+// funguje i na starší zálohy appky, appka pro to nepotřebuje žádné nové pole navíc.
+function latestDataDate(st){
+  let max=null;
+  (st.players||[]).forEach(p=>{
+    (p.testSessions||[]).forEach(s=>{if(s.date&&(!max||s.date>max))max=s.date;});
+    (p.notes||[]).forEach(n=>{if(n.date&&(!max||n.date>max))max=n.date;});
+  });
+  (st.matches||[]).forEach(m=>{if(m.date&&(!max||m.date>max))max=m.date;});
+  (st.seasons||[]).forEach(se=>{if(se.date&&(!max||se.date>max))max=se.date;});
+  return max;
+}
+let _pendingImport=null;
 function importData(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -1227,15 +1243,39 @@ function importData(e){
     try{
       const d=JSON.parse(ev.target.result);
       if(!d.players){toast("Soubor nevypadá jako záloha Bombito","err");return;}
-      confirmAction('Nahradit všechna data souborem "'+f.name+'"? Aktuální data ('+S.players.length+' hráček) budou přepsána.',()=>{
-        localStorage.setItem('bombito_v4_pred_importem',JSON.stringify(S));
-        S=d;save();load();render();
-        toast("Import úspěšný ✓ (předchozí stav zálohován lokálně)");
-      });
+      _pendingImport=d;
+      confirmImport(f.name,d);
     }catch{toast("Chyba importu — soubor není platný JSON","err");}
   };
   r.readAsText(f);
   e.target.value='';
+}
+function confirmImport(filename,d){
+  const curDate=latestDataDate(S),newDate=latestDataDate(d);
+  const curTxt=curDate?fmtDate(curDate):'žádná data';
+  const newTxt=newDate?fmtDate(newDate):'žádná data';
+  const older=curDate&&newDate&&newDate<curDate;
+  const warn=older?`<p style="color:var(--red);font-weight:600;font-size:0.82rem;margin-bottom:14px">⚠ Tenhle soubor vypadá STARŠÍ než data, co appka má teď — pravděpodobně bys přepsal novější data staršími.</p>`:'';
+  openModal(`<div style="text-align:center;padding:8px 0">
+    <div style="font-size:2rem;margin-bottom:10px">⚠️</div>
+    <h2 style="margin-bottom:8px">Nahradit všechna data souborem „${filename}"?</h2>
+    <div style="text-align:left;background:#0a140a;border:1px solid var(--brd);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.8rem">
+      <div style="margin-bottom:4px">📱 <b>V appce teď:</b> ${S.players.length} hráček, poslední data ${curTxt}</div>
+      <div>📄 <b>V souboru:</b> ${d.players.length} hráček, poslední data ${newTxt}</div>
+    </div>
+    ${warn}
+    <p style="color:var(--gm);font-size:0.82rem;margin-bottom:20px">Tuto akci nelze vrátit (appka si ale schová stav před importem, viz „Vrátit stav před posledním importem").</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-o" style="min-width:100px" onclick="closeModal()">Zpět</button>
+      <button class="btn btn-d" style="min-width:100px" onclick="doImport()">Potvrdit</button>
+    </div>
+  </div>`);
+}
+function doImport(){
+  if(!_pendingImport)return;
+  localStorage.setItem('bombito_v4_pred_importem',JSON.stringify(S));
+  S=_pendingImport;_pendingImport=null;save();load();render();closeModal();
+  toast("Import úspěšný ✓ (předchozí stav zálohován lokálně)");
 }
 function undoLastImport(){
   const backup=localStorage.getItem('bombito_v4_pred_importem');
@@ -1263,7 +1303,7 @@ function openAddPlayer(){
 }
 function addPlayer(){
   const name=document.getElementById("pName").value.trim();if(!name){toast("Zadej jméno!","err");return;}
-  const p={id:Date.now().toString(),name,birthYear:parseInt(document.getElementById("pYear").value)||2011,badges:[],milestones:{},testSessions:[]};
+  const p={id:Date.now().toString(),name,birthYear:parseInt(document.getElementById("pYear").value)||2011,badges:[],milestones:{},testSessions:[],notes:[]};
   S.players.push(p);S.activeId=p.id;S.activeTab="physical";S.cmpMode=false;
   save();closeModal();closeSidebar();render();
 }
@@ -1319,17 +1359,56 @@ function saveTest(){
   const p=gP();if(!p)return;
   const date=document.getElementById("testDate").value;
   const physical={};S.config.physical.filter(m=>m.active!==false).forEach(m=>{const v=parseFloat(document.getElementById("ph_"+m.id)?.value);if(!isNaN(v))physical[m.id]=v;});
-  const game={};S.config.game.filter(m=>m.active!==false).forEach(m=>{
+  const game={};
+  for(const m of S.config.game.filter(m=>m.active!==false)){
     const s=parseInt(document.getElementById("ga_s_"+m.id)?.value);
     const a=parseInt(document.getElementById("ga_a_"+m.id)?.value)||m.defaultMax;
-    if(!isNaN(s))game[m.id]={score:s,attempts:a};
-  });
-  if(!p.testSessions)p.testSessions=[];
-  p.testSessions=p.testSessions.filter(s=>s.date!==date);
+    if(isNaN(s))continue;
+    if(s>a){toast('„'+m.label+'": úspěšných pokusů ('+s+') nemůže být víc než celkem pokusů ('+a+')',"err");return;}
+    game[m.id]={score:s,attempts:a};
+  }
   const sessNote=document.getElementById("sessNote")?.value.trim()||null;
-  p.testSessions.push({date,physical,game,note:sessNote||undefined});
+  const payload={date,physical,game,note:sessNote||undefined};
+  const susp=suspiciousTestValues(physical);
+  if(susp.length){_pendingTest={kind:'add',payload};confirmSuspiciousTest(susp);return;}
+  commitNewTest(payload);
+}
+function commitNewTest(payload){
+  const p=gP();if(!p)return;
+  if(!p.testSessions)p.testSessions=[];
+  p.testSessions=p.testSessions.filter(s=>s.date!==payload.date);
+  p.testSessions.push(payload);
   p.testSessions.sort((a,b)=>a.date.localeCompare(b.date));
   save();closeModal();renderDetail();toast("Test uložen ✓");
+}
+// Kolo 46: appka nemá jak poznat obsahovou chybu (žádný test to nezkontroluje sám),
+// ale umí aspoň upozornit na hodnotu, co je nápadně mimo obvyklé rozmezí — typicky
+// překlep (chybějící desetinná čárka, přebytečná nula). Práh |z|>3 appka bere ze
+// stejné T-skórové škály, kterou appka jinde zobrazuje jako T 20–80 (viz Overall) —
+// tři směrodatné odchylky je appce dost neobvyklé, aby se appka radši zeptala, ne
+// aby appka rovnou blokovala zápis (může to být i skutečný, jen výjimečný výkon).
+// Vyžaduje aspoň 5 hodnot v poolu (norms[m.id].n), jinak by mu/sigma byly nespolehlivé.
+let _pendingTest=null; // {kind:'add', payload} nebo {kind:'edit', idx, data}
+function suspiciousTestValues(physical){
+  const norms=activeNorms();
+  const out=[];
+  S.config.physical.filter(m=>m.active!==false).forEach(m=>{
+    const v=physical[m.id];if(v==null)return;
+    const nm=norms[m.id];if(!nm||nm.n<5||!nm.sigma)return;
+    const z=(v-nm.mu)/nm.sigma;
+    if(Math.abs(z)>3)out.push({label:m.label,value:v,unit:m.unit,mu:nm.mu});
+  });
+  return out;
+}
+function confirmSuspiciousTest(susp){
+  const rows=susp.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--brd);font-size:0.82rem">⚠ <b>${x.label}</b>: zadáno ${x.value} ${x.unit} <span style="color:var(--gm)">(běžně kolem ${Math.round(x.mu*10)/10} ${x.unit})</span></div>`).join('');
+  openModal(`<h2>⚠ Zkontroluj hodnoty</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:10px">Appka neví, jestli je to překlep, nebo je to fakt takhle — jen chce mít jistotu, než to appka uloží.</p>${rows}<div class="ma"><button class="btn btn-o" onclick="closeModal()">← Zpět, opravím</button><button class="btn btn-p" onclick="commitPendingTest()">Uložit i tak</button></div>`);
+}
+function commitPendingTest(){
+  if(!_pendingTest)return;
+  if(_pendingTest.kind==='add')commitNewTest(_pendingTest.payload);
+  else commitEditTest(_pendingTest.idx,_pendingTest.data);
+  _pendingTest=null;
 }
 
 // ═══ MILESTONES ═══
@@ -2108,7 +2187,61 @@ function buildMil(){
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'milestones\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
     return`<div class="mi ${isA?"":"inactive"}"><div class="mck ${d&&isA?"done":""}" onclick="${isA?"toggleMil('"+m.id+"')":""}"">${d&&isA?"✓":""}</div><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}</div>${nb}<div class="md2">${d&&isA?`✓ ${fmtDate(dt)}`:'<span style="color:#2a4a2a">nesplněno</span>'}</div></div>`;
   }).join("");
-  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${done}/${act.length} splněno</h3>${rows||'<div class="no-data">Žádné milníky</div>'}</div>`;
+  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${done}/${act.length} splněno</h3>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
+}
+// Kolo 47: appka dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
+// jednoho testování (jedna poznámka na session) — appka neměla žádné volné, datované
+// poznámky k samotné hráčce (postřehy z tréninku, co appka s hráčkou probrala apod.).
+// Zobrazeno jako druhá karta hned pod Milníky, protože obojí je nečíselný/kvalitativní
+// záznam o hráčce — appka je řadí od nejnovější, žádné omezení počtu.
+function buildPlayerNotesCard(p){
+  const notes=[...(p.notes||[])].reverse();
+  const rows=notes.map(n=>`<div class="me" style="align-items:flex-start"><div class="ml"><b>${fmtDate(n.date)}</b><br><span style="font-size:0.8rem;font-weight:400;white-space:pre-wrap">${n.text}</span></div><button class="btn btn-o sm" onclick="openEditNote('${n.id}')">✎</button><button class="btn btn-d sm" onclick="deletePlayerNote('${n.id}')">✕</button></div>`).join("");
+  return`<div class="card"><h3>📝 Poznámky k hráčce</h3><button class="btn btn-o sm" style="margin-bottom:10px" onclick="openAddNote()">+ Přidat poznámku</button>${rows||'<div class="no-data">Zatím žádné poznámky</div>'}</div>`;
+}
+function openAddNote(){
+  const p=gP();if(!p)return;
+  openModal(`<h2>📝 Nová poznámka</h2>
+    <div class="fg"><label>Datum</label><input type="date" id="pnDate" value="${today()}"></div>
+    <div class="fg"><textarea id="pnText" placeholder="Např: mluvili jsme o servisu, chce zkusit float…"></textarea></div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModalConfirm()">Zrušit</button><button class="btn btn-p" onclick="saveNewNote()">Uložit</button></div>`);
+  setTimeout(()=>{snapModal();document.getElementById("pnText")?.focus();},90);
+}
+function saveNewNote(){
+  const p=gP();if(!p)return;
+  const text=document.getElementById("pnText")?.value.trim();
+  if(!text){toast("Napiš text poznámky!","err");return;}
+  const date=document.getElementById("pnDate")?.value||today();
+  if(!p.notes)p.notes=[];
+  p.notes.push({id:'n_'+Date.now(),date,text});
+  p.notes.sort((a,b)=>a.date.localeCompare(b.date));
+  save();closeModal();renderDetail();toast("Poznámka uložena ✓");
+}
+function openEditNote(id){
+  const p=gP();if(!p)return;
+  const n=p.notes?.find(x=>x.id===id);if(!n)return;
+  openModal(`<h2>✎ Upravit poznámku</h2>
+    <div class="fg"><label>Datum</label><input type="date" id="pnDate" value="${n.date}"></div>
+    <div class="fg"><textarea id="pnText">${n.text}</textarea></div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModalConfirm()">Zrušit</button><button class="btn btn-p" onclick="saveEditNote('${id}')">Uložit</button></div>`);
+  setTimeout(snapModal,90);
+}
+function saveEditNote(id){
+  const p=gP();if(!p)return;
+  const n=p.notes?.find(x=>x.id===id);if(!n)return;
+  const text=document.getElementById("pnText")?.value.trim();
+  if(!text){toast("Napiš text poznámky!","err");return;}
+  n.date=document.getElementById("pnDate")?.value||n.date;
+  n.text=text;
+  p.notes.sort((a,b)=>a.date.localeCompare(b.date));
+  save();closeModal();renderDetail();toast("Poznámka upravena ✓");
+}
+function deletePlayerNote(id){
+  confirmAction('Smazat poznámku?',()=>{
+    const p=gP();if(!p)return;
+    p.notes=(p.notes||[]).filter(x=>x.id!==id);
+    save();renderDetail();toast('Smazáno ✓');
+  });
 }
 
 // ═══ COMPARE ═══
@@ -2754,6 +2887,7 @@ function doArchiveConfirmed(name,ids){
   S.seasons[newSi].wrapped=computeSeasonWrapped(newSi);
   save();closeModal();render();
   toast(`Sezóna "${name}" archivována — ${ids.length} hráček`);
+  nudgeBackupAfterMilestone('Sezóna archivována');
   showSeasonWrapped(newSi);
 }
 
@@ -3353,6 +3487,7 @@ function copyPlayer(){
     badges:[...p.badges],
     milestones:{...p.milestones},
     testSessions:[],
+    notes:[],
   };
   S.players.push(np);S.activeId=np.id;
   save();closeModal();render();toast(`Kopie "${name}" vytvořena ✓`);
@@ -3643,17 +3778,28 @@ function drawTsTimeline(p,norms){
 // ═══════════════════════════════════════════════
 // AUTO-BACKUP REMINDER
 // ═══════════════════════════════════════════════
+function showBackupBubble(label){
+  if(document.querySelector('.backup-bubble'))return; // appka neukazuje dvě bubliny najednou
+  const banner=document.createElement('div');
+  banner.className='backup-bubble';
+  banner.innerHTML=`<span style="flex:1;min-width:180px">💾 ${label}</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout později</button>`;
+  document.body.appendChild(banner);
+}
 function checkBackupReminder(){
   const last=parseInt(localStorage.getItem('bombito_last_export')||'0');
   if(!S.players.length)return;
   const days=last?Math.floor((Date.now()-last)/86400000):null;
   const show=!last||(days>=7);
   if(!show)return;
-  const label=last?`Poslední záloha před ${days} ${days===1?'dnem':days<5?'dny':'dny'}`:'Zatím bez zálohy';
-  const banner=document.createElement('div');
-  banner.className='backup-bubble';
-  banner.innerHTML=`<span style="flex:1;min-width:180px">💾 ${label} — doporučujeme exportovat data</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout později</button>`;
-  document.body.appendChild(banner);
+  const label=(last?`Poslední záloha před ${days} ${days===1?'dnem':days<5?'dny':'dny'}`:'Zatím bez zálohy')+' — doporučujeme exportovat data';
+  showBackupBubble(label);
+}
+// Kolo 46: appka teď připomene zálohu i mimo 7denní kalendář — hned po chvíli, kdy
+// přibude hodně cenných dat najednou (uzavřený turnaj/sezóna), bez ohledu na to, kolik
+// dní od poslední zálohy uplynulo. Nenahrazuje kalendářní připomínku výš, jen ji doplňuje
+// (showBackupBubble sama zařídí, že appka nikdy neukáže obě bubliny najednou).
+function nudgeBackupAfterMilestone(reason){
+  showBackupBubble(`${reason} — dobrá chvíle na zálohu dat`);
 }
 
 
@@ -4617,6 +4763,7 @@ function closeTournament(tid){
     mhAdd('turnaj',tid,last?last.date:today());
     save();updateMhDot();closeModal();openTournamentDetail(tid);
     toast('Turnaj uzavřen 🏁');
+    nudgeBackupAfterMilestone('Turnaj uzavřen');
   });
 }
 
@@ -4855,18 +5002,30 @@ function openEditTest(idx){
 function saveEditTest(idx){
   const p=gP();if(!p)return;
   const sess=p.testSessions[idx];if(!sess)return;
-  sess.date=document.getElementById('ep_date').value;
+  const date=document.getElementById('ep_date').value;
+  const physical={...sess.physical},game={...sess.game};
   S.config.physical.filter(m=>m.active!==false).forEach(m=>{
     const v=parseFloat(document.getElementById('ep_'+m.id)?.value);
-    if(!isNaN(v))sess.physical[m.id]=v;else delete sess.physical[m.id];
+    if(!isNaN(v))physical[m.id]=v;else delete physical[m.id];
   });
-  S.config.game.filter(m=>m.active!==false).forEach(m=>{
+  for(const m of S.config.game.filter(m=>m.active!==false)){
     const s=parseInt(document.getElementById('eg_s_'+m.id)?.value);
     const a=parseInt(document.getElementById('eg_a_'+m.id)?.value)||m.defaultMax;
-    if(!isNaN(s))sess.game[m.id]={score:s,attempts:a};else delete sess.game[m.id];
-  });
+    if(isNaN(s)){delete game[m.id];continue;}
+    if(s>a){toast('„'+m.label+'": úspěšných pokusů ('+s+') nemůže být víc než celkem pokusů ('+a+')',"err");return;}
+    game[m.id]={score:s,attempts:a};
+  }
   const note=document.getElementById('ep_note')?.value.trim();
-  if(note)sess.note=note;else delete sess.note;
+  const data={date,physical,game,note};
+  const susp=suspiciousTestValues(physical);
+  if(susp.length){_pendingTest={kind:'edit',idx,data};confirmSuspiciousTest(susp);return;}
+  commitEditTest(idx,data);
+}
+function commitEditTest(idx,data){
+  const p=gP();if(!p)return;
+  const sess=p.testSessions[idx];if(!sess)return;
+  sess.date=data.date;sess.physical=data.physical;sess.game=data.game;
+  if(data.note)sess.note=data.note;else delete sess.note;
   p.testSessions.sort((a,b)=>a.date.localeCompare(b.date));
   save();closeModal();renderDetail();toast('Test upraven ✓');
 }
@@ -5562,8 +5721,8 @@ const HELP_DATA=[
  a:`V prohlížeči telefonu otevři appku a najdi v jeho menu volbu jako „Přidat na plochu" nebo „Nainstalovat appku" (na iPhonu je to v nabídce sdílení, na Androidu obvykle přímo v menu prohlížeče se třemi tečkami). Appka se pak zobrazí jako normální ikonka na ploše a otevírá se jako samostatná appka, bez adresního řádku prohlížeče.`,
  kw:"instalace ikona plocha telefon pwa install"},
 {q:`Proč appka občas vyskočí s připomínkou zálohy?`,
- a:`Appka si hlídá, kdy jsi naposledy udělal Export JSON (zálohu dat), a pokud je to buď nikdy, nebo víc než 7 dní, ukáže dole bublinu s připomínkou a tlačítky „⬇ Exportovat" a „Připomenout později". Je to proto, že appka data drží jen u tebe v prohlížeči (viz otázka o bezpečí dat výš) — bez vlastní zálohy bys je při ztrátě telefonu nebo smazání dat prohlížeče měl nenávratně pryč. Klikneš-li na kterékoli z těch dvou tlačítek, appka připomínku na dalších 7 dní ztiší, i kdyby sis nakonec zálohu nestáhla.`,
- kw:"backup bublina banner export připomínka 7 dní"},
+ a:`Appka si hlídá, kdy jsi naposledy udělal Export JSON (zálohu dat), a pokud je to buď nikdy, nebo víc než 7 dní, ukáže dole bublinu s připomínkou a tlačítky „⬇ Exportovat" a „Připomenout později". Je to proto, že appka data drží jen u tebe v prohlížeči (viz otázka o bezpečí dat výš) — bez vlastní zálohy bys je při ztrátě telefonu nebo smazání dat prohlížeče měl nenávratně pryč. Klikneš-li na kterékoli z těch dvou tlačítek, appka připomínku na dalších 7 dní ztiší, i kdyby sis nakonec zálohu nestáhla. Appka se stejnou bublinou navíc připomene i hned po uzavření turnaje nebo sezóny, bez ohledu na těch 7 dní — je to chvíle, kdy zrovna přibylo hodně cenných dat.`,
+ kw:"backup bublina banner export připomínka 7 dní turnaj sezóna"},
 {q:`Co se stane, když appku smažu z telefonu nebo vymažu data prohlížeče?`,
  a:`Všechna data (hráčky, testy, zápasy, nastavení) se nenávratně smažou spolu s appkou — appka je totiž ukládá jen lokálně u tebe (viz výš), ne nikam „do cloudu". Jediný způsob, jak se pak k datům vrátit, je mít předtím staženou zálohu přes Export JSON a tu pak načíst přes Import JSON do nově nainstalované appky.`,
  kw:"smazání appky odinstalace ztráta dat"},
@@ -5634,6 +5793,12 @@ const HELP_DATA=[
  kw:"název testování poznámka pojmenování"},
 {q:`Jaký je rozdíl mezi „fyzickým" a „herním" testem?`,
  a:`Appka mezi nimi ve formuláři nijak zvlášť nerozlišuje — jeden formulář „+ Test" (nebo „Skupinový test") appka rovnou dělí na dvě sekce, „💪 Fyzické testy" a „🎯 Herní testy", a vyplníš z obojího, kolik chceš. Rozdíl je spíš v tom, CO měří: fyzické testy jsou obecné atletické veličiny (rychlost, výbušnost, síla), herní testy jsou přímo volejbalové dovednosti měřené jako úspěšnost z pokusů (třeba kolik přihrávek z 15 trefíš na cíl). Appka je pak i odděleně počítá do Overallu jako dva různé bloky (viz blok „Overall").`},
+{q:`Proč appka po uložení testu najednou napsala „Zkontroluj hodnoty"?`,
+ a:`Appka takhle upozorní, když je zadaná fyzická hodnota hodně mimo obvyklé rozmezí (podle appčiny normy Tým/Databáze, viz blok „T-skóre a normy) — typicky to bývá překlep, třeba chybějící desetinná čárka nebo přebytečná nula. Appka nic neblokuje ani sama neopravuje, jen appka ukáže, o kterou hodnotu jde a jaký je běžný průměr, a necháš appku uložit i tak, pokud je hodnota ve skutečnosti správně (může jít i o opravdu výjimečný výkon).`,
+ kw:"podezřelá hodnota překlep varování outlier"},
+{q:`Proč appka odmítla uložit herní test s hláškou o počtu pokusů?`,
+ a:`Appka nedovolí, aby bylo zadáno víc úspěšných pokusů než celkový počet pokusů (např. 12 úspěšných z 10 pokusů) — to není otázka neobvyklé hodnoty jako u fyzických testů výš, ale rovnou logická chyba, appka proto zápis vůbec neuloží a necháš čísla opravit.`,
+ kw:"pokusy úspěšné chyba validace herní test"},
 ]},
 
 {title:"Fyzické testy — jednotlivé metriky",icon:"💪",qa:[
@@ -5762,6 +5927,11 @@ const HELP_DATA=[
  a:`Ano — kliknutím na už splněný milník appka zaškrtnutí i uložené datum zase zruší; funguje to jako přepínač tam a zpátky.`},
 {q:`Kde appka ukazuje, kolik milníků má hráčka splněno?`,
  a:`Přímo na kartě hráčky v sekci Milníků appka ukazuje poměr splněno/celkem u každého jednotlivého milníku i souhrnně za všechny.`},
+{q:`Co jsou „Poznámky k hráčce" a čím se liší od Milníků?`,
+ a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější.`,
+ kw:"poznámky hráčka deník zápisník postřehy"},
+{q:`Jak poznámku k hráčce přidám, upravím nebo smažu?`,
+ a:`V sekci Milníků na kartě hráčky klikni na „+ Přidat poznámku" — appka nabídne datum (jde změnit) a textové pole. Existující poznámku appka nechá upravit tlačítkem „✎" u ní, nebo smazat tlačítkem „✕" (appka se zeptá na potvrzení). Počet poznámek appka nijak neomezuje.`},
 ]},
 
 {title:"Odznaky",icon:"🏅",qa:[
@@ -5912,7 +6082,8 @@ const HELP_DATA=[
 {q:`Co je „Export JSON" a k čemu slouží?`,
  a:`Je to appčina záloha ÚPLNĚ VŠECH dat (hráčky, testy, zápasy, turnaje, nastavení...) do jednoho souboru, který appka umí kdykoli zase načíst zpátky (Import JSON). Na mobilu appka rovnou nabídne systémové sdílení (uložit do souborů, poslat sobě mailem...), na počítači appka soubor prostě stáhne. Je to jediná appčina záchranná síť pro data, viz blok „Co appka umí a jak s ní začít".`},
 {q:`Jak appku obnovím ze zálohy (Import JSON)?`,
- a:`V menu ⋮ → „💾 Data a zálohy" → „⬆ Importovat data (JSON)" vyber záložní soubor. Appka se před samotným importem VŽDYCKY zeptá na potvrzení, protože import KOMPLETNĚ PŘEPÍŠE všechna aktuální data appky tím, co je v souboru — appka si ale automaticky ještě před přepsáním uloží i tvůj PŮVODNÍ stav pro jistotu (viz další otázka).`},
+ a:`V menu ⋮ → „💾 Data a zálohy" → „⬆ Importovat data (JSON)" vyber záložní soubor. Appka se před samotným importem VŽDYCKY zeptá na potvrzení, protože import KOMPLETNĚ PŘEPÍŠE všechna aktuální data appky tím, co je v souboru — appka si ale automaticky ještě před přepsáním uloží i tvůj PŮVODNÍ stav pro jistotu (viz další otázka). V potvrzení appka rovnou ukáže i „poslední data" (nejnovější datum, co appka v datech najde) zvlášť pro appku teď a zvlášť pro soubor, a pokud soubor vypadá STARŠÍ než to, co appka má právě teď, appka na to zvlášť červeně upozorní — ať omylem nepřepíšeš novější data starší zálohou (typicky při střídání appky mezi telefonem a počítačem).`,
+ kw:"časový kontext datum starší novější telefon počítač"},
 {q:`Co je „Vrátit stav před posledním importem"?`,
  a:`Appka si při každém importu automaticky (bez ptaní) uloží stav appky TĚSNĚ PŘED přepsáním — tímhle tlačítkem se k němu jde vrátit, kdybys importoval omylem špatný soubor. Funguje to ale jen JEDNOU dozadu (appka drží jen ten úplně poslední stav před importem, ne celou historii) a jen do dalšího importu, který tenhle bezpečnostní záznam zase přepíše.`,
  kw:"undo import vrácení jedna úroveň"},
