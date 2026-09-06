@@ -428,7 +428,6 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .mh-sub{color:var(--gm);font-size:0.78rem;margin:4px 0 14px}
 .mh-qhead{font-weight:700;margin-bottom:2px;font-size:0.92rem}
 .mh-qsub{font-size:0.72rem;color:var(--gm);margin-bottom:10px}
-.mh-cond{font-size:0.64rem;color:var(--acc);letter-spacing:.5px;text-transform:uppercase;font-weight:700;margin-bottom:2px}
 .mh-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;border:1px solid var(--brd);margin-bottom:8px;cursor:pointer}
 .mh-row.picked{opacity:.45}
 .mh-row.sel{border-color:var(--acc);background:rgba(232,200,64,.06)}
@@ -2850,6 +2849,45 @@ function overallAt(p,norms,cutoff){
   const tAvg=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum;
   return{score:overallDisplay(tAvg),tAvg};
 }
+// Sezónně omezená sourozenecká verze pro MINIHRU (Kolo 43). overallAt()/overallMatchRawAt()
+// výš schválně NEomezují zápasy na aktuální sezónu — je to vědomé rozhodnutí z Kola 38 kvůli
+// plynulosti grafu "Overall v čase" a Wrapped napříč sezónami. Jenže to samé použité v minihře
+// (mhTestTop3Rows/mhTestImprovedRows) umí u hráčky otestované na začátku nové sezóny, ale ještě
+// PŘED jejím prvním zápasem té sezóny, tiše dopočítat Zápasy ze zápasů staré sezóny — a živá
+// karta hráčky by ve stejný okamžik žádné Zápasy neukázala (seasonRealMatches je prázdná).
+// Reálně nalezeno a rozebráno na datech uživatele (Antonie Šmejcová, srpen/září 2026) — appka
+// jí v minihře napočítala Zápasy ze 3 zápasů PŘED začátkem sezóny, zatímco její karta ve stejnou
+// chvíli by Zápasy měla úplně prázdné. Uživatel zvolil opravit to JEN pro minihru, graf a Wrapped
+// beze změny (viz komentář u overallAt výš).
+function overallMatchRawAtSeason(p,norms,cutoff){
+  const start=currentSeasonStart();
+  const types=[["body","body_zapas"],["prijem","prijem_zapas"]];
+  const vals=[];
+  types.forEach(([type,key])=>{
+    const ms=realMatches().filter(m=>m.date<=cutoff&&m.date>=start&&playerMatchMetric(p,m,type)!=null)
+      .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+    const avg=ms.length?mean(ms.map(m=>playerMatchMetric(p,m,type))):null;
+    if(avg!=null)vals.push(tRaw(avg,norms[key]));
+  });
+  return{vals,n:vals.length,total:types.length};
+}
+function overallAtSeason(p,norms,cutoff){
+  const sess=sessionAtOrBefore(p,cutoff);
+  const phys=overallPhysRaw(sess,norms);
+  const game=overallGameRaw(sess,norms);
+  const match=overallMatchRawAtSeason(p,norms,cutoff);
+  const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
+  const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
+  const matchAvg=match.n?match.vals.reduce((a,b)=>a+b,0)/match.n:null;
+  const blocks=[];
+  if(physAvg!=null)blocks.push({avg:physAvg,w:OVERALL_W_PHYS});
+  if(gameAvg!=null)blocks.push({avg:gameAvg,w:OVERALL_W_GAME});
+  if(matchAvg!=null)blocks.push({avg:matchAvg,w:OVERALL_W_MATCH});
+  if(!blocks.length)return null;
+  const wSum2=blocks.reduce((s,b)=>s+b.w,0);
+  const tAvg2=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum2;
+  return{score:overallDisplay(tAvg2),tAvg:tAvg2};
+}
 const WR_ICONS={k_test:'⏱',sprint_6m:'🏃',vyskok:'💪',hod_med:'🏋',bloky_20s:'🧱',wall_toss:'🤾',sud_vyskok:'🌀',
   balony_zadarmo:'🎁',tezke_balony:'🛡',servisy_zatezy:'🎯',prihravka_cil:'📍',utok_cil:'🏹',utok_pole:'🏹',nahravka_cil:'🤲',
   body:'🔥',prijem:'📥',count:'🗓'};
@@ -4960,12 +4998,10 @@ function mhAllAnswered(){
 }
 function mhLabelOf(pool,id){const o=pool.find(x=>x.id===id);return o?o.label:'';}
 function mhRenderQuestion(q,answers){
-  const condHtml=q.cond?`<div class="mh-cond">${q.cond}</div>`:'';
   if(q.type==='rank3'){
     const v=answers[q.key];
     const rows=q.pool.map(o=>mhRowTapSlot(q.key,o.id,o.label,v.includes(o.id))).join('');
     return`<div class="card">
-      ${condHtml}
       <div class="mh-qhead">${q.title}</div>
       ${q.sub?`<div class="mh-qsub">${q.sub}</div>`:''}
       <div style="display:flex;gap:10px;margin-bottom:14px">
@@ -4977,7 +5013,6 @@ function mhRenderQuestion(q,answers){
   const sel=answers[q.key];
   const rows=q.pool.map(o=>mhRowSelect(q.key,o.id,o.label,sel===o.id)).join('');
   return`<div class="card">
-    ${condHtml}
     <div class="mh-qhead">${q.title}</div>
     ${q.sub?`<div class="mh-qsub">${q.sub}</div>`:''}
     ${rows}
@@ -5086,10 +5121,12 @@ function mhTestEventLabel(date){
 }
 function mhTestTop3Rows(date,norms){
   return mhTestParticipants(date).map(p=>{
-    const ov=overallAt(p,norms,date);
+    // overallAtSeason, ne overallAt — minihra nesmí tahat Zápasy z jiné sezóny, než jakou by
+    // ve stejný okamžik ukázala živá karta hráčky (Kolo 43, viz komentář u overallAtSeason).
+    const ov=overallAtSeason(p,norms,date);
     if(ov?.score==null)return null;
     const prevDate=mhTestPrevDate(p,date);
-    const prevOv=prevDate?overallAt(p,norms,prevDate):null;
+    const prevOv=prevDate?overallAtSeason(p,norms,prevDate):null;
     let delta;
     if(!prevOv||prevOv.score==null)delta={kind:'new'};
     else{
@@ -5103,7 +5140,7 @@ function mhTestImprovedRows(date,norms){
   return mhTestParticipants(date).map(p=>{
     const prevDate=mhTestPrevDate(p,date);
     if(!prevDate)return null;
-    const ov=overallAt(p,norms,date),prevOv=overallAt(p,norms,prevDate);
+    const ov=overallAtSeason(p,norms,date),prevOv=overallAtSeason(p,norms,prevDate);
     if(ov?.score==null||prevOv?.score==null)return null;
     return{p,score:ov.score,prevScore:prevOv.score,delta:ov.score-prevOv.score};
   }).filter(Boolean).sort((a,b)=>b.delta-a.delta);
@@ -5255,17 +5292,17 @@ function mhBuildTestQuestions(date){
       pool:improvedRows.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
   }
   const talent=mhFindTalent(date,norms);
-  if(talent)qs.push({key:'talent',type:'single',cond:'Objeví se, jen když appka něco najde',
+  if(talent)qs.push({key:'talent',type:'single',
     title:'U koho appka našla talent?',
     sub:'Metrika, ve které je hráčka výrazně nad svůj vlastní obvyklý výkon (fyzické a herní se nemíchá).',
     pool});
   const needs=mhFindNeedsWork(date,norms);
-  if(needs)qs.push({key:'needswork',type:'single',cond:'Objeví se, jen když appka něco najde',
+  if(needs)qs.push({key:'needswork',type:'single',
     title:'Na čem je podle appky prostor růst?',
     sub:'Metrika, ve které hráčka nejvíc zaostává za svým vlastním standardem.',
     pool});
   const lead=mhFindDisciplineChange(date);
-  if(lead)qs.push({key:'leader',type:'single',cond:'Objeví se, jen když appka najde změnu',
+  if(lead)qs.push({key:'leader',type:'single',
     title:`Nová jednička – ${lead.metric.label}?`,
     sub:'Appka zaznamenala změnu vedení v téhle disciplíně.',
     pool:getActiveP().map(p=>({id:p.id,label:playerLabel(p)}))});
@@ -5380,9 +5417,17 @@ function mhBuildZapasQuestions(mid){
   if(recvRows.length)qs.push({key:'reception',type:'single',title:'Kdo měla nejlepší příjem?',
     pool:recvRows.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
   const records=mhZapasRecordCandidates(mid);
-  if(records.length)qs.push({key:'record',type:'single',cond:'Objeví se, jen když padne',
-    title:'Padl dnes osobní rekord?',sub:'V bodech nebo v příjmu.',
-    pool:[...records.map(r=>({id:r.p.id,label:playerLabel(r.p)})),{id:'none',label:'Nikdo'}]});
+  if(records.length){
+    // Jedna hráčka může padnout do rekordu ve VÍC metrikách zároveň (body i příjem) —
+    // `records` pak má za ni dva samostatné záznamy (viz mhZapasRecordCandidates), ale
+    // v nabídce možností se smí objevit jen jednou. Odhalovací karty (mhRenderZapasReveal
+    // níž) naopak ukážou úplně všechny záznamy zvlášť — to je záměr, mění se jen tahle nabídka.
+    const seen=new Set(),recordPool=[];
+    records.forEach(r=>{if(!seen.has(r.p.id)){seen.add(r.p.id);recordPool.push({id:r.p.id,label:playerLabel(r.p)});}});
+    qs.push({key:'record',type:'single',
+      title:'Padl dnes osobní rekord?',sub:'V bodech nebo v příjmu.',
+      pool:[...recordPool,{id:'none',label:'Nikdo'}]});
+  }
   return qs;
 }
 function mhRenderZapasReveal(mh){
@@ -5440,9 +5485,14 @@ function mhBuildTurnajQuestions(tid){
     sub:'Součet bodů ze všech zápasů turnaje.',pool:points.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
   if(recv.length)qs.push({key:'reception',type:'single',title:'Kdo měla nejlepší příjem za turnaj?',
     pool:recv.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
-  qs.push({key:'forma',type:'single',title:'Kdo skončila v 🔥 Formě?',
-    sub:'Nadprůměrný výkon vs. vlastní standard.',
-    pool:[...forma.filter(x=>x.state==='up').map(x=>({id:x.p.id,label:playerLabel(x.p)})),{id:'none',label:'Nikdo'}]});
+  // Otázka se ptá jen tehdy, když je opravdu koho tipovat — samotné "Nikdo" jako jediná
+  // možnost by nebyl tip, ale jistota (appka to tak nahlásila jako reálný nález, opraveno).
+  const formaUp=forma.filter(x=>x.state==='up');
+  if(formaUp.length){
+    qs.push({key:'forma',type:'single',title:'Kdo skončila v 🔥 Formě?',
+      sub:'Nadprůměrný výkon vs. vlastní standard.',
+      pool:[...formaUp.map(x=>({id:x.p.id,label:playerLabel(x.p)})),{id:'none',label:'Nikdo'}]});
+  }
   return qs;
 }
 function mhRenderTurnajReveal(mh){
