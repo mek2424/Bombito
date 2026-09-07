@@ -795,6 +795,27 @@ function normPlayers(){
 // na její konec) vyšla z prázdné množiny — sezóna, co se dopočítává, ještě žádné svoje
 // "nové" zápasy nemá. Wrapped proto vždycky žádá 'all', ať dostane normu ze stabilní,
 // kompletní historie bez ohledu na to, kdy přesně appka Wrapped počítá.
+// Odolný odhad mu/sigma pro normu syrových/neomezených metrik (fyzické testy s normou,
+// dopočítaný výskok, body na zápas — NE herní testy ani příjem, ty jsou procenta s
+// přirozeným stropem a mají jiný druh ochrany, viz shrinkPct níž). Bez tohohle by jeden
+// extrémní výkon jedné hráčky (ať už nahoru, nebo dolů) nafoukl sigmu a přes ni stlačil
+// T-skóre všech ostatních, i když se jich to netýká — viz diskuze v konverzaci. Postup:
+// napřed předběžný ořezaný odhad (ať se ho extrém sám nezmocní), podle něj najít hodnoty
+// přes 3 odchylky (appka stejný práh používá u kontroly podezřelých hodnot, Kolo 46), ty
+// z finálního výpočtu mu/sigma vynechat. Hráčka samotná se ale VŽDY skóruje svojí
+// SKUTEČNOU hodnotou (tRaw dostává raw val, ne tohle) — mění se jen sdílená norma.
+function robustMuSigma(vals){
+  const plain={mu:mean(vals),sigma:std(vals,mean(vals))};
+  if(vals.length<8)return plain; // málo dat na to, aby mělo smysl něco vylučovat
+  const sorted=[...vals].sort((a,b)=>a-b);
+  const cut=Math.floor(sorted.length*0.1);
+  const trimmed=sorted.slice(cut,sorted.length-cut);
+  const mu0=mean(trimmed),sigma0=std(trimmed,mu0);
+  if(!sigma0)return plain;
+  const kept=vals.filter(v=>Math.abs(v-mu0)<=3*sigma0);
+  if(kept.length<5)return plain; // pojistka proti degenerovanému výsledku
+  return{mu:mean(kept),sigma:std(kept,mean(kept))};
+}
 function computeNorms(matchScope){
   const pool=normPlayers();
   const matches=matchScope==='all'?realMatches():seasonRealMatches();
@@ -816,7 +837,7 @@ function computeNorms(matchScope){
         }
       });
     });
-    const mu=mean(vals),sigma=std(vals,mu);
+    const{mu,sigma}=robustMuSigma(vals);
     const swing=deltas.length?mean(deltas):null;
     norms[m.id]={mu,sigma,n:vals.length,lowerBetter:!!m.lowerBetter,swing,swingN:deltas.length};
   });
@@ -832,7 +853,8 @@ function computeNorms(matchScope){
       }
     });
   });
-  norms["vyskok"]={mu:mean(vysVals),sigma:std(vysVals,mean(vysVals)),n:vysVals.length,lowerBetter:false,swing:vysDeltas.length?mean(vysDeltas):null,swingN:vysDeltas.length};
+  const vysStat=robustMuSigma(vysVals);
+  norms["vyskok"]={mu:vysStat.mu,sigma:vysStat.sigma,n:vysVals.length,lowerBetter:false,swing:vysDeltas.length?mean(vysDeltas):null,swingN:vysDeltas.length};
   S.config.game.filter(m=>m.active!==false).forEach(m=>{
     const vals=[],deltas=[];
     pool.forEach(p=>{
@@ -865,7 +887,11 @@ function computeNorms(matchScope){
         if(v!=null)vals.push(v);
       });
     });
-    norms[key]={mu:mean(vals),sigma:std(vals,mean(vals)),n:vals.length,lowerBetter:false};
+    // body_zapas = syrové, neomezené číslo → odolná norma (robustMuSigma). prijem_zapas
+    // je procento (recvPct) → zůstává obyčejný průměr/odchylka, spolehlivost s málo
+    // příjmy se řeší jinde, jen uvnitř Overallu (shrinkPct), ne tady v samotné normě.
+    const stat=key==="body_zapas"?robustMuSigma(vals):{mu:mean(vals),sigma:std(vals,mean(vals))};
+    norms[key]={mu:stat.mu,sigma:stat.sigma,n:vals.length,lowerBetter:false};
   });
   return norms;
 }
@@ -943,13 +969,35 @@ function overallPhysRaw(sess,norms){
   const vys=calcVys(sess);if(vys!=null)vals.push(tRaw(vys,norms["vyskok"]));
   return{vals,n:vals.length,total};
 }
+// Spolehlivostní uhlazení (shrinkage) pro procentuální metriky s proměnným počtem pokusů
+// (herní testy, příjem) — JEN pro Overall a to, co se z něj odvozuje (rozpad, graf v čase,
+// Wrapped, minihry, odznak ⚡/🧪); tabulky, karta hráčky, pavouk a T-score vývoj v čase
+// zůstávají na syrových procentech beze změny, appka je nikde neukazuje uhlazené. Princip:
+// procento z málo pokusů se přitáhne blíž k typickému týmovému průměru dané metriky (mu),
+// čím míň pokusů za ním stojí, tím silněji — "k" je počet virtuálních pokusů na úrovni
+// průměru, co se do výpočtu přidá. Hodně pokusů → skoro beze změny, málo pokusů → výrazně
+// blíž průměru. Viz diskuze v konverzaci (příklad 70 % ze 3 vs. 48 % z 26 příjmů).
+const SHRINK_K_GAME=7; // ~polovina typického počtu pokusů herního testu (defaultMax 15)
+const SHRINK_K_PRIJEM=6;
+function shrinkPct(rawPct,n,priorPct,k){
+  if(rawPct==null||!n)return rawPct;
+  if(priorPct==null)return rawPct;
+  return(rawPct*n+priorPct*k)/(n+k);
+}
 // Kolo 24: herní blok odděleně od fyzického (dřív appka obojí míchala plochým průměrem
 // v jedné funkci, viz výš) — stejná vstupní data, jen vlastní T-skórovaný průměr.
 function overallGameRaw(sess,norms){
   if(!sess)return{vals:[],n:0,total:0};
   const gaM=S.config.game.filter(m=>m.active!==false);
   const vals=[];
-  gaM.forEach(m=>{const pct=gamePct(gameScore(sess.game,m.id));if(pct!=null)vals.push(tRaw(pct,norms[m.id]));});
+  gaM.forEach(m=>{
+    const gs=gameScore(sess.game,m.id);
+    const pct=gamePct(gs);
+    if(pct!=null){
+      const shrunk=shrinkPct(pct,gs.attempts,norms[m.id]?.mu,SHRINK_K_GAME);
+      vals.push(tRaw(shrunk,norms[m.id]));
+    }
+  });
   return{vals,n:vals.length,total:gaM.length};
 }
 // Přeškáluje průměrné T-skóre (typicky 20–80) na "fifácké" 40–99, stejná logika ořezu jako tScore().
@@ -973,17 +1021,23 @@ function overallDisplay(tAvg){
 const OVERALL_MATCH_CAP=12; // kolik posledních reálných zápasů hráčky (z AKTUÁLNÍ sezóny, Kolo 38) se bere do průměru
 const OVERALL_W_PHYS=0.25, OVERALL_W_GAME=0.35, OVERALL_W_MATCH=0.40; // startovní váhy, snadno doladitelné později
 function overallMatchRaw(p,norms){
-  const types=[["body","body_zapas"],["prijem","prijem_zapas"]];
   const vals=[];
-  types.forEach(([type,key])=>{
-    const avg=playerRecentMatchAvg(p,type,OVERALL_MATCH_CAP);
-    if(avg!=null)vals.push(tRaw(avg,norms[key]));
-  });
+  const bodyAvg=playerRecentMatchAvg(p,'body',OVERALL_MATCH_CAP);
+  if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
+  // příjem: sdružené pokusy napříč posledními zápasy (ne prostý průměr per-zápas procent),
+  // pak shrinkPct podle celkového počtu příjmů — viz playerReceptionPool/shrinkPct výš.
+  const prijemMs=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'prijem')!=null)
+    .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+  const pool=playerReceptionPool(p,prijemMs);
+  if(pool){
+    const shrunk=shrinkPct(pool.avg,pool.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM);
+    vals.push(tRaw(shrunk,norms.prijem_zapas));
+  }
   // Kolo 38: jen zápasy AKTUÁLNÍ sezóny (seasonRealMatches()) — ať "posledních N zápasů"
   // v popiscích (matchNote/matchGapBadge níž) neukazuje na zápasy z minulé sezóny, které se
   // do vlastního průměru výše (playerRecentMatchAvg) taky už nepočítají.
   const matchCount=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null).length;
-  return{vals,n:vals.length,total:types.length,matchCount};
+  return{vals,n:vals.length,total:2,matchCount};
 }
 // Nejvyšší počet naměřených overall-metrik (fyzické + herní + zápasy dohromady) v týmu —
 // referenční "úplnost" pro hvězdičku.
@@ -2979,13 +3033,17 @@ function playerRecentMatchAvgAt(p,type,cap,cutoff){
   return ms.length?mean(ms.map(m=>playerMatchMetric(p,m,type))):null;
 }
 function overallMatchRawAt(p,norms,cutoff){
-  const types=[["body","body_zapas"],["prijem","prijem_zapas"]];
   const vals=[];
-  types.forEach(([type,key])=>{
-    const avg=playerRecentMatchAvgAt(p,type,OVERALL_MATCH_CAP,cutoff);
-    if(avg!=null)vals.push(tRaw(avg,norms[key]));
-  });
-  return{vals,n:vals.length,total:types.length};
+  const bodyAvg=playerRecentMatchAvgAt(p,'body',OVERALL_MATCH_CAP,cutoff);
+  if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
+  const prijemMs=realMatches().filter(m=>m.date<=cutoff&&playerMatchMetric(p,m,'prijem')!=null)
+    .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+  const pool=playerReceptionPool(p,prijemMs);
+  if(pool){
+    const shrunk=shrinkPct(pool.avg,pool.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM);
+    vals.push(tRaw(shrunk,norms.prijem_zapas));
+  }
+  return{vals,n:vals.length,total:2};
 }
 function overallAt(p,norms,cutoff){
   const sess=sessionAtOrBefore(p,cutoff);
@@ -3016,15 +3074,19 @@ function overallAt(p,norms,cutoff){
 // beze změny (viz komentář u overallAt výš).
 function overallMatchRawAtSeason(p,norms,cutoff){
   const start=currentSeasonStart();
-  const types=[["body","body_zapas"],["prijem","prijem_zapas"]];
   const vals=[];
-  types.forEach(([type,key])=>{
-    const ms=realMatches().filter(m=>m.date<=cutoff&&m.date>=start&&playerMatchMetric(p,m,type)!=null)
-      .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
-    const avg=ms.length?mean(ms.map(m=>playerMatchMetric(p,m,type))):null;
-    if(avg!=null)vals.push(tRaw(avg,norms[key]));
-  });
-  return{vals,n:vals.length,total:types.length};
+  const bodyMs=realMatches().filter(m=>m.date<=cutoff&&m.date>=start&&playerMatchMetric(p,m,'body')!=null)
+    .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+  const bodyAvg=bodyMs.length?mean(bodyMs.map(m=>playerMatchMetric(p,m,'body'))):null;
+  if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
+  const prijemMs=realMatches().filter(m=>m.date<=cutoff&&m.date>=start&&playerMatchMetric(p,m,'prijem')!=null)
+    .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+  const pool=playerReceptionPool(p,prijemMs);
+  if(pool){
+    const shrunk=shrinkPct(pool.avg,pool.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM);
+    vals.push(tRaw(shrunk,norms.prijem_zapas));
+  }
+  return{vals,n:vals.length,total:2};
 }
 function overallAtSeason(p,norms,cutoff){
   const sess=sessionAtOrBefore(p,cutoff);
@@ -4782,6 +4844,18 @@ function playerMatchMetric(p,m,type){
   if(type==='body')return actions.reduce((s,a)=>s+a.value,0);
   return recvPct(actions.reduce((s,a)=>s+a.value,0)/actions.length); // 'prijem' → %, vyšší = lepší
 }
+// Sesbírá VŠECHNY 'prijem' akce hráčky napříč danou sadou zápasů DOHROMADY (ne zápas po
+// zápase jako playerMatchMetric výš) — pro shrinkPct v Overallu (viz overallGameRaw) je
+// potřeba vědět celkový počet příjmů za víc zápasů najednou, ne jen z jednoho zápasu.
+function playerReceptionPool(p,matches){
+  let sum=0,n=0;
+  matches.forEach(m=>{
+    m.sets.forEach(s=>s.actions.forEach(a=>{
+      if(a.pid===p.id&&a.type==='prijem'){sum+=a.value;n++;}
+    }));
+  });
+  return n?{avg:recvPct(sum/n),n}:null;
+}
 
 // Průměr hráččiných posledních `cap` reálných zápasů AKTUÁLNÍ sezóny (jen ty, kde má pro
 // `type` data), řazeno od nejnovějšího. Pro Overall fázi 2 (Kolo 22) — jeden zápas je podle
@@ -5865,6 +5939,9 @@ const HELP_DATA=[
  a:`Protože T-skóre není absolutní číslo, ale vždycky relativní k průměru ostatních (viz otázka „Co je T-skóre?"). Pokud appka nemá normu zamčenou (viz předchozí otázka) a JINÁ hráčka v poolu (tým nebo databáze, podle přepínače) přidá nový test, průměr celé skupiny se posune — a tím se automaticky posune i T-skóre všech ostatních, i té, co zrovna žádný nový test neměla. Chceš-li se tomuhle vyhnout, použij zamčenou normu.`},
 {q:`Co přesně znamená, že je hráčka „nad průměrem" nebo „pod průměrem"?`,
  a:`Znamená to prostě T-skóre nad, nebo pod hodnotou 50 — 50 je z definice přesně průměr referenční skupiny (Tým nebo Databáze, podle přepínače) v danou chvíli. „Nad průměrem" tedy neznamená nic absolutního jako „dobrá hráčka" — jen že v dané metrice je momentálně lepší než průměr té konkrétní skupiny, se kterou appka zrovna počítá.`},
+{q:`Může jedné hráčce extrémně dobrá nebo extrémně špatná hodnota zkreslit T-skóre všech ostatních?`,
+ a:`Bez ochrany by to šlo — u fyzických testů, dopočítaného výskoku a bodů ze zápasu aplikace normu (průměr a rozptyl, ze kterých T-skóre počítá) staví ze VŠECH hodnot v poolu, a jediná hodnota, co je nápadně (přes tři směrodatné odchylky — stejný práh aplikace používá i u kontroly podezřelých hodnot při zadávání testu) mimo zbytek, dokáže sama o sobě rozptyl výrazně nafouknout, a tím „stlačit" T-skóre všem ostatním hráčkám blíž k 50 — i těm, co s tou extrémní hodnotou nemají nic společného. Aplikace se proti tomu brání: při výpočtu normy takovou nápadně vybočující hodnotu z výpočtu PRŮMĚRU A ROZPTYLU vynechá — ale jen ze SDÍLENÉ normy, ne z hodnocení samotné hráčky. Ta, co tu extrémní hodnotu má, dostane svoje T-skóre pořád spočítané ze svého SKUTEČNÉHO čísla, beze změny — mění se jen to, čím aplikace poměřuje ostatní. Tahle ochrana se zapíná až od 8 hodnot v poolu výš — u menšího vzorku by aplikace nedokázala spolehlivě poznat, co je skutečná anomálie a co jen běžný rozptyl malého týmu.`,
+ kw:"extrém odlehlá hodnota outlier zkreslení normy odolnost robustní"},
 ]},
 
 {title:"Overall — souhrnné skóre hráčky",icon:"🔢",qa:[
@@ -5873,6 +5950,9 @@ const HELP_DATA=[
 {q:`Jak appka Overall počítá (Fyzické/Herní/Zápasy)?`,
  a:`Appka zvlášť spočítá průměrné T-skóre ve třech blocích — Fyzické testy (váha 25 %), Herní testy (váha 35 %) a Zápasy (váha 40 %) — a pak je zkombinuje do jednoho čísla podle těchhle vah. Váhy rostou s tím, jak blízko je daný typ dat opravdové hře v zápase (fyzický test je nejobecnější, zápas je realita) — méně váhy tedy nemusí znamenat menší důležitost bloku, jen menší váhu v TOMHLE konkrétním souhrnném čísle. Když hráčce nějaký blok v datech úplně chybí (třeba nemá žádný herní test), appka ho z výpočtu prostě VYNECHÁ a váhy zbylých bloků si mezi sebe úměrně rozdělí tak, aby dohromady pořád daly 100 % — takže chybějící blok appku nepenalizuje, jen se počítá jen z toho, co appka má.`,
  kw:"vzorec výpočet váhy fyzické herní zápasy"},
+{q:`Počítá aplikace do Overallu herní testy a příjem stejně, ať mají za sebou 3 pokusy, nebo 30?`,
+ a:`Do tabulek, karty hráčky, žebříčků a pavouka aplikace VŽDY ukazuje přesně to syrové procento, které spočítala ze zapsaných čísel — tam se nic neupravuje. Ale jen do výpočtu OVERALLU aplikace navíc potichu zohledňuje, kolik pokusů (u herních testů) nebo přijatých míčů (u příjmu ze zápasu) za daným procentem stojí — málo pokusů dělá z procenta nespolehlivé číslo (70 % ze 3 pokusů může být náhoda), hodně pokusů naopak číslo dělá důvěryhodnějším (48 % z 26 pokusů je už solidní vzorek). Aplikace proto do Overallu (a jen do Overallu, nikam jinam) počítá s hodnotou mírně přitaženou k typickému týmovému průměru dané metriky — tím silněji, čím míň pokusů za procentem stojí. U hodně pokusů je tahle úprava skoro neznatelná. Aplikace tohle přitažené číslo nikde nezobrazuje samo o sobě — je to čistě interní mezikrok mezi syrovým procentem a výsledným Overallem.`,
+ kw:"malý počet pokusů spolehlivost uhlazení herní test příjem overall shrinkage"},
 {q:`Co znamená hvězdička (*) u čísla Overall?`,
  a:`Značí, že appka má u téhle hráčky změřeno MÍŇ metrik, než kolik jich má nejlépe otestovaná hráčka v týmu — jinými slovy, že je její Overall postavený na neúplnějších datech než u ostatních, takže se dá brát trochu s rezervou. Na kartě hráčky appka tohle ukazuje jako zlatou hvězdičku ★ přímo u nápisu OVERALL, v Přehledu týmu a Porovnání pak jako menší horní index * u čísla — je to POŘÁD JEDNA A TÁ SAMÁ informace, appka ji jen na různých místech kreslí trochu jinak vizuálně. Najetím myší (nebo podržením prstu na mobilu) appka v tooltipu ukáže přesně, kolik metrik má hráčka naměřeno a kolik má nejtestovanější hráčka v týmu.`,
  kw:"hvězdička star neúplná data horní index"},
