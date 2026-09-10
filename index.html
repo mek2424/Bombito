@@ -113,11 +113,21 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .mu{font-size:0.65rem;color:var(--gm);margin-left:1px}
 .tr{font-size:0.67rem;padding:2px 5px;border-radius:4px;flex-shrink:0}
 .tu{background:#1a421a;color:#5dce5d}.td{background:#421a1a;color:#ce5d5d}.ts{background:#222;color:var(--gm)}
-.mi{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #141e14}
+/* Kolo 48: milník dřív byl jeden řádek s jedním kolečkem (.mck) — teď je
+   dvouřádkový (.mi-top nad .mi-bot), se třemi kolečky fáze (.mst) vedle sebe.
+   .ml2/.md2 beze změny velikosti písma, jen se teď používají v jiném rozložení. */
+.mi{display:flex;flex-direction:column;gap:6px;padding:10px 0;border-bottom:1px solid #141e14}
 .mi:last-child{border-bottom:none}
 .mi.inactive{opacity:0.35}
-.mck{width:36px;height:36px;border-radius:50%;border:2px solid #2a4a2a;display:flex;align-items:center;justify-content:center;font-size:0.85rem;cursor:pointer;transition:all .2s;flex-shrink:0}
-.mck.done{background:var(--g);border-color:var(--g)}
+.mi-top{display:flex;align-items:center;gap:10px}
+.mi-bot{display:flex;align-items:center;gap:8px}
+.mstages{display:flex;gap:5px;flex-shrink:0}
+.mst{width:27px;height:27px;border-radius:50%;border:2px solid #2a4a2a;opacity:.4;display:flex;align-items:center;justify-content:center;font-size:0.78rem;flex-shrink:0;transition:all .2s}
+.mst.done{background:var(--g);border-color:var(--g);opacity:1}
+.mst.next{background:#e8c84022;border:2px dashed var(--acc);opacity:1;cursor:pointer}
+.mil-back{cursor:pointer;font-size:0.75rem;opacity:0.4;transition:opacity .15s;flex-shrink:0;background:none;border:none;color:var(--w);padding:4px;min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:auto}
+.mil-back:hover{opacity:1}
+.mil-summary{font-size:0.72rem;color:var(--gm);margin-top:-7px;margin-bottom:11px}
 .ml2{flex:1;font-size:0.84rem}
 .md2{font-size:0.7rem;color:var(--gm);flex-shrink:0}
 .gi{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid #141e14}
@@ -636,13 +646,26 @@ function gameAbbr(m){
 // tohle používá všude, kde se útok na cíl/do pole zobrazuje jako JEDNA věc, ne dvě
 // samostatné metriky vedle sebe (Poslední výsledky, grafové karty, Přehled týmu).
 function activeAttackMetricId(p){return p?.attackHarderSince?"utok_cil":"utok_pole";}
+// Kolo 48: milníky se rozšířily o 3 fáze (🌱🌿🌳, viz MIL_STAGES níž) a o 3 nové
+// položky (presun_zpet, hlasite_prihlaseni, hraj_prsty) podle uživatelovy tabulky.
+// Dvě stávající dostaly přesnější znění ze stejné tabulky (bagr_ruce, nataceni_prsty)
+// beze změny id, ať se nezahodí historie — jednorázovou migraci uloženého labelu
+// řeší load() níž.
 const DEF_MIL=[
-  {id:"vrchni_servis",  label:"Vrchní servis",          active:true},
-  {id:"smec_vyskoku",   label:"Smeč z výskoku",         active:true},
-  {id:"blok",           label:"Blok",                   active:true},
-  {id:"bagr_ruce",      label:"Spojování rukou – bagr", active:true},
-  {id:"split_step",     label:"Split step",             active:true},
-  {id:"nataceni_prsty", label:"Natáčení se – prsty",    active:true},
+  {id:"vrchni_servis",      label:"Vrchní servis",                active:true},
+  {id:"smec_vyskoku",       label:"Smeč z výskoku",               active:true},
+  {id:"blok",               label:"Blok",                         active:true},
+  {id:"bagr_ruce",          label:"Spojování rukou při bagru",    active:true},
+  {id:"split_step",         label:"Split step",                   active:true},
+  {id:"nataceni_prsty",     label:"Natáčení do směru odbití",     active:true},
+  {id:"presun_zpet",        label:"Přesun zpět po každé akci",    active:true},
+  {id:"hlasite_prihlaseni", label:"Hlasité přihlášení se k míči", active:true},
+  {id:"hraj_prsty",         label:"Co můžeš, hraj prsty",         active:true},
+];
+const MIL_STAGES=[
+  {n:1,emoji:"🌱",label:"Trénink",            full:"začíná fungovat v tréninku"},
+  {n:2,emoji:"🌿",label:"Herní cvičení",      full:"funguje v herním cvičení"},
+  {n:3,emoji:"🌳",label:"Pravidelně v zápase",full:"funguje pravidelně v zápase"},
 ];
 const DEF_BADGES=[
   {id:"blokar",      label:"Blokař",     icon:"🧱", color:CGREEN},
@@ -689,6 +712,37 @@ function load(){
     if(!S.config.milestones.some(m=>m.id===def.id)){
       S.config.milestones.push(JSON.parse(JSON.stringify(def)));
     }
+  });
+  // Kolo 48: jednorázová migrace přesnějšího znění dvou stávajících milníků (viz
+  // komentář u DEF_MIL výš) — přepíše label, jen když ještě odpovídá starému znění,
+  // ať se nepřepíše případná vlastní úprava trenéra.
+  const _milRenames={bagr_ruce:"Spojování rukou – bagr",nataceni_prsty:"Natáčení se – prsty"};
+  Object.keys(_milRenames).forEach(id=>{
+    const m=S.config.milestones.find(x=>x.id===id);
+    if(m&&m.label===_milRenames[id])m.label=DEF_MIL.find(d=>d.id===id).label;
+  });
+  // Kolo 48: milníky se rozšířily z jednoho zaškrtnutí na 3 postupné fáze
+  // (🌱 trénink → 🌿 herní cvičení → 🌳 pravidelně v zápase, viz MIL_STAGES výš).
+  // Jednorázová migrace starého tvaru p.milestones[id]='datum' na nový
+  // {stage,date} — poběží jen do první úspěšné migrace na zařízení, pak se
+  // hodnota už nenajde jako string a přeskočí se. Archivované hráčky se berou
+  // jako fáze 3 (pravidelně v zápase). U aktuální sezóny platí stejné výchozí
+  // pravidlo, až na dvě reálné hráčky, které uživatel osobně rozřadil podle
+  // skutečné úrovně při zavedení téhle verze (Antonie Šmejcová — Vrchní servis
+  // zůstává na fázi 3; Laura Hamáčková — Split step se snižuje na fázi 2,
+  // protože jí tehdy fungoval jen v herním cvičení, ne ještě pravidelně v zápase).
+  S.players.forEach(p=>{
+    if(!p.milestones)return;
+    Object.keys(p.milestones).forEach(id=>{
+      const v=p.milestones[id];
+      if(typeof v!=='string')return;
+      let stage=3;
+      if(!p.archived){
+        if(p.id==='1780140808646'&&id==='vrchni_servis')stage=3;
+        else if(p.id==='1783013509811'&&id==='split_step')stage=2;
+      }
+      p.milestones[id]={stage,date:v};
+    });
   });
   S.config.game.forEach(m=>{
     if(m.defaultMax==null)m.defaultMax=m.max||10;
@@ -1466,7 +1520,36 @@ function commitPendingTest(){
 }
 
 // ═══ MILESTONES ═══
-function toggleMil(id){const p=gP();if(!p)return;if(p.milestones[id])delete p.milestones[id];else p.milestones[id]=today();save();renderDetail();}
+// Kolo 48: milník má 3 postupné fáze — p.milestones[id] je buď pryč (fáze 0,
+// nezačato), nebo {stage:1|2|3, date}. milStage() čte aktuální fázi, advanceMil()
+// fázi posune o jednu výš (s potvrzením — stejná pojistka proti uklikání, jakou
+// aplikace používá i jinde) a revertMil() ji naopak o jednu vrátí (taky
+// s potvrzením) — obojí jen na aktivních milnících, popořadě, bez přeskakování.
+function milStage(p,id){return p?.milestones?.[id]?.stage||0;}
+function advanceMil(id){
+  const p=gP();if(!p)return;
+  const cur=milStage(p,id);if(cur>=3)return;
+  const m=S.config.milestones.find(x=>x.id===id);if(!m)return;
+  const next=MIL_STAGES[cur];
+  confirmAction(`${m.label} — ${next.emoji} ${next.full}?`,()=>{
+    p.milestones=p.milestones||{};
+    p.milestones[id]={stage:next.n,date:today()};
+    save();renderDetail();
+  },{icon:next.emoji,note:'Zaznamená se s dnešním datem.',btnCls:'btn-p'});
+}
+function revertMil(id){
+  const p=gP();if(!p)return;
+  const cur=milStage(p,id);if(cur<=0)return;
+  const m=S.config.milestones.find(x=>x.id===id);if(!m)return;
+  const targetN=cur-1;
+  const label=targetN>0?`${MIL_STAGES[targetN-1].emoji} ${MIL_STAGES[targetN-1].full}`:'„zatím nezačato"';
+  const note=targetN>0?'Datum se přepíše na dnešek.':'Smaže se i uložené datum.';
+  confirmAction(`${m.label} — vrátit na ${label}?`,()=>{
+    if(targetN<=0)delete p.milestones[id];
+    else p.milestones[id]={stage:targetN,date:today()};
+    save();renderDetail();
+  },{icon:'↩️',note,btnCls:'btn-gray'});
+}
 
 // ═══ NOTES ═══
 function openNote(type,id){
@@ -2234,14 +2317,28 @@ function buildMil(){
   const p=gP();
   const act=S.config.milestones.filter(m=>m.active!==false);
   const inact=S.config.milestones.filter(m=>m.active===false);
-  const done=act.filter(m=>p.milestones?.[m.id]).length;
+  const c1=act.filter(m=>milStage(p,m.id)===1).length;
+  const c2=act.filter(m=>milStage(p,m.id)===2).length;
+  const c3=act.filter(m=>milStage(p,m.id)===3).length;
+  const c0=act.length-c1-c2-c3;
   const rows=[...act,...inact].map(m=>{
-    const isA=m.active!==false,d=!!p.milestones?.[m.id],dt=p.milestones?.[m.id]||"";
+    const isA=m.active!==false,cur=isA?milStage(p,m.id):0,dt=p.milestones?.[m.id]?.date||"";
     const ntitle=m.note?'Poznámka: '+m.note.slice(0,40):'Přidat poznámku';
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'milestones\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
-    return`<div class="mi ${isA?"":"inactive"}"><div class="mck ${d&&isA?"done":""}" onclick="${isA?"toggleMil('"+m.id+"')":""}"">${d&&isA?"✓":""}</div><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}</div>${nb}<div class="md2">${d&&isA?`✓ ${fmtDate(dt)}`:'<span style="color:#2a4a2a">nesplněno</span>'}</div></div>`;
+    const stagesHtml=MIL_STAGES.map(s=>{
+      const cls=s.n<=cur?"mst done":s.n===cur+1?"mst next":"mst locked";
+      const click=(isA&&s.n===cur+1)?' onclick="advanceMil(\''+m.id+'\')"':'';
+      return `<div class="${cls}"${click} title="${s.emoji} ${s.full}">${s.emoji}</div>`;
+    }).join("");
+    const statusHtml=cur>0?`${MIL_STAGES[cur-1].emoji} od ${fmtDate(dt)}`:'<span style="color:#5a6a58">zatím nezačato</span>';
+    const backBtn=(isA&&cur>0)?'<button class="mil-back" onclick="revertMil(\''+m.id+'\')" title="Vrátit o fázi zpět">↩</button>':'';
+    return`<div class="mi ${isA?"":"inactive"}">
+      <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}</div>${nb}</div>
+      <div class="mi-bot"><div class="mstages">${stagesHtml}</div><div class="md2">${statusHtml}</div>${backBtn}</div>
+    </div>`;
   }).join("");
-  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${done}/${act.length} splněno</h3>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
+  const summary=`🌱 ${c1} &nbsp;·&nbsp; 🌿 ${c2} &nbsp;·&nbsp; 🌳 ${c3}${c0?` &nbsp;·&nbsp; ${c0} zatím nezačato`:""}`;
+  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><div class="mil-summary">${summary}</div>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
 }
 // Kolo 47: appka dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
 // jednoho testování (jedna poznámka na session) — appka neměla žádné volné, datované
@@ -2319,7 +2416,7 @@ function renderCmp(){
   const gaChs=gaAct.map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
   const milTbl=milAct.length?`<div class="card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse">
     <tr><th style="text-align:left;padding-bottom:8px;font-size:0.6rem;letter-spacing:1px;color:var(--gm)">MILNÍK</th>${sel.map((p,i)=>`<th style="text-align:center;padding-bottom:8px;font-size:0.71rem;color:${COLORS[i%COLORS.length]}">${playerLabel(p)}</th>`).join("")}</tr>
-    ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid #141e14">${m.label}</td>${sel.map(p=>`<td style="text-align:center;border-bottom:1px solid #141e14;padding:6px 4px">${p.milestones?.[m.id]?`<span style="color:var(--gl)">✓</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id])}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`).join("")}</tr>`).join("")}
+    ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid #141e14">${m.label}</td>${sel.map(p=>{const cur=milStage(p,m.id);return `<td style="text-align:center;border-bottom:1px solid #141e14;padding:6px 4px">${cur?`<span style="color:var(--gl)">${MIL_STAGES[cur-1].emoji}</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id].date)}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`;}).join("")}</tr>`).join("")}
   </table></div></div>`:"";
   const battleH=Math.max(175,sel.length*26);
   el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ Porovnání</h2>
@@ -2743,10 +2840,12 @@ function exportPDF(){
     return`<span class="pdf-badge-inline" style="background:${b.color}33;border:1.5px solid ${b.color};color:${b.color}">${b.icon} ${b.label}</span>`;
   }).join('')||'<span style="color:#aaa">–</span>';
 
-  // MILESTONES (beze změny)
+  // Kolo 48: milníky mají teď 3 fáze — do PDF jde ikonka aktuální fáze (místo
+  // dřívějšího ✓) a k datu i název fáze, ať je report čitelný i bez barevného
+  // rozlišení kroužků z karty hráčky.
   const milHtml=S.config.milestones.filter(m=>m.active!==false).map(m=>{
-    const done=!!p.milestones?.[m.id];const dt=p.milestones?.[m.id]||'';
-    return`<div class="pdf-mil-row"><div class="pdf-dot" style="background:${done?CG:'none'};border:2px solid ${done?CG:'#ccc'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem">${done?'✓':''}</div><div style="flex:1">${m.label}</div>${done?`<div style="font-size:0.73rem;color:#666">${fmtDate(dt)}</div>`:''}</div>`;
+    const cur=milStage(p,m.id);const done=cur>0;const dt=p.milestones?.[m.id]?.date||'';
+    return`<div class="pdf-mil-row"><div class="pdf-dot" style="background:${done?CG:'none'};border:2px solid ${done?CG:'#ccc'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem">${done?MIL_STAGES[cur-1].emoji:''}</div><div style="flex:1">${m.label}</div>${done?`<div style="font-size:0.73rem;color:#666">${MIL_STAGES[cur-1].label} · ${fmtDate(dt)}</div>`:''}</div>`;
   }).join('');
 
   const dateRange=sessions.length>1?`${fmtDate(sessions[0].date)} – ${fmtDate(sessions[sessions.length-1].date)}`:fmtDate(sessions[0].date);
@@ -3248,8 +3347,11 @@ function computeSeasonWrapped(si){
     return scores.length?{date:d,score:Math.round(mean(scores))}:null;
   }).filter(Boolean);
   const badges=roster.map(p=>({pid:p.id,name:playerLabel(p),initials:wrInitials(p.name),badgeIds:[...(p.badges||[])]}));
+  // Kolo 48: "splněno v období" teď znamená dosažení nejvyšší fáze (🌳 pravidelně
+  // v zápase) v daném rozmezí dat, ne jen jakoukoli změnu fáze — nejblíž to
+  // odpovídá tomu, co dřív znamenalo jedno prosté zaškrtnutí.
   const milestones=S.config.milestones.filter(m=>m.active!==false).map(m=>{
-    const completed=roster.filter(p=>{const d=p.milestones?.[m.id];return d&&d>=start&&d<=end;});
+    const completed=roster.filter(p=>{const ms=p.milestones?.[m.id];return ms&&ms.stage>=3&&ms.date>=start&&ms.date<=end;});
     return{key:m.id,label:m.label,people:completed.map(p=>({name:playerLabel(p),initials:wrInitials(p.name)}))};
   });
   const points=roster.map(p=>{
@@ -3708,9 +3810,9 @@ function renderOverview(){
       lowerBetter:false,
     }]:[]),
     {id:'milestones',label:'Milníky',
-      get:p=>Object.keys(p.milestones||{}).filter(id=>S.config.milestones.find(m=>m.id===id&&m.active!==false)).length,
+      get:p=>S.config.milestones.filter(m=>m.active!==false&&milStage(p,m.id)>=3).length,
       display:(p,v)=>{const tot=S.config.milestones.filter(m=>m.active!==false).length;return `${v}/${tot}`;},
-      sortVal:p=>Object.keys(p.milestones||{}).filter(id=>S.config.milestones.find(m=>m.id===id&&m.active!==false)).length,
+      sortVal:p=>S.config.milestones.filter(m=>m.active!==false&&milStage(p,m.id)>=3).length,
       lowerBetter:false},
     {id:'last_test',label:'Poslední<br><small>test</small>',
       get:p=>lS(p)?.date,
@@ -5113,8 +5215,16 @@ function deleteMatch(mid){
   });
 }
 
-function confirmAction(msg, onYes){
-  openModal('<div style="text-align:center;padding:8px 0"><div style="font-size:2rem;margin-bottom:10px">⚠️</div><h2 style="margin-bottom:8px">'+msg+'</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:20px">Tuto akci nelze vrátit.</p><div style="display:flex;gap:10px;justify-content:center"><button class="btn btn-o" style="min-width:100px" onclick="closeModal()">Zpět</button><button class="btn btn-d" style="min-width:100px" id="confirmYesBtn">Potvrdit</button></div></div>');
+// Kolo 48: rozšířeno o volitelný třetí parametr (opts: icon/note/btnCls), ať jde
+// znovupoužít i pro nedestruktivní potvrzení (posun/vrácení fáze milníku) beze
+// změny chování pro všech 15 stávajících volání — bez opts se vykreslí přesně
+// totéž co dřív (⚠️, „Tuto akci nelze vrátit.", červené tlačítko).
+function confirmAction(msg, onYes, opts){
+  opts=opts||{};
+  const icon=opts.icon||'⚠️';
+  const note=opts.note!==undefined?opts.note:'Tuto akci nelze vrátit.';
+  const btnCls=opts.btnCls||'btn-d';
+  openModal('<div style="text-align:center;padding:8px 0"><div style="font-size:2rem;margin-bottom:10px">'+icon+'</div><h2 style="margin-bottom:8px">'+msg+'</h2>'+(note?'<p style="color:var(--gm);font-size:0.82rem;margin-bottom:20px">'+note+'</p>':'<div style="margin-bottom:20px"></div>')+'<div style="display:flex;gap:10px;justify-content:center"><button class="btn btn-o" style="min-width:100px" onclick="closeModal()">Zpět</button><button class="btn '+btnCls+'" style="min-width:100px" id="confirmYesBtn">Potvrdit</button></div></div>');
   setTimeout(()=>{const b=document.getElementById('confirmYesBtn');if(b)b.onclick=()=>{closeModal();onYes();};},50);
 }
 
@@ -6000,13 +6110,13 @@ const HELP_DATA=[
 
 {title:"Milníky",icon:"🎖",qa:[
 {q:`Co jsou Milníky?`,
- a:`Milníky appka odlišuje od číselných metrik — jde o jednorázové dovednostní „odemčení", třeba „Vrchní servis" nebo „Smeč z výskoku" — věci, které hráčka buď už umí, nebo ještě ne, a appka je proto neměří číslem, ale jen zaškrtnutím ANO/NE s datem, kdy k tomu došlo.`},
-{q:`Jak milník hráčce zaškrtnu jako splněný?`,
- a:`Na kartě hráčky v sekci Milníků klikneš na daný milník a appka ho označí jako splněný s dnešním datem.`},
-{q:`Jde milník zpětně odškrtnout?`,
- a:`Ano — kliknutím na už splněný milník appka zaškrtnutí i uložené datum zase zruší; funguje to jako přepínač tam a zpátky.`},
-{q:`Kde appka ukazuje, kolik milníků má hráčka splněno?`,
- a:`Přímo na kartě hráčky v sekci Milníků appka ukazuje poměr splněno/celkem u každého jednotlivého milníku i souhrnně za všechny.`},
+ a:`Milníky aplikace odlišuje od číselných metrik — jde o dovednostní „odemčení", třeba „Vrchní servis" nebo „Smeč z výskoku". Místo jednoho zaškrtnutí má každý milník tři postupné fáze: 🌱 začíná fungovat v tréninku, 🌿 funguje v herním cvičení, 🌳 funguje pravidelně v zápase — s datem, kdy na ni hráčka postoupila.`},
+{q:`Jak milník hráčce posunu na další fázi?`,
+ a:`Na kartě hráčky v sekci Milníků klikneš na další (zlatě orámovanou) fázi u daného milníku. Aplikace se před uložením zeptá na potvrzení — teprve po něm fázi posune a uloží dnešní datum. Fáze jdou jen popořadě, žádnou nejde přeskočit.`},
+{q:`Jde fázi milníku vrátit zpátky?`,
+ a:`Ano — malým tlačítkem ↩ vedle rozdělaného milníku, taky s potvrzením. Hodí se to hlavně po nechtěném kliknutí nebo když se ukáže, že hráčka na danou úroveň ještě doopravdy nedosáhla.`},
+{q:`Kde aplikace ukazuje, kolik milníků má hráčka v jaké fázi?`,
+ a:`Přímo na kartě hráčky v sekci Milníků nahoře aplikace ukazuje souhrn (kolik milníků je v jaké fázi) a u každého milníku zvlášť jeho aktuální fázi s datem.`},
 {q:`Co jsou „Poznámky k hráčce" a čím se liší od Milníků?`,
  a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější.`,
  kw:"poznámky hráčka deník zápisník postřehy"},
