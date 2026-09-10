@@ -128,6 +128,10 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .mil-back{cursor:pointer;font-size:0.75rem;opacity:0.4;transition:opacity .15s;flex-shrink:0;background:none;border:none;color:var(--w);padding:4px;min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;line-height:1;margin-left:auto}
 .mil-back:hover{opacity:1}
 .mil-summary{font-size:0.72rem;color:var(--gm);margin-top:-7px;margin-bottom:11px}
+.mil-summary summary{cursor:pointer;list-style:none;display:inline-block;border-bottom:1px dotted #4a5a48;padding-bottom:1px}
+.mil-summary summary::-webkit-details-marker{display:none}
+.mil-summary[open] summary{color:#c8d0c8}
+.mil-leg{background:#0a140a;border-radius:8px;padding:9px 11px;display:flex;flex-direction:column;gap:5px;margin-top:9px;color:#c8d0c8}
 .ml2{flex:1;font-size:0.84rem}
 .md2{font-size:0.7rem;color:var(--gm);flex-shrink:0}
 .gi{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid #141e14}
@@ -2338,7 +2342,10 @@ function buildMil(){
     </div>`;
   }).join("");
   const summary=`🌱 ${c1} &nbsp;·&nbsp; 🌿 ${c2} &nbsp;·&nbsp; 🌳 ${c3}${c0?` &nbsp;·&nbsp; ${c0} zatím nezačato`:""}`;
-  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><div class="mil-summary">${summary}</div>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
+  // Kolo 49: vysvětlení emoji fází dřív nikde nebylo — teď je schované v klepacím
+  // souhrnném řádku (varianta C z mock-upu), ať nezabírá trvalé místo v kartě.
+  const legend=MIL_STAGES.map(s=>`<div>${s.emoji} ${s.full}</div>`).join("");
+  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><details class="mil-summary"><summary>${summary}</summary><div class="mil-leg">${legend}</div></details>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
 }
 // Kolo 47: appka dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
 // jednoho testování (jedna poznámka na session) — appka neměla žádné volné, datované
@@ -3809,9 +3816,25 @@ function renderOverview(){
       sortVal:p=>{const mid=activeAttackMetricId(p);const gs=gameScore(lS(p)?.game,mid);return gamePct(gs)??-Infinity;},
       lowerBetter:false,
     }]:[]),
+    // Kolo 49: dřív jen text "X/9" — teď mini mřížka čtverečků (varianta A z
+    // mock-upu), ať je vidět i KTERÝ milník týmu jako celku dělá problém, ne jen
+    // kolik má která hráčka splněno. Šířka mřížky je pevná na 3 sloupce (28px),
+    // takže se sama zalomí do dalších řádků i při jiném počtu aktivních milníků
+    // než 9 (přidání/ubrání milníku v Nastavení).
     {id:'milestones',label:'Milníky',
       get:p=>S.config.milestones.filter(m=>m.active!==false&&milStage(p,m.id)>=3).length,
-      display:(p,v)=>{const tot=S.config.milestones.filter(m=>m.active!==false).length;return `${v}/${tot}`;},
+      display:(p,v)=>{
+        const actM=S.config.milestones.filter(m=>m.active!==false);
+        const tot=actM.length;
+        const cells=actM.map(m=>{
+          const st=milStage(p,m.id);
+          const bg=st>=3?'#2a7a35':st===2?'#2a7a35bf':st===1?'#2a7a3566':'#16241a';
+          const bd=st>0?'#2a7a35':'#2a3a2a';
+          const ttl=st>0?`${m.label}: ${MIL_STAGES[st-1].emoji} ${MIL_STAGES[st-1].label}`:`${m.label}: zatím nezačato`;
+          return `<div style="width:8px;height:8px;border-radius:2px;background:${bg};border:1px solid ${bd}" title="${ttl}"></div>`;
+        }).join('');
+        return `<div style="display:flex;align-items:center;gap:7px"><div style="display:flex;flex-wrap:wrap;gap:2px;width:28px">${cells}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:#c8d0c8">${v}/${tot}</span></div>`;
+      },
       sortVal:p=>S.config.milestones.filter(m=>m.active!==false&&milStage(p,m.id)>=3).length,
       lowerBetter:false},
     {id:'last_test',label:'Poslední<br><small>test</small>',
@@ -6116,7 +6139,8 @@ const HELP_DATA=[
 {q:`Jde fázi milníku vrátit zpátky?`,
  a:`Ano — malým tlačítkem ↩ vedle rozdělaného milníku, taky s potvrzením. Hodí se to hlavně po nechtěném kliknutí nebo když se ukáže, že hráčka na danou úroveň ještě doopravdy nedosáhla.`},
 {q:`Kde aplikace ukazuje, kolik milníků má hráčka v jaké fázi?`,
- a:`Přímo na kartě hráčky v sekci Milníků nahoře aplikace ukazuje souhrn (kolik milníků je v jaké fázi) a u každého milníku zvlášť jeho aktuální fázi s datem.`},
+ a:`Přímo na kartě hráčky v sekci Milníků nahoře aplikace ukazuje souhrn (kolik milníků je v jaké fázi) a u každého milníku zvlášť jeho aktuální fázi s datem. Klepnutím na souhrnný řádek se navíc rozbalí vysvětlení, co který emoji fáze znamená. V Přehledu týmu (📊) pak aplikace u každé hráčky zobrazuje totéž jako malou barevnou mřížku čtverečků — čím světlejší čtvereček, tím nižší fáze, tmavý/prázdný znamená ještě nezačato — a podržením na čtverečku aplikace ukáže, o který konkrétní milník jde.`,
+ kw:"vysvětlení emoji fází legenda přehled týmu barevná mřížka"},
 {q:`Co jsou „Poznámky k hráčce" a čím se liší od Milníků?`,
  a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější.`,
  kw:"poznámky hráčka deník zápisník postřehy"},
