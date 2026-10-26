@@ -1,6 +1,9 @@
-const CACHE = 'bombito-v53';
+const CACHE = 'bombito-v54';
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
-  './icons/icon-192.png', './icons/icon-512.png'];
+  './icons/icon-192.png', './icons/icon-512.png',
+  // Kolo 51: Font Awesome pro vzhled Trenéra — uložený v repu, ať ikony fungují i offline.
+  './fa/css/fontawesome.min.css', './fa/css/solid.min.css', './fa/css/regular.min.css',
+  './fa/webfonts/fa-solid-900.woff2', './fa/webfonts/fa-regular-400.woff2'];
 
 self.addEventListener('install', e => {
   // Cachovat každý soubor ZVLÁŠŤ, ne přes jedno cache.addAll(ASSETS) — addAll je
