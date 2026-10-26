@@ -891,6 +891,19 @@ html.skin-trener .mh-radio i{background:var(--chalk)}
 html.skin-trener .mh-tag{color:var(--chalk-ink)}
 html.skin-trener .mn-val{display:inline}
 html.skin-trener .t-lbl{display:contents}
+/* Kolo 52: ikony místo emoji v nadpisech a tlačítkách (skinIcons() ve skriptu). */
+i.t-ic{display:none}
+html.skin-trener i.t-ic{display:inline-block;font-size:.9em;width:1.15em;text-align:center}
+html.skin-trener h2 i.t-ic{font-size:.72em;vertical-align:.1em;width:auto;margin-right:.05em}
+html.skin-trener h3 i.t-ic{font-size:1.05em;width:auto;margin-right:.15em}
+html.skin-trener .note-btn i.t-ic,html.skin-trener .mil-back i.t-ic{font-size:13px}
+html.skin-trener .note-btn{opacity:.75}
+html.skin-trener .note-btn.has-note{opacity:1}
+html.skin-trener .card h3 span i.t-ic{font-size:1em;width:auto}
+/* Kolo 52 (Mek 26. 10.): znak klubu v hlavičce vzhledu Trenéra pryč — klik vedl jen na Domů,
+   což umí záložka Domů i nápis BOMBITO, a zelený znak na zelené liště byl nečitelný. */
+html.skin-trener .logo-wrap{display:none}
+@media(min-width:769px){html.skin-trener .hd{padding-left:8px}}
 </style>
 </head>
 <body>
@@ -6883,8 +6896,8 @@ const HELP_DATA=[
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
 {q:`Jak přepnu Bombito do vzhledu Trenéra a zpátky?`,
- a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě, pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b>, bílé karty a ikony v ovládání. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
- kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design"},
+ a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
+ kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
  a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
  kw:"tmavý světlý noční režim dark barvy barva téma motiv výchozí oranžová zelená"},
@@ -7008,6 +7021,7 @@ function setVzhled(patch,live){
   const redraw=()=>{
     applyChartSkin();rerenderCurrent();
     if(document.getElementById('vzSkin')&&!live)openEditor();
+    skinIcons(document.body);
   };
   if(live)_vzhledLiveTm=setTimeout(redraw,250);else redraw();
 }
@@ -7065,6 +7079,77 @@ const BACKNAV=(function(){
   // Přepnutí do vzhledu Trenéra s už otevřeným oknem (Nastavení): okno se začne sledovat.
   function adopt(){sync();}
   return {init,reset,adopt,_state:()=>({stack:stack.slice(),pending,deferred})};
+})();
+
+// Kolo 52: zbylá emoji v ovládání (tlačítka, ✎/✕, poznámky 💬/📝, živý zápas) a v nadpisech
+// oken a karet se ve vzhledu Trenéra nahradí ikonami Font Awesome. Dělá se to až nad hotovým
+// DOM (hlídač změn níž), takže šablony klasiku zůstávají přesně jak byly a klasik se nemění.
+// Původní emoji zůstává schované v <span class="k-only"> — po přepnutí do klasiku je zpátky.
+// Emoji, která něco znamenají (forma 🔥❄️➖, fáze 🌱🌿🌳, typ hráčky, ikony odznaků, ★), tady
+// v mapě nejsou a nemění se.
+const SK_ICO={'✕':'xmark','✖':'xmark','←':'chevron-left','→':'chevron-right','✎':'pen','↩':'rotate-left','📊':'chart-simple','⬇':'download','⬆':'upload','🏁':'flag-checkered','🎯':'bullseye','🗑':'trash-can','🏠':'house','🗃':'database','⚙':'gear','🏐':'volleyball','⚖':'scale-balanced','⚡':'bolt','🔓':'lock-open','🔒':'lock','💪':'wave-square','🎖':'seedling','🏅':'medal','📦':'box-archive','🗂':'folder-open','🖨':'print','▶':'play','📋':'clipboard-list','✔':'check','🏟':'trophy','📚':'list','🏆':'trophy','📝':'note-sticky','⚠':'triangle-exclamation','💾':'database','⎘':'copy','🎮':'gamepad','❓':'circle-question','📈':'chart-line','📥':'inbox','💬':'r:comment','+':'plus'};
+const SK_ICO_LABEL={'✕':'Smazat','✎':'Upravit','↩':'Vrátit','📋':'Záznam akcí','💬':'Poznámka','📝':'Poznámka'};
+const SK_ICO_RE=new RegExp('^(\\s*)('+Object.keys(SK_ICO).map(k=>k.replace(/[+]/g,'\\+')).join('|')+')\\uFE0F?');
+const SK_ICO_SEL='h2,.card h3,.btn,.note-btn,.mil-back,#liveOverlay button,#liveOverlay>div:first-child>div>div:first-child';
+function skIcoEl(fa){
+  const i=document.createElement('i');
+  const reg=fa.startsWith('r:');
+  i.className=`t-ic fa-${reg?'regular':'solid'} fa-${reg?fa.slice(2):fa}`;i.setAttribute('aria-hidden','true');
+  return i;
+}
+function skIcoOne(el){
+  if(el.dataset.skIco||el.closest('#wrappedView,.pdf-wrap,.sk-confirm,.menu-dropdown,header,#skTabs,.help-results-raw'))return;
+  if(el.matches('.btn-plus,.btn-minus,.recv-btn,.da .btn'))return;
+  const tn=[...el.childNodes].find(n=>n.nodeType===1||(n.nodeType===3&&n.textContent.trim()));
+  if(!tn||tn.nodeType!==3)return;
+  const m=tn.textContent.match(SK_ICO_RE);if(!m)return;
+  const g=m[2],rest=tn.textContent.slice(m[0].length);
+  // „+“ jen jako samostatné znaménko na začátku tlačítka („+ Přidat“, „+“), ne „+3“ apod.
+  if(g==='+'&&(!el.matches('.btn')||(rest&&!/^\s/.test(rest))))return;
+  let fa=SK_ICO[g];
+  if(g==='✕'&&!el.matches('.btn-d'))fa='xmark';
+  else if(g==='✕')fa='trash-can';
+  if(g==='⚡'&&/Skupinov|Test/.test(rest))fa='clipboard-check';
+  el.dataset.skIco='1';
+  const em=document.createElement('span');em.className='k-only';em.textContent=m[0];
+  el.insertBefore(em,tn);el.insertBefore(skIcoEl(fa),tn);
+  tn.textContent=rest;
+  if(!rest.trim()&&!el.getAttribute('aria-label')){
+    const lbl=el.getAttribute('title')||(g==='✕'&&!el.matches('.btn-d')?'Zavřít':SK_ICO_LABEL[g]);
+    if(lbl)el.setAttribute('aria-label',lbl);
+  }
+}
+// Legenda v nadpisech karet („💬 = podmínky“, „✎ upravit · ✕ smazat“) — ať odpovídá ikonám.
+function skIcoLegend(sp){
+  if(sp.dataset.skIco)return;
+  const t=sp.textContent;if(!/[💬✎✕]/u.test(t))return;
+  sp.dataset.skIco='1';
+  // Nové spany se označí hned, jinak by je hlídač změn zpracoval znovu (nekonečná smyčka).
+  const k=document.createElement('span');k.className='k-only';k.textContent=t;k.dataset.skIco='1';
+  const tr=document.createElement('span');tr.className='t-only t-lbl';tr.dataset.skIco='1';
+  t.split(/([💬✎✕])/u).forEach(part=>{
+    if(!part)return;
+    if(part==='💬')tr.appendChild(skIcoEl('r:comment'));
+    else if(part==='✎')tr.appendChild(skIcoEl('pen'));
+    else if(part==='✕')tr.appendChild(skIcoEl('trash-can'));
+    else tr.appendChild(document.createTextNode(part));
+  });
+  sp.textContent='';sp.appendChild(k);sp.appendChild(tr);
+}
+function skinIcons(root){
+  if(!isTrener()||!root||root.nodeType!==1)return;
+  if(root.matches(SK_ICO_SEL))skIcoOne(root);
+  root.querySelectorAll(SK_ICO_SEL).forEach(skIcoOne);
+  if(root.matches('.card h3 span'))skIcoLegend(root);
+  root.querySelectorAll('.card h3 span').forEach(skIcoLegend);
+}
+(function(){
+  let fronta=[],naplanovano=false;
+  new MutationObserver(ms=>{
+    if(!isTrener())return;
+    ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1)fronta.push(n);}));
+    if(!naplanovano&&fronta.length){naplanovano=true;queueMicrotask(()=>{naplanovano=false;const f=fronta;fronta=[];f.forEach(n=>{if(n.isConnected)skinIcons(n);});});}
+  }).observe(document.body,{childList:true,subtree:true});
 })();
 
 load();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);
