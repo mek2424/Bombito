@@ -2332,7 +2332,7 @@ function applyScreen(screen){
     document.getElementById('ovView').style.display='none';
     closeSidebar();render();
   }else if(screen.type==='player'){
-    S.activeId=screen.id;S.activeTab='physical';S.cmpMode=false;
+    _detailToTop=true;S.activeId=screen.id;S.activeTab='physical';S.cmpMode=false;
     document.getElementById('ovView').style.display='none';
     closeSidebar();render();
   }else if(screen.type==='cmp'){
@@ -2461,7 +2461,7 @@ function goHome(){
   render();
 }
 
-function selectPlayer(id){S.activeId=id;S.activeTab="physical";closeSidebar();const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none")ov.style.display="none";setNavActive(null);render();}
+function selectPlayer(id){_detailToTop=true;S.activeId=id;S.activeTab="physical";closeSidebar();const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none")ov.style.display="none";setNavActive(null);render();}
 // Kolo 34: "Zápas" přesunut hned za Pavouka (schválená Varianta 2 z mock-upu) — na
 // mobilu se řádek tabů nevejde do šířky a potichu scrolluje (schovaný scrollbar, viz
 // .tabsWrap níže), takže čím dřív v pořadí, tím míň se tab dá přehlédnout.
@@ -2477,12 +2477,18 @@ function badgeTagStyle(color,bdProp){
   }
   return bdProp==='bc'?`background:${color}33;color:${color};border:1px solid ${color}`:`background:${color}33;border-color:${color};color:${color}`;
 }
+// Kolo 55 (Mek 26. 10.): otevřená hráčka začíná vždy nahoře. Dřív <main> držel posun
+// z předchozí obrazovky/hráčky. Přepnutí tabu u téže hráčky posun nemění.
+let _detailShownId=null,_detailToTop=false;
 function renderDetail(){
   const p=gP();if(!p)return;
+  const el=document.getElementById("playerDetail");
+  const toTop=_detailToTop||el.style.display==="none"||_detailShownId!==p.id;
+  _detailToTop=false;_detailShownId=p.id;
   document.getElementById("emptyState").style.display="none";
   document.getElementById("cmpView").style.display="none";
-  document.getElementById("playerDetail").style.display="block";
-  const el=document.getElementById("playerDetail");
+  el.style.display="block";
+  if(toTop){const mn=document.querySelector("main");if(mn)mn.scrollTop=0;window.scrollTo(0,0);}
   const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   const brow=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";const style=b.special?"":badgeTagStyle(b.color,'ba');return`<span class="ba ${b.special?"sp":""}" style="${style}">${b.icon} ${b.label}</span>`;}).join("");
   const ovNorms=activeNorms(),ovMax=teamMaxCovered(getActiveP(),ovNorms),ov=overallForPlayer(p,ovNorms,ovMax);
@@ -4610,7 +4616,7 @@ function ovSortBy(col){
   renderOverview();
 }
 function selectOvPlayer(id){
-  S.activeId=id;S.activeTab='physical';
+  _detailToTop=true;S.activeId=id;S.activeTab='physical';
   toggleOverview(); // closes overview
 }
 
@@ -7006,7 +7012,8 @@ const HELP_DATA=[
 {q:`Co znamená karta s pomlčkou „–" místo čísla?`,
  a:`Appka tam pomlčku ukáže u hráčky, které zatím vůbec nejde spočítat Overall — nemá totiž ještě žádná data ani v jednom ze tří bloků (Fyzické/Herní/Zápasy). Jakmile appka zaznamená první data, pomlčka se změní na skutečné číslo.`},
 {q:`Jak se z domovské obrazovky dostanu na konkrétní hráčku?`,
- a:`Stačí kliknout přímo na její kartičku v mřížce — appka rovnou otevře její kartu.`},
+ a:`Stačí kliknout přímo na její kartičku v mřížce — appka rovnou otevře její kartu. Karta hráčky se vždycky otevře od začátku, tedy nahoře, ať ji otevřeš z Domů, ze seznamu ☰, z Přehledu týmu nebo tlačítkem Zpět. Když u téže hráčky jen přepneš tab (Fyzické, Herní, Pavouk…), zůstaneš tam, kde jsi byl.`,
+ kw:"otevřít hráčku karta nahoře začátek posun scroll"},
 ]},
 
 ]},
