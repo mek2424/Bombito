@@ -26,13 +26,16 @@
    V klasickém vzhledu se na <html> nesahá vůbec, takže klasik zůstává přesně jako dřív.
    BOMBITO_VZHLED je jediné místo s výpočtem barev; applySkin() ve skriptu níž ho používá taky. */
 window.BOMBITO_VZHLED=(function(){
-  var DEF={skin:"klasik",dark:false,primary:"#339933",accent:"#E8622C"};
+  // Výchozí hlavní barva je o kousek tmavší než #339933 v Trenérovi (Mek 26. 10.) — na #339933
+  // má bílý text tlačítek jen 3,66 : 1, na #2B7D2B 5,16 : 1. Kdo měl uloženou starou výchozí
+  // #339933, dostane novou výchozí (vlastní volbu jinou barvou to nemění).
+  var DEF={skin:"klasik",dark:false,primary:"#2B7D2B",accent:"#E8622C"},STARA_VYCHOZI="#339933";
   function read(){
     var v=null;
     try{v=JSON.parse(localStorage.getItem("bombito_vzhled")||"null");}catch(e){}
     var o={};for(var k in DEF)o[k]=DEF[k];
     if(v&&typeof v==="object")for(var k2 in DEF)if(v[k2]!==undefined)o[k2]=v[k2];
-    if(!/^#[0-9a-fA-F]{6}$/.test(o.primary))o.primary=DEF.primary;
+    if(!/^#[0-9a-fA-F]{6}$/.test(o.primary)||o.primary.toUpperCase()===STARA_VYCHOZI)o.primary=DEF.primary;
     if(!/^#[0-9a-fA-F]{6}$/.test(o.accent))o.accent=DEF.accent;
     return o;
   }
@@ -55,7 +58,7 @@ window.BOMBITO_VZHLED=(function(){
     return dark?"#ffffff":"#000000";
   }
   // Text na ploše v barvě trenéra: bílý, pokud má 4,5 : 1; jinak tmavý, pokud ten 4,5 : 1 má;
-  // když nesplní ani jeden (třeba výchozí zelená #339933), zůstává bílý jako v mock-upu.
+  // když nesplní ani jeden (třeba #339933 z Trenéra), zůstává bílý jako v mock-upu.
   function onFill(h){return contrast("#ffffff",h)>=4.5?"#ffffff":contrast("#1B2430",h)>=4.5?"#1B2430":contrast("#ffffff",h)>=3?"#ffffff":"#1B2430";}
   function mix(a,b,t){var x=rgb(a),y=rgb(b);return hex(x.map(function(v,i){return v+(y[i]-v)*t;}));}
   function vars(v){
@@ -567,7 +570,7 @@ html.skin-trener{
   --danger:#C24545;--danger-ink:#BA4242;--danger-bg:#FBEAEA;--av-bg:#E3F0E3;--av-ink:#216321;--gold-bg:#FBF0CC;--gold-ink:#6E5300;
   --fav-gold:#C99A2E;--gold-text:#87671F;--hover:#F4F5F2;
   --shadow:0 1px 2px rgba(27,36,48,.07),0 4px 14px rgba(27,36,48,.05);
-  --court:#339933;--court-dark:#216321;--chalk:#E8622C;--chalk-dark:#BE5124;--court-ink:#297C29;--chalk-ink:#B34B22;--on-court:#fff;--on-chalk:#fff;
+  --court:#2B7D2B;--court-dark:#226222;--chalk:#E8622C;--chalk-dark:#BE5124;--court-ink:#2B7D2B;--chalk-ink:#B34B22;--on-court:#fff;--on-chalk:#fff;
   /* Bombito proměnné přemapované na paletu Trenéra */
   --g:var(--court);--gd:var(--court-dark);--gl:var(--court-ink);--w:var(--ink);--gm:var(--ink-faint-ink);--acc:var(--gold-text);
   --red:var(--danger-ink);--bg:var(--paper);--brd:var(--line);--gold-1:#C99A2E;--gold-2:#E8C468;
@@ -585,7 +588,7 @@ html.skin-trener.skin-dark{
   --danger:#E06666;--danger-ink:#E47B7B;--danger-bg:#3D2020;--av-bg:#243A29;--av-ink:#8FD08F;--gold-bg:#3D3420;--gold-ink:#E8C468;
   --fav-gold:#E8B23A;--gold-text:#E8B23A;--hover:#151A21;
   --shadow:0 1px 2px rgba(0,0,0,.45),0 4px 14px rgba(0,0,0,.3);
-  --court-ink:#5AAC5A;--chalk-ink:#EB7A4C;
+  --court-ink:#5A9A5A;--chalk-ink:#EB7A4C;
   color-scheme:dark;
 }
 /* Wrapped (sezónní shrnutí) a PDF mají vlastní design — vracím jim klasické hodnoty. */
@@ -6883,7 +6886,7 @@ const HELP_DATA=[
  a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě, pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b>, bílé karty a ikony v ovládání. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
  kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
- a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí zelenou a oranžovou z Trenéra. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
+ a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
  kw:"tmavý světlý noční režim dark barvy barva téma motiv výchozí oranžová zelená"},
 {q:`Uloží se vzhled do zálohy?`,
  a:`Ne. Vzhled je volba tohoto zařízení — nejde do exportu (JSON), import ho nepřepíše a „Resetovat paměť" ho nesmaže. Na jiném telefonu nebo počítači si vzhled nastavíš znovu.`,
