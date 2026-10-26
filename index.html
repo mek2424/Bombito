@@ -904,6 +904,14 @@ html.skin-trener .card h3 span i.t-ic{font-size:1em;width:auto}
    což umí záložka Domů i nápis BOMBITO, a zelený znak na zelené liště byl nečitelný. */
 html.skin-trener .logo-wrap{display:none}
 @media(min-width:769px){html.skin-trener .hd{padding-left:8px}}
+/* Kolo 53: upozornění na staré testování (ikona místo tečky + text na kartě hráčky) */
+.stale-ic{display:inline-flex;align-items:center;margin-left:5px;font-size:0.68rem;color:var(--acc);vertical-align:middle;flex-shrink:0;line-height:1}
+.stale-ic.red{color:var(--red)}
+.stale-note{display:block;margin-top:3px;font-size:0.72rem;color:var(--acc)}
+.stale-note.red{color:var(--red)}
+html.skin-trener .stale-ic{color:var(--warn);font-size:11px}
+html.skin-trener .stale-ic.red,html.skin-trener .stale-note.red{color:var(--danger-ink)}
+html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
 </style>
 </head>
 <body>
@@ -2446,7 +2454,7 @@ function renderDetail(){
   const ovHtml=ov.score==null
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
-  el.innerHTML=`<div class="pdh"><div class="pav">${ini}</div>${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>
+  el.innerHTML=`<div class="pdh"><div class="pav">${ini}</div>${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -4154,13 +4162,38 @@ function renderWrappedCard(){
 // ═══════════════════════════════════════════════
 // STALE TEST INDICATOR
 // ═══════════════════════════════════════════════
+// Kolo 53 (Mek 26. 10.): přes sezónu se testuje tak 3× (začátek, zima, konec), původních
+// 30/60 dní svítilo pořád a přestalo se vnímat. Teď žlutá po čtvrt roce, červená po půl roce
+// nebo když hráčka nemá žádný test. Místo tečky ikona, ze které je poznat, co chybí
+// (hodiny = starý test, prázdný papír = žádný test); vysvětlení i textem na kartě hráčky.
+const STALE_WARN_DAYS=90, STALE_RED_DAYS=180;
+// Stáří posledního testování ve dnech podle MÍSTNÍHO data (stejně jako today()) — dřív
+// new Date('2026-08-24') četlo datum jako půlnoc UTC, což kolem hranice posunulo počet dní.
+function staleInfo(p){
+  const dates=(p.testSessions||[]).map(s=>s.date).filter(Boolean).sort();
+  if(!dates.length)return{level:'red',kind:'none'};
+  const last=dates[dates.length-1];
+  const [y,m,d]=last.split('-').map(Number);
+  const now=new Date(),t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days=Math.round((t0-new Date(y,m-1,d))/86400000);
+  const level=days>STALE_RED_DAYS?'red':days>STALE_WARN_DAYS?'warn':null;
+  return{level,kind:'old',days,last};
+}
+function staleTitle(i){
+  return i.kind==='none'
+    ?'Zatím bez testu — první zapíšeš přes + Test na kartě hráčky nebo ⋮ → Skupinový test'
+    :`Poslední test ${fmtDate(i.last)} (před ${i.days} dny) — čas přetestovat: + Test na kartě hráčky nebo ⋮ → Skupinový test`;
+}
 function staleDot(p){
-  if(!p.testSessions?.length) return '<span class="stale-dot red" title="Zatím bez testu"></span>';
-  const last = p.testSessions[p.testSessions.length-1].date;
-  const days = Math.floor((Date.now() - new Date(last).getTime()) / 86400000);
-  if(days > 60) return `<span class="stale-dot red" title="Poslední test: ${fmtDate(last)} (${days} dní)"></span>`;
-  if(days > 30) return `<span class="stale-dot" title="Poslední test: ${fmtDate(last)} (${days} dní)"></span>`;
-  return '';
+  const i=staleInfo(p);if(!i.level)return '';
+  const t=staleTitle(i);
+  return `<span class="stale-ic${i.level==='red'?' red':''}" role="img" aria-label="${t}" title="${t}"><i class="fa-solid ${i.kind==='none'?'fa-clipboard':'fa-clock'}" aria-hidden="true"></i></span>`;
+}
+// Text pod „Nar. … · N testování“ na kartě hráčky — jen když svítí ikona.
+function staleNoteHtml(p){
+  const i=staleInfo(p);if(!i.level)return '';
+  const txt=i.kind==='none'?'Zatím bez testu — první zapíšeš přes + Test':`Poslední test ${fmtDate(i.last)}, před ${i.days} dny — čas přetestovat`;
+  return `<span class="stale-note${i.level==='red'?' red':''}" title="${staleTitle(i)}"><i class="fa-solid ${i.kind==='none'?'fa-clipboard':'fa-clock'}" aria-hidden="true"></i> ${txt}</span>`;
 }
 
 // ═══════════════════════════════════════════════
@@ -6523,8 +6556,9 @@ const HELP_DATA=[
  kw:"navigace historie back forward"},
 {q:`Proč appka po každém otevření skočí na domovskou obrazovku, i když jsem byla naposledy u konkrétní hráčky?`,
  a:`Je to záměr — domovská obrazovka appce slouží jako přehledný „výchozí bod" s celým týmem najednou, ať appku neotevíráš pokaždé rovnou na tom, u koho jsi skončil minule. Ke konkrétní hráčce se odtud dostaneš jedním klikem v mřížce karet nebo přes postranní seznam (☰).`},
-{q:`Co je barevná tečka u jména hráčky v postranním seznamu?`,
- a:`Značí, že appka má u té hráčky čerstvě něco nového nebo nedokončeného, na co by ses měla podívat (typicky nová/neodehraná minihra) — funguje stejně jako tečka na ikoně ⋮ v hlavičce, jen konkrétněji u dané hráčky.`},
+{q:`Co znamená ikona hodin nebo papíru u jména hráčky?`,
+ a:`Připomínka, že hráčka potřebuje přetestovat. <b>Hodiny</b> znamenají, že poslední testování je staré — žluté po víc než 90 dnech, tedy čtvrt roce, červené po víc než 180 dnech, tedy půl roce. <b>Prázdný papír</b> (červený) znamená, že hráčka zatím nemá žádný test. Ikona je v seznamu hráček ☰, na kartách na Domů i v Přehledu týmu; po rozkliknutí hráčky je pod „Nar. … · N testování" totéž napsané slovy (kdy byl poslední test a před kolika dny). Ikona zmizí, jakmile zapíšeš nové testování — na kartě hráčky tlačítkem „+ Test", nebo pro celý tým přes ⋮ → „Skupinový test".`,
+ kw:"tečka ikona hodiny papír červená žlutá oranžová upozornění přetestovat zastaralé staré testování bez testu"},
 {q:`Co je ten štítek „👥 Tým" / „🗃 Databáze" nahoře v appce?`,
  a:`Tohle je přepínač normy — jedno z nejdůležitějších, ale málo nápadných tlačítek v appce, protože ovlivňuje skoro všechna čísla, která appka ukazuje (T-skóre, Overall, barvy v grafech...). Appka totiž hráččiny výkony vždycky poměřuje vůči nějaké skupině ostatních — a tenhle přepínač určuje, jestli je to jen aktuální aktivní tým („👥 Tým"), nebo úplně všechny hráčky, co kdy appka měřila, včetně archivovaných z minulých sezón („🗃 Databáze"). Podrobně a s příklady, kdy který použít, appka vysvětluje v bloku „T-skóre a normy" — tam je na to samostatná otázka.`,
  kw:"přepínač normscope scope norma tým databáze"},
@@ -6811,9 +6845,9 @@ const HELP_DATA=[
  a:`Je to úplně stejná informace jako na kartě hráčky (viz blok „Overall") — jen appka ji tady kreslí jako malý horní index * místo velké hvězdičky, protože v tabulce je míň místa. Značí, že appka měla u téhle hráčky k dispozici míň naměřených metrik než u nejtestovanější hráčky v týmu.`},
 {q:`Co znamenají ikonky 🎯/▫️ vedle sloupce „Útok %"?`,
  a:`Appka jimi značí, na jaké VARIANTĚ útoku appka zrovna to konkrétní číslo počítala — 🎯 = těžší varianta („Útok na cíl"), ▫️ = lehčí varianta („Útok do pole"). Souvisí to se sloučenou metrikou Útok z bloku „Herní testy" — appka tu jen navíc ukazuje, na jaké obtížnosti hráčka zrovna je.`},
-{q:`Co znamená barevná tečka „●" u jména hráčky v Přehledu?`,
- a:`Appka jí upozorňuje, že hráččino testování je zastaralé nebo chybí úplně — objeví se, když hráčka nemá ještě VŮBEC žádný test, nebo když je její poslední test starší než 30 dní (appka mezi 30 a 60 dny ukáže tečku jemnější barvou, nad 60 dní výraznější). Je to appčino tiché připomenutí „tuhle bys měl zase brzy otestovat", ne chyba ani problém s appkou.`,
- kw:"stará data tečka upozornění zastaralé testování"},
+{q:`Co znamená ikona hodin nebo papíru u jména hráčky v Přehledu?`,
+ a:`Stejné upozornění jako v seznamu hráček: hodiny = poslední testování je starší než 90 dní (žluté) nebo 180 dní (červené), prázdný papír = hráčka zatím nemá žádný test. Je to tiché připomenutí „tuhle bys měl zase otestovat", ne chyba. Zmizí po zapsání nového testování (+ Test nebo ⋮ → Skupinový test).`,
+ kw:"stará data tečka ikona hodiny papír upozornění zastaralé testování přetestovat"},
 ]},
 
 {title:"Porovnání",icon:"⚖",qa:[
