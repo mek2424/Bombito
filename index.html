@@ -696,7 +696,41 @@ html.skin-trener .pd-ov .mv{font-size:38px!important;line-height:1}
 html.skin-trener .pdh>.pdi{display:contents}
 html.skin-trener .pdi h2{grid-column:2;grid-row:1;font-size:30px;letter-spacing:.02em;color:var(--ink);text-transform:uppercase;font-weight:400}
 html.skin-trener .pdi p{grid-column:2;grid-row:2;font-size:12.5px;color:var(--ink-faint-ink);margin-top:3px}
-html.skin-trener .pdi .brow{grid-column:2;grid-row:3;margin-top:6px}
+html.skin-trener .pdi .brow{display:none}
+/* ── Kolo 54: koláž dovedností (varianta A2) ── */
+/* Fáze milníků v prstenci: šedá = nezačato, pak tři odstíny hlavní barvy. V tmavém režimu
+   ze světlejší --court-ink a s tmavší šedou, jinak by 🌱 na tmavé kartě splynula se šedou. */
+html.skin-trener{--kol-m0:var(--line);--kol-m1:color-mix(in srgb,var(--court) 34%,var(--card));--kol-m2:color-mix(in srgb,var(--court) 68%,var(--card));--kol-m3:var(--court)}
+html.skin-trener.skin-dark{--kol-m0:#2F3742;--kol-m1:color-mix(in srgb,var(--court-ink) 42%,var(--card));--kol-m2:color-mix(in srgb,var(--court-ink) 72%,var(--card));--kol-m3:var(--court-ink)}
+html.skin-trener .kol{position:relative;width:44px;height:44px;flex-shrink:0;border-radius:50%;background:var(--ring);line-height:1}
+html.skin-trener .kol.big{width:72px;height:72px}
+html.skin-trener .kol-c{position:absolute;inset:4px;border-radius:50%;background:var(--av-bg);color:var(--court-ink);display:flex;align-items:center;justify-content:center;font-size:17px}
+html.skin-trener .kol.big .kol-c{inset:6px;font-size:28px}
+html.skin-trener .kol-em{font-size:18px}
+html.skin-trener .kol.big .kol-em{font-size:28px}
+html.skin-trener .kol-sat{position:absolute;width:17px;height:17px;box-sizing:border-box;border-radius:50%;border:2px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:10px;background:var(--card);color:var(--ink)}
+html.skin-trener .kol.big .kol-sat{width:24px;height:24px;font-size:13px}
+html.skin-trener .kol-s{background:var(--court);color:var(--on-court);font-size:8px}
+html.skin-trener .kol.big .kol-s{font-size:11px}
+html.skin-trener .kol-b.sp{background:var(--gold-bg)}
+html.skin-trener .pdh:has(>.kol){grid-template-columns:76px minmax(0,1fr) auto}
+html.skin-trener .pdh>.kol{grid-column:1;grid-row:1/4;align-self:center;justify-self:center;cursor:pointer}
+html.skin-trener .home-card .kol{margin:4px 0 2px}
+html.skin-trener .m-ic{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border-radius:50%;background:var(--paper);color:var(--ink-soft);font-size:11px}
+html.skin-trener .m-ic.on{background:var(--court);color:var(--on-court)}
+html.skin-trener .m-t{display:inline-block;flex-shrink:0;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--ok-bg);color:var(--ok-ink)}
+html.skin-trener .kol-hd{display:flex;align-items:center;gap:16px;margin:4px 0 12px}
+html.skin-trener .kol-hd h2{margin:0}
+html.skin-trener .kol-hd .kol{cursor:default}
+html.skin-trener .kol-sec{margin-bottom:12px}
+html.skin-trener .kol-sec h3{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--court-ink);padding-bottom:6px;margin:0 0 2px;border-bottom:1px solid var(--line)}
+html.skin-trener .kol-row,html.skin-trener .kol-mil{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:14px;color:var(--ink)}
+html.skin-trener .kol-row{border-bottom:1px solid var(--line)}
+html.skin-trener .kol-l{flex:1;min-width:0}
+html.skin-trener .kol-bar{width:14px;height:6px;border-radius:3px;flex-shrink:0}
+html.skin-trener .kol-st{font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+html.skin-trener .kol-none{font-size:13px;color:var(--ink-faint-ink);padding:8px 0}
+html.skin-trener .kol-sec .brow{display:flex;margin-top:8px}
 html.skin-trener .pdi .da{grid-column:1/-1;grid-row:4;margin-top:12px;gap:6px;flex-wrap:nowrap;align-items:center}
 html.skin-trener .ba{border-radius:999px;font-size:12px;padding:3px 10px;border-width:0}
 html.skin-trener .da .btn{height:38px;padding:0 11px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
@@ -2366,11 +2400,13 @@ function renderHome(){
     const hasData=ov.score!=null;
     const badges=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";return`<span title="${b.label}">${b.icon}</span>`;}).join(" ");
     const star=hasData&&ov.incomplete?`<sup style="color:var(--acc);font-size:0.6rem" title="Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})">*</sup>`:"";
+    // Kolo 54: ve vzhledu Trenéra koláž dovedností místo iniciál; odznaky jsou v ní, řádek pod číslem odpadá.
+    const av=isTrener()?collageHtml(p,44,norms):`<div class="pav" style="width:44px;height:44px;font-size:1rem">${ini}</div>`;
     return`<div class="home-card${hasData?"":" home-card-nodata"}" onclick="selectPlayer('${p.id}')">
-      <div class="pav" style="width:44px;height:44px;font-size:1rem">${ini}</div>
+      ${av}
       <div style="font-size:0.84rem;font-weight:600;color:var(--w);display:flex;align-items:center;gap:1px">${p.name}${staleDot(p)}</div>
       <div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}</div>
-      ${badges?`<div style="font-size:0.85rem">${badges}</div>`:""}
+      ${badges&&!isTrener()?`<div style="font-size:0.85rem">${badges}</div>`:""}
     </div>`;
   }).join("");
 
@@ -2454,7 +2490,8 @@ function renderDetail(){
   const ovHtml=ov.score==null
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
-  el.innerHTML=`<div class="pdh"><div class="pav">${ini}</div>${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>
+  const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
+  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -2496,7 +2533,7 @@ function renderTab(){
 
 // ═══ PHYSICAL ═══
 function buildPhys(){
-  const s=lS(),pv=pS();
+  const s=lS(),pv=pS(),tMap=strengthTMap(gP());
   const activeRows=[],inactiveRows=[];
   S.config.physical.forEach(m=>{
     const isA=m.active!==false;
@@ -2504,14 +2541,14 @@ function buildPhys(){
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'physical\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
     if(m.id==="dosah_vyskoku"){
       const c=s?.physical?.dosah_vyskoku,pc=pv?.physical?.dosah_vyskoku,vys=calcVys(s),pvys=calcVys(pv);
-      const row=`<div class="me ${isA?"":"inactive"}"><div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,false)}</div>`;
+      const row=`<div class="me ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${metricTHtml(m.id,tMap)}${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,false)}</div>`;
       (isA?activeRows:inactiveRows).push(row);
       // Výskok je dopočítaný, ne samostatně vypínatelná metrika — vždy mezi aktivními.
-      activeRows.push(`<div class="me"><div class="ml">Výskok <small>↳ dopočítáno</small></div>${vys!=null?`<span class="mv calc">${vys}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(vys,pvys,false)}</div>`);
+      activeRows.push(`<div class="me">${metricIcoHtml('vyskok',tMap)}<div class="ml">Výskok <small>↳ dopočítáno</small></div>${metricTHtml('vyskok',tMap)}${vys!=null?`<span class="mv calc">${vys}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(vys,pvys,false)}</div>`);
       return;
     }
     const c=s?.physical?.[m.id],pc=pv?.physical?.[m.id];
-    const row=`<div class="me ${isA?"":"inactive"}"><div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,m.lowerBetter)}</div>`;
+    const row=`<div class="me ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${metricTHtml(m.id,tMap)}${nb}${c!=null?`<span class="mv">${c}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,m.lowerBetter)}</div>`;
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
@@ -2612,7 +2649,7 @@ function drawPhys(){
 
 // ═══ GAME ═══
 function buildGame(){
-  const s=lS(),pv=pS();
+  const s=lS(),pv=pS(),tMap=strengthTMap(gP());
   const p=gP();const attackMerged=!!p?.attackHarderSince;
   const activeRows=[],inactiveRows=[];
   S.config.game.forEach(m=>{
@@ -2627,7 +2664,7 @@ function buildGame(){
     const pctDisp=pct!=null?Math.round(pct*100):null;
     const ntitle=m.note?'Poznámka: '+m.note.slice(0,40):'Přidat poznámku';
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'game\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
-    const row=`<div class="gi ${isA?"":"inactive"}"><div class="gl2">${m.label}</div>${nb}<div class="sb"><div class="sf" style="width:${pctDisp||0}%"></div></div>${gs!=null?`<div class="sc"><span style="font-size:1rem;font-family:'Bebas Neue',sans-serif;color:var(--gl)">${pctDisp}%</span><span style="font-size:0.7rem;color:var(--gm);margin-left:4px">${gs.score}/${gs.attempts}</span></div>`:'<div class="sc" style="color:var(--gm)">–</div>'}${trElPct(pct,pctpv)}</div>`;
+    const row=`<div class="gi ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="gl2">${m.label}</div>${metricTHtml(m.id,tMap)}${nb}<div class="sb"><div class="sf" style="width:${pctDisp||0}%"></div></div>${gs!=null?`<div class="sc"><span style="font-size:1rem;font-family:'Bebas Neue',sans-serif;color:var(--gl)">${pctDisp}%</span><span style="font-size:0.7rem;color:var(--gm);margin-left:4px">${gs.score}/${gs.attempts}</span></div>`:'<div class="sc" style="color:var(--gm)">–</div>'}${trElPct(pct,pctpv)}</div>`;
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
@@ -4194,6 +4231,106 @@ function staleNoteHtml(p){
   const i=staleInfo(p);if(!i.level)return '';
   const txt=i.kind==='none'?'Zatím bez testu — první zapíšeš přes + Test':`Poslední test ${fmtDate(i.last)}, před ${i.days} dny — čas přetestovat`;
   return `<span class="stale-note${i.level==='red'?' red':''}" title="${staleTitle(i)}"><i class="fa-solid ${i.kind==='none'?'fa-clipboard':'fa-clock'}" aria-hidden="true"></i> ${txt}</span>`;
+}
+
+// ═══ Kolo 54: koláž dovedností (jen vzhled Trenéra, schválená varianta A2, Mek 26. 10.) ═══
+// Místo kolečka s iniciálami: prstenec = milníky (dílek na milník, odstín podle fáze),
+// uprostřed nejvýraznější vlastnost, kolem další silné stránky (nahoře) a odznaky (dole).
+// Jedna ikona na metriku, stejná v koláži, v řádcích Fyzické/Herní, v okně i v Nápovědě.
+const METRIC_FA={k_test:'shuffle',sprint_6m:'bolt',hod_med:'dumbbell',bloky_20s:'hand',wall_toss:'arrows-rotate',
+  vyskok:'angles-up',sud_vyskok:'stopwatch',vyska:'ruler-vertical',dosah:'hand-point-up',dosah_vyskoku:'arrows-up-to-line',
+  balony_zadarmo:'volleyball',tezke_balony:'person-running',servisy_zatezy:'rocket',prihravka_cil:'crosshairs',
+  utok_cil:'bullseye',utok_pole:'burst',nahravka_cil:'hand-pointer',body_zapas:'star',prijem_zapas:'shield-halved'};
+function metricFa(id){return METRIC_FA[id]||'circle-dot';}
+// „Vyniká“ = T-skóre aspoň 60 (hranice pásma „výborná“, tBadgeCls). Kandidáti jsou stejné
+// metriky a stejný výpočet jako v Overallu (poslední testování + zápasy aktuální sezóny,
+// uhlazení shrinkPct u procent), aby koláž a Overall nikdy netvrdily každý něco jiného.
+// Norma z méně než 5 hodnot se nebere (stejná hranice spolehlivosti jako u kontroly překlepů).
+const STRENGTH_T=60;
+function strengthTs(p,norms){
+  const out=[],sess=lS(p);
+  const add=(id,label,val,nm)=>{if(val==null||!nm||!(nm.n>=5)||!nm.sigma)return;const t=tRaw(val,nm);if(t!=null)out.push({id,label,t});};
+  if(sess){
+    S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku").forEach(m=>add(m.id,m.label,sess.physical?.[m.id],norms[m.id]));
+    add('vyskok','Výskok',calcVys(sess),norms.vyskok);
+    S.config.game.filter(m=>m.active!==false).forEach(m=>{const gs=gameScore(sess.game,m.id),pct=gamePct(gs);if(pct!=null)add(m.id,m.label,shrinkPct(pct,gs.attempts,norms[m.id]?.mu,SHRINK_K_GAME),norms[m.id]);});
+  }
+  const mr=overallMatchRaw(p,norms);
+  if(mr.matchCount>=OVERALL_GAP_MIN_MATCHES){
+    add('body_zapas','Body v zápase',playerRecentMatchAvg(p,'body',OVERALL_MATCH_CAP),norms.body_zapas);
+    const ms=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'prijem')!=null).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+    const pool=playerReceptionPool(p,ms);
+    if(pool)add('prijem_zapas','Příjem v zápase',shrinkPct(pool.avg,pool.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM),norms.prijem_zapas);
+  }
+  return out;
+}
+function playerStrengths(p,norms){return strengthTs(p,norms).filter(x=>x.t>=STRENGTH_T).sort((a,b)=>b.t-a.t);}
+function playerBadgesOrdered(p){
+  const bs=(p.badges||[]).map(id=>S.config.badges.find(b=>b.id===id)).filter(Boolean);
+  return[...bs.filter(b=>b.special),...bs.filter(b=>!b.special)];
+}
+function collageData(p,norms){
+  const mils=S.config.milestones.filter(m=>m.active!==false);
+  return{str:playerStrengths(p,norms),badges:playerBadgesOrdered(p),mils,stages:mils.map(m=>milStage(p,m.id))};
+}
+function milStageColor(st){return`var(--kol-m${Math.max(0,Math.min(3,st||0))})`;}
+function collageTip(d){
+  const c=k=>d.stages.filter(x=>x===k).length;
+  return[
+    d.str.length?'Vyniká: '+d.str.map(x=>`${x.label} (T ${x.t})`).join(', '):'',
+    d.badges.length?'Odznaky: '+d.badges.map(b=>b.label).join(', '):'',
+    d.stages.some(x=>x>0)?'Milníky: '+[3,2,1].filter(k=>c(k)).map(k=>`${c(k)}× ${MIL_STAGES[k-1].emoji}`).join(' · '):''
+  ].filter(Boolean).join('\n');
+}
+// size 44 (Domů) nebo 72 (karta hráčky). Bez jakýchkoli dat zůstává kolečko s iniciálami.
+function collageHtml(p,size,norms,onclick){
+  const d=collageData(p,norms),best=Math.max(0,...d.stages);
+  if(!d.str.length&&!d.badges.length&&!best){
+    const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    return`<div class="pav">${ini}</div>`;
+  }
+  const big=size>=60,R=size/2,n=d.stages.length||1,seg=360/n,gap=big?3:5;
+  const ring=d.stages.map((st,i)=>{const a=i*seg,b=a+gap/2,c=a+seg-gap/2;return`transparent ${a}deg ${b}deg,${milStageColor(st)} ${b}deg ${c}deg,transparent ${c}deg ${a+seg}deg`;}).join(',');
+  // Hlavní vlastnost: nejsilnější metrika › odznak (kapitánka první) › nejvyšší fáze milníku.
+  let main,badges=d.badges;
+  if(d.str[0])main=`<i class="fa-solid fa-${metricFa(d.str[0].id)}" aria-hidden="true"></i>`;
+  else if(badges[0]){main=`<span class="kol-em">${badges[0].icon}</span>`;badges=badges.slice(1);}
+  else main=`<span class="kol-em">${MIL_STAGES[best-1].emoji}</span>`;
+  const rr=R-(big?2:1),cw=big?24:17;
+  const at=deg=>{const r=deg*Math.PI/180;return`left:${Math.round(R+rr*Math.cos(r)-cw/2)}px;top:${Math.round(R+rr*Math.sin(r)-cw/2)}px`;};
+  const sDeg=big?[-45,-135,-90]:[-45,-135],bDeg=[45,135,90,0,180];
+  const sats=d.str.slice(1,1+sDeg.length).map((x,i)=>`<span class="kol-sat kol-s" style="${at(sDeg[i])}"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span>`).join('')
+    +badges.slice(0,bDeg.length).map((b,i)=>`<span class="kol-sat kol-b${b.special?' sp':''}" style="${at(bDeg[i])}">${b.icon}</span>`).join('');
+  const tip=collageTip(d).replace(/"/g,'&quot;');
+  return`<div class="kol${big?' big':''}" style="--ring:conic-gradient(${ring})" role="img" aria-label="${tip.replace(/\n/g,'. ')}" title="${tip}"${onclick?` onclick="${onclick}"`:''}><div class="kol-c">${main}</div>${sats}</div>`;
+}
+// Ikona metriky v řádcích Fyzické/Herní (vidět jen ve vzhledu Trenéra) — u T ≥ 60 zeleně
+// a se štítkem T, takže je hned vidět, odkud koláž bere.
+function metricIcoHtml(id,tMap){
+  if(!tMap)return'';
+  const t=tMap[id];
+  return`<span class="t-only m-ic${t>=STRENGTH_T?' on':''}"><i class="fa-solid fa-${metricFa(id)}" aria-hidden="true"></i></span>`;
+}
+function metricTHtml(id,tMap){
+  const t=tMap?.[id];
+  return t>=STRENGTH_T?`<span class="t-only m-t">T ${t}</span>`:'';
+}
+function strengthTMap(p){
+  if(!isTrener()||!p)return null;
+  const m={};strengthTs(p,activeNorms()).forEach(x=>{m[x.id]=x.t;});return m;
+}
+function openCollage(pid){
+  const p=S.players.find(x=>x.id===pid);if(!p)return;
+  const d=collageData(p,activeNorms());
+  const strRows=d.str.length?d.str.map(x=>`<div class="kol-row"><span class="m-ic on"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span><span class="kol-l">${x.label}</span><span class="m-t">T ${x.t}</span></div>`).join('')
+    :`<div class="kol-none">Zatím žádná metrika s T aspoň ${STRENGTH_T}</div>`;
+  const bRow=d.badges.length?`<div class="brow">${d.badges.map(b=>`<span class="ba ${b.special?"sp":""}" style="${b.special?"":badgeTagStyle(b.color,'ba')}">${b.icon} ${b.label}</span>`).join('')}</div>`:`<div class="kol-none">Žádné odznaky</div>`;
+  const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st">${st?MIL_STAGES[st-1].emoji+' '+MIL_STAGES[st-1].label:'—'}</span></div>`;}).join('');
+  openModal(`<div class="kol-hd">${collageHtml(p,72,activeNorms())}<h2>${p.name}</h2></div>
+    <div class="kol-sec"><h3>Vyniká</h3>${strRows}</div>
+    <div class="kol-sec"><h3>Odznaky</h3>${bRow}</div>
+    <div class="kol-sec"><h3>Milníky</h3>${milRows}</div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModal();openBadges()"><i class="fa-solid fa-medal" aria-hidden="true"></i> Odznaky</button><button class="btn btn-o" onclick="closeModal();switchTab('milestones')"><i class="fa-solid fa-seedling" aria-hidden="true"></i> Milníky</button><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
 }
 
 // ═══════════════════════════════════════════════
@@ -6763,7 +6900,8 @@ const HELP_DATA=[
  a:`Appka to nedělá sama automaticky — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
  kw:"udělení odznaku manuálně přiřazení"},
 {q:`Kde všude appka odznaky u hráčky ukazuje?`,
- a:`Appka je ukazuje přímo na kartě hráčky pod jejím jménem a taky v Domovské obrazovce na její kartičce v mřížce — takže je vidíš i bez otevírání karty jednotlivě.`},
+ a:`Appka je ukazuje přímo na kartě hráčky pod jejím jménem a taky v Domovské obrazovce na její kartičce v mřížce — takže je vidíš i bez otevírání karty jednotlivě. Ve vzhledu Trenéra jsou odznaky jako emoji v kolečku hráčky (koláž dovedností) na Domů i na kartě; jejich názvy uvidíš po klepnutí na kolečko na kartě hráčky.`,
+ kw:"odznaky kde koláž kolečko"},
 ]},
 
 ]},
@@ -6944,6 +7082,9 @@ const HELP_DATA=[
 {q:`Co dělá tlačítko Zpět na telefonu?`,
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, chová se Zpět jako dřív. Mezi obrazovkami (hráčka, Domů, Přehled…) se dál pohybuješ spodní lištou „Zpět / Dopředu", na počítači šipkami v hlavičce.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
+{q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
+ a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
+ kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
 {q:`Proč PDF a sezónní shrnutí vypadají v obou vzhledech stejně?`,
  a:`Záměrně. PDF report je dělaný pro tisk a pro rodiče a sezónní shrnutí (Wrapped) má vlastní „story" design — obojí proto zůstává stejné, ať máš zapnutý jakýkoli vzhled.`,
  kw:"pdf wrapped shrnutí vzhled stejné tisk report"},
