@@ -1237,6 +1237,12 @@ html.skin-trener .help-block{border-bottom-color:var(--line)}
 html.skin-trener .help-block summary{color:var(--ink)}
 html.skin-trener .help-block summary:hover,html.skin-trener .help-qa summary{color:var(--court-ink)}
 html.skin-trener .help-qa .help-badge{background:var(--paper);border-color:var(--line)}
+html.skin-trener .help-ico{width:20px;text-align:center;margin-right:6px;color:var(--court-ink)}
+html.skin-trener .help-badge .help-ico{width:auto;margin-right:4px;color:var(--ink-soft)}
+html.skin-trener .mh-ico{width:18px;text-align:center;margin-right:4px;color:var(--court-ink)}
+html.skin-trener .btn.sm{min-height:36px;min-width:36px}
+html.skin-trener #tourNameEl{font:inherit!important;letter-spacing:inherit;text-transform:inherit;color:var(--court-ink)!important;border-bottom:1px solid transparent!important;max-width:none!important;width:auto;field-sizing:content;min-width:4ch;padding:0;outline:none}
+html.skin-trener #tourNameEl:focus{border-bottom-color:var(--line)!important}
 html.skin-trener .help-a{color:var(--ink-soft);border-left-color:var(--line)}
 html.skin-trener .live-badge{background:#fff;color:var(--danger)}
 html.skin-trener .set-tab{background:var(--card);border:1px solid var(--line)}
@@ -7102,7 +7108,7 @@ function openMinihry(){
     const{icon,title,sub}=mhTitleAndSub(mh);
     return`<div class="match-card" style="cursor:pointer;${mh.played?'opacity:.45':''}" onclick="closeModal();mhOpen('${mh.id}')">
       <div class="match-card-head">
-        <span class="match-card-opp">${icon} ${title}</span>
+        <span class="match-card-opp">${isTrener()?`<i class="fa-solid fa-${{'📋':'clipboard-list','🏐':'volleyball','🏟':'trophy'}[icon]||'gamepad'} mh-ico" aria-hidden="true"></i>`:icon+' '}${title}</span>
         <span class="match-card-date">${fmtDate(mh.date)}</span>
       </div>
       <div style="font-size:0.8rem;color:var(--gm)">${sub}</div>
@@ -8032,12 +8038,15 @@ function helpNorm(s){
   }
   return out.toLowerCase();
 }
+// Kolo 74: ve vzhledu Trenéra místo emoji bloku ikona Font Awesome.
+const HELP_FA={'🏐':'volleyball','🧭':'compass','👤':'user','📝':'note-sticky','💪':'wave-square','🎯':'bullseye','🧮':'calculator','🔢':'hashtag','📈':'chart-line','🕸':'circle-nodes','🎖':'seedling','🏅':'medal','🏆':'stopwatch','🏟':'trophy','🎮':'gamepad','📊':'chart-simple','⚖':'scale-balanced','🏠':'house','📦':'box-archive','📄':'file-pdf','💾':'database','⚙':'gear','🎨':'palette','📋':'clipboard-list'};
+function helpIco(e){const fa=isTrener()&&HELP_FA[e];return fa?`<i class="fa-solid fa-${fa} help-ico" aria-hidden="true"></i>`:e+' ';}
 function helpQaHtml(qa,badge){
   return`<div class="help-qa"><details><summary>${qa.q}${badge?`<span class="help-badge">${badge}</span>`:""}</summary><div class="help-a">${qa.a}</div></details></div>`;
 }
 function helpRenderBlocks(){
   return HELP_DATA.map(g=>`<div class="help-group-title">${g.group}</div>${g.blocks.map(b=>
-    `<details class="help-block"><summary>${b.icon} ${b.title}<span class="help-count">${b.qa.length}</span></summary>${b.qa.map(qa=>helpQaHtml(qa)).join("")}</details>`
+    `<details class="help-block"><summary>${helpIco(b.icon)}${b.title}<span class="help-count">${b.qa.length}</span></summary>${b.qa.map(qa=>helpQaHtml(qa)).join("")}</details>`
   ).join("")}`).join("");
 }
 function helpSearch(query){
@@ -8055,7 +8064,7 @@ function helpSearch(query){
   }));
   countEl.textContent=hits.length?`Nalezeno: ${hits.length}`:"Nic nenalezeno — zkus jiné slovo";
   box.innerHTML=hits.length
-    ?hits.map(h=>helpQaHtml(h.qa,`${h.blockIcon} ${h.blockTitle}`)).join("")
+    ?hits.map(h=>helpQaHtml(h.qa,`${helpIco(h.blockIcon)}${h.blockTitle}`)).join("")
     :`<div class="no-data">Aplikace hledá napříč všemi otázkami i odpověďmi ve všech blocích — zkus třeba jiné slovo nebo jen jeho část.</div>`;
 }
 function openHelp(){
