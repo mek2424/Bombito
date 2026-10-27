@@ -785,6 +785,18 @@ html.skin-trener .bl-lepik{--lp-ohyb:28px;--lp-f:"Patrick Hand","Segoe Print",cu
 html.skin-trener .pdh+.bl-lepik{margin:0 6px 18px}
 html.skin-trener[data-pismo="caveat"] .bl-lepik{--lp-f:"Caveat","Segoe Print",cursive;--lp-v:23px;--lp-r:30px}
 html.skin-trener[data-pismo="kalam"] .bl-lepik{--lp-f:"Kalam","Segoe Print",cursive;--lp-v:17.5px;--lp-r:28px}
+html.skin-trener .zap-odkazy{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+html.skin-trener .zap-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:600px){html.skin-trener .zap-sum{grid-template-columns:repeat(2,1fr)}}
+html.skin-trener .zap-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;text-align:center}
+html.skin-trener .zap-tile .mv{font-size:1.9rem;line-height:1.1}
+html.skin-trener .zap-tile-l{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint-ink);margin-top:2px}
+html.skin-trener #zapView .match-card{cursor:pointer;position:relative;padding-right:46px}
+html.skin-trener .zap-smazat{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--ink-faint-ink);cursor:pointer;font-size:14px}
+html.skin-trener .zap-smazat:hover{background:var(--danger-bg);color:var(--danger-ink)}
+.lm-zahodit{display:none}
+html.skin-trener #liveOverlay .lm-zahodit i{color:#fff}
+html.skin-trener .lm-zahodit{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:7px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:15px;flex-shrink:0}
 html.skin-trener .sk-kapsle.sk-pismo button{font-weight:400;font-size:18px;padding:0 12px}
 html.skin-trener .bl-lepik .lp-papir{position:relative;color:#1F3A7A;font:400 var(--lp-v)/var(--lp-r) var(--lp-f);padding:7px 14px 26px;background:linear-gradient(180deg,#FFF6C2 0%,#FFEFA0 60%,#FCE58A 100%);clip-path:polygon(0 0,100% 0,100% 100%,var(--lp-ohyb) 100%,0 calc(100% - var(--lp-ohyb)))}
 html.skin-trener .bl-lepik .lp-roh{position:absolute;left:0;bottom:0;width:var(--lp-ohyb);height:var(--lp-ohyb);clip-path:polygon(0 0,100% 0,100% 100%);background:linear-gradient(225deg,#FFF7CF 0%,#F3DD7C 55%,#E2C55A 100%);filter:drop-shadow(2px -2px 2px rgba(0,0,0,.25));pointer-events:none}
@@ -1134,7 +1146,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
   <button type="button" data-nav="home" onclick="skTab('home')"><i class="fa-solid fa-house" aria-hidden="true"></i>Domů</button>
   <button type="button" data-nav="ov" onclick="skTab('ov')"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Přehled</button>
   <button type="button" data-nav="cmp" onclick="skTab('cmp')"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Porovnání</button>
-  <button type="button" data-nav="zapasy" onclick="openMatchesHub()"><i class="fa-solid fa-trophy" aria-hidden="true"></i>Zápasy</button>
+  <button type="button" data-nav="zapasy" onclick="skTab('zapasy')"><i class="fa-solid fa-trophy" aria-hidden="true"></i>Zápasy</button>
 </nav>
 <div id="sidebarBackdrop" onclick="closeSidebar()"></div>
 <div class="body-wrap">
@@ -1152,6 +1164,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
     <div id="playerDetail" style="display:none"></div>
     <div id="cmpView" style="display:none"></div>
     <div id="ovView" style="display:none"></div>
+    <div id="zapView" style="display:none"></div>
   </main>
 </div>
 <div class="mo" id="modal" style="display:none"><div class="md" id="modalContent"></div></div>
@@ -2581,6 +2594,8 @@ function toggleCmpP(id){if(S.cmpIds.includes(id))S.cmpIds=S.cmpIds.filter(x=>x!=
 // ═══ RENDER ═══
 function render(){
   if(syncAutoBadges())save();
+  const zap=document.getElementById("zapView"),zapOpen=!!zap&&zap.style.display!=="none"&&!S.cmpMode&&!(S.activeId&&gP());
+  if(zap)zap.style.display="none";
   const sub=document.getElementById("subtitleEl");if(sub)sub.value=S.subtitle||"SK Meteor Praha";
   renderPL();
   document.getElementById("emptyState").style.display="none";
@@ -2589,10 +2604,11 @@ function render(){
   document.getElementById("ovView").style.display="none";
   if(S.cmpMode){document.getElementById("cmpView").style.display="block";renderCmp();}
   else if(S.activeId&&gP())renderDetail();
+  else if(zapOpen){zap.style.display="block";setNavActive('zapasy');renderZapasy();}
   else{setNavActive('home');document.getElementById("emptyState").style.display="flex";renderHome();}
   updateScopeChip();
   updateMhDot();
-  pushHistory(S.cmpMode?{type:'cmp'}:(S.activeId&&gP()?{type:'player',id:S.activeId}:{type:'home'}));
+  pushHistory(S.cmpMode?{type:'cmp'}:(S.activeId&&gP()?{type:'player',id:S.activeId}:zapOpen?{type:'zap'}:{type:'home'}));
 }
 // ══════════════════════════════════════════════════════════
 // HISTORIE NAVIGACE — Zpět/Dopředu (Kolo 27)
@@ -2616,9 +2632,15 @@ function pushHistory(screen){
 }
 function applyScreen(screen){
   NAV_SUPPRESS=true;
+  document.getElementById('zapView').style.display='none';
   if(screen.type==='home'){
     S.activeId=null;S.cmpMode=false;
     document.getElementById('ovView').style.display='none';
+    closeSidebar();render();
+  }else if(screen.type==='zap'){
+    S.activeId=null;S.cmpMode=false;
+    document.getElementById('ovView').style.display='none';
+    document.getElementById('zapView').style.display='block';
     closeSidebar();render();
   }else if(screen.type==='player'){
     _detailToTop=true;S.activeId=screen.id;S.activeTab='physical';S.cmpMode=false;
@@ -2636,7 +2658,7 @@ function applyScreen(screen){
     S.cmpMode=false;
     renderOverview();
   }
-  setNavActive(screen.type==='home'?'home':screen.type==='ov'?'ov':screen.type==='cmp'?'cmp':null);
+  setNavActive(screen.type==='home'?'home':screen.type==='ov'?'ov':screen.type==='cmp'?'cmp':screen.type==='zap'?'zapasy':null);
   NAV_SUPPRESS=false;
   updateNavButtons();
 }
@@ -2745,10 +2767,19 @@ function skTab(which){
   if(which==='home')goHome();
   else if(which==='ov'){if(!ovOpen)toggleOverview();}
   else if(which==='cmp'){if(!S.cmpMode)toggleCmp();}
+  else if(which==='zapasy')openZapasy();
+}
+// Kolo 67: obrazovka Zápasy (jen vzhled Trenéra, záložka Zápasy).
+function openZapasy(){
+  const ov=document.getElementById('ovView');if(ov)ov.style.display='none';
+  S.activeId=null;S.cmpMode=false;closeSidebar();
+  document.getElementById('zapView').style.display='block';
+  render();
 }
 function goHome(){
   S.activeId=null;
   S.cmpMode=false;
+  const zv=document.getElementById('zapView');if(zv)zv.style.display='none';
   const ov=document.getElementById('ovView');
   if(ov)ov.style.display='none';
   setNavActive('home');
@@ -4941,6 +4972,7 @@ function toggleOverview(){
     document.getElementById('emptyState').style.display='none';
     document.getElementById('playerDetail').style.display='none';
     document.getElementById('cmpView').style.display='none';
+    document.getElementById('zapView').style.display='none';
     document.getElementById('ovView').style.display='block';
     S.cmpMode=false;
     setNavActive('ov');
@@ -5076,6 +5108,55 @@ function renderOverview(){
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
+// ═══ Kolo 67: ZÁPASY — statistiky týmu ze zápasů aktuální sezóny (Mek 27. 10.) ═══
+// Souhrn sezóny, tabulka hráček (řazení klepnutím na záhlaví) a poslední zápasy a turnaje
+// s odkazy na Záznamy zápasů a Turnaje. Příjem = průměrná kvalita (recvPct) ze všech příjmů
+// dohromady, stejně jako v Overallu a u Přijímačky. Forma = 🔥/❄️ v posledním turnaji sezóny
+// (computePlayerForma, stejně jako v detailu turnaje).
+let zapSort={col:'body',asc:false};
+function zapSortBy(c){if(zapSort.col===c)zapSort.asc=!zapSort.asc;else{zapSort.col=c;zapSort.asc=c==='name';}renderZapasy();}
+function zapRecvBarva(v){return v==null?'var(--gm)':v>=80?'var(--gl)':v>=50?'var(--acc)':'var(--red)';}
+function renderZapasy(){
+  const el=document.getElementById('zapView');if(!el)return;
+  const ms=seasonRealMatches().slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const akce=ms.flatMap(m=>m.sets.flatMap(st=>st.actions));
+  const body=akce.filter(a=>a.type==='body').reduce((x,a)=>x+a.value,0);
+  const rv=akce.filter(a=>a.type==='prijem');
+  const recv=rv.length?recvPct(rv.reduce((x,a)=>x+a.value,0)/rv.length):null;
+  const tids=[...new Set(ms.map(m=>m.tournamentId).filter(t=>t&&(S.tournaments||[]).some(x=>x.id===t)))];
+  const posledniT=tids[0]||null;
+  const hrac=getActiveP().map(p=>{
+    const pm=ms.filter(m=>m.sets.some(st=>st.actions.some(a=>a.pid===p.id)));
+    const bv=pm.map(m=>playerMatchMetric(p,m,'body')).filter(v=>v!=null);
+    const pool=playerReceptionPool(p,ms);
+    const fo=posledniT?computePlayerForma(p,posledniT):null;
+    return{p,z:pm.length,body:bv.length?bv.reduce((x,v)=>x+v,0):null,prum:bv.length?Math.round(mean(bv)*10)/10:null,recv:pool?pool.avg:null,n:pool?pool.n:0,
+      forma:fo?[fo.body?.badge,fo.recv?.badge]:null};
+  });
+  const val={name:h=>h.p.name,z:h=>h.z,body:h=>h.body,prum:h=>h.prum,recv:h=>h.recv,n:h=>h.n};
+  const get=val[zapSort.col]||val.body;
+  hrac.sort((a,b)=>{const x=get(a),y=get(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;const r=typeof x==='string'?x.localeCompare(y,'cs'):x-y;return zapSort.asc?r:-r;});
+  const th=(c,t,ico)=>`<th class="${zapSort.col===c?(zapSort.asc?'sort-asc':'sort-desc'):''}" onclick="zapSortBy('${c}')">${ico?metricHeadIco(ico,'m-hi'):''}${t}</th>`;
+  const pom='<span style="color:var(--gm)">–</span>';
+  const formaHtml=f=>{if(!f)return pom;const t=[f[0]==='up'?'🔥 body':f[0]==='down'?'❄️ body':'',f[1]==='up'?'🔥 příjem':f[1]==='down'?'❄️ příjem':''].filter(Boolean);return t.length?t.join('<br>'):'➖';};
+  const rows=hrac.map(h=>`<tr><td onclick="selectPlayer('${h.p.id}')" style="cursor:pointer;color:var(--gl)">${h.p.name}</td><td>${h.z||pom}</td><td>${h.body==null?pom:`<b style="color:${h.body>0?'var(--gl)':h.body<0?'var(--red)':'var(--gm)'}">${h.body>0?'+':''}${h.body}</b>`}</td><td>${h.prum==null?pom:(h.prum>0?'+':'')+h.prum}</td><td>${h.recv==null?pom:`<b style="color:${zapRecvBarva(h.recv)}">${h.recv} %</b>`}</td><td>${h.n||pom}</td>${posledniT?`<td>${formaHtml(h.forma)}</td>`:''}</tr>`).join('');
+  const dlazdice=(v,l,c)=>`<div class="zap-tile"><div class="mv" style="color:${c||'var(--w)'}">${v}</div><div class="zap-tile-l">${l}</div></div>`;
+  const zapKarta=m=>{
+    const a=m.sets.flatMap(st=>st.actions),b=a.filter(x=>x.type==='body').reduce((x,y)=>x+y.value,0),r=a.filter(x=>x.type==='prijem');
+    const rp=r.length?recvPct(r.reduce((x,y)=>x+y.value,0)/r.length):null;
+    const t=m.tournamentId&&(S.tournaments||[]).find(x=>x.id===m.tournamentId);
+    return`<div class="match-card" onclick="openMatchStats('${m.id}')"><div class="match-card-head"><span class="match-card-opp">vs ${m.opponent}</span><span class="match-card-date">${fmtDate(m.date)}</span></div>
+      <div style="font-size:0.8rem;color:var(--gm)">${m.mode!=='prijem'?`Body: <b style="color:${b>0?'var(--gl)':b<0?'var(--red)':'var(--gm)'}">${b>0?'+':''}${b}</b>`:''}${rp!=null?` · Příjem: <b style="color:${zapRecvBarva(rp)}">${rp} %</b>`:''}${t?` · <i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name}`:''}</div><button class="zap-smazat" onclick="event.stopPropagation();deleteMatch('${m.id}')" aria-label="Smazat zápas vs ${m.opponent}" title="Smazat zápas"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button></div>`;
+  };
+  const turKarta=tid=>{const t=S.tournaments.find(x=>x.id===tid),n=tournamentMatches(tid).length;
+    return`<div class="match-card" onclick="openTournamentDetail('${tid}')"><div class="match-card-head"><span class="match-card-opp"><i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name}${t.closed?' <i class="fa-solid fa-flag-checkered" aria-hidden="true" title="Uzavřený"></i>':''}</span><span class="match-card-date">${tournamentDateRange(tid)}</span></div><div style="font-size:0.8rem;color:var(--gm)">${n} ${n===1?'zápas':n<5?'zápasy':'zápasů'}</div></div>`;};
+  el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:8px">🏆 Zápasy</h2>
+    <div class="zap-odkazy"><button class="btn btn-o sm" onclick="openAllMatchesLibrary()"><i class="fa-solid fa-list" aria-hidden="true"></i> Záznamy zápasů</button><button class="btn btn-o sm" onclick="openTournaments()"><i class="fa-solid fa-trophy" aria-hidden="true"></i> Turnaje</button></div>
+    ${ms.length?`<div class="zap-sum">${dlazdice(ms.length,ms.length===1?'zápas v sezóně':ms.length<5?'zápasy v sezóně':'zápasů v sezóně')}${dlazdice((body>0?'+':'')+body,'body týmu',body>0?'var(--gl)':body<0?'var(--red)':null)}${dlazdice(recv==null?'–':recv+' %','kvalita příjmu',zapRecvBarva(recv))}${dlazdice(tids.length,tids.length===1?'turnaj':tids.length>1&&tids.length<5?'turnaje':'turnajů')}</div>
+    <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${th('name','Hráčka')}${th('z','Zápasy')}${th('body','Body','body_zapas')}${th('prum','Body/zápas','body_zapas')}${th('recv','Příjem','prijem_zapas')}${th('n','Příjmů','prijem_zapas')}${posledniT?'<th style="cursor:default">Forma</th>':''}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="g2" style="margin-top:14px"><div><div class="sk-grp">Poslední zápasy</div>${ms.slice(0,5).map(zapKarta).join('')}</div>${tids.length?`<div><div class="sk-grp">Turnaje</div>${tids.slice(0,3).map(turKarta).join('')}</div>`:''}</div>`
+    :'<div class="empty" style="height:30vh"><div class="ei"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div><div>V této sezóně zatím žádný zápas</div></div>'}`;
+}
 function ovSortBy(col){
   if(ovSort.col===col)ovSort.asc=!ovSort.asc;
   else{ovSort.col=col;ovSort.asc=true;}
@@ -5337,6 +5418,7 @@ function openLiveScreen(){
         <div style="font-size:0.62rem;color:var(--x-sub);letter-spacing:1px">${fmtDate(LM.date)} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[LM.mode]}</div>
       </div>
       <span class="live-badge">LIVE</span>
+      <button class="lm-zahodit" onclick="zahoditZapas()" aria-label="Zahodit zápas" title="Zahodit zápas"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
     </div>
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px" id="liveContent"></div>
 `;
@@ -5344,6 +5426,13 @@ function openLiveScreen(){
   renderLiveContent();
 }
 
+// Kolo 67: rozehraný zápas spuštěný omylem (nebo na zkoušku) jde zahodit, nic se z něj neuloží.
+function zahoditZapas(){
+  confirmAction('Zahodit rozehraný zápas?',()=>{
+    localStorage.removeItem(lmKey());LM=null;
+    closeLiveScreen();rerenderCurrent();toast('Zápas zahozen');
+  },{noteTrener:'Nic z něj se neuloží.',yesLabel:'Zahodit'});
+}
 function closeLiveScreen(){
   window.removeEventListener('beforeunload',window._lmUnloadHandler);
   document.getElementById('liveOverlay')?.remove();
@@ -6491,7 +6580,8 @@ function deleteMatch(mid){
     const tid=(S.matches||[]).find(m=>m.id===mid)?.tournamentId;
     S.matches=(S.matches||[]).filter(m=>m.id!==mid);
     if(tid)cleanupTournamentIfEmpty(tid);
-    save();renderDetail();
+    save();
+    if(document.getElementById('zapView')?.style.display==='block')renderZapasy();else renderDetail();
     if(snap)offerUndo(snap,'Zápasový záznam smazán');else toast('Zápas smazán');
   },undoOpts());
 }
@@ -7461,6 +7551,9 @@ const HELP_DATA=[
 {q:`Jde zápas smazat nebo upravit i zpětně?`,
  a:`Smazat jde — u zápasu v historii appka nabízí smazání s potvrzením, zápas i s daty appka pak trvale odstraní (a pokud tím turnaj zůstane úplně prázdný, appka ho tiše zruší i sám). Upravit už zapsaná čísla v HOTOVÉM zápase appka ale neumí — jakmile zápas jednou dokončíš, appka další úpravy jeho zápisů nenabízí. Drobnou chybu proto oprav ještě PŘED dokončením přes „📋 Zápisy" (viz výš); pokud si chybu všimneš až pozdě, jediná cesta je zápas smazat a zapsat znovu.`,
  kw:"editace úprava zápasu po dohrání"},
+{q:`Spustil jsem zápas omylem (nebo jen zkouším). Jak ho smažu?`,
+ a:`Ve vzhledu Trenéra:<br>• <b>Rozehraný zápas</b>: v hlavičce živého zápasu klepni na koš (vpravo vedle LIVE) a potvrď „Zahodit“. Nic z něj se neuloží.<br>• <b>Dohraný zápas</b>: na záložce Zápasy klepni na koš u zápasu v Posledních zápasech, nebo v Záznamech zápasů na „Smazat“. Po smazání můžeš krátce klepnout na „Vrátit“. Když tím turnaji zbyde jen jeden zápas, turnaj se zruší.<br>V klasickém vzhledu jde smazat dohraný zápas v Záznamech zápasů a rozehraný zahodit tak, že v okně „Zápas probíhá“ zvolíš „Nový zápas (zahodit rozehraný)“.`,
+ kw:"smazat zápas omylem překliknutí zkouška test zahodit koš"},
 ]},
 
 {title:`Zápasová historie a tab „Zápas"`,icon:"📋",qa:[
@@ -7470,6 +7563,9 @@ const HELP_DATA=[
  a:`Appka tu ukazuje historii zápasů, ve kterých má tahle konkrétní hráčka zaznamenaná nějaká data (body a/nebo příjem), včetně jejích čísel z každého zápasu a případného štítku turnaje, do kterého zápas patří.`},
 {q:`Co znamená štítek s názvem turnaje na kartě zápasu?`,
  a:`Značí, že appka tenhle zápas zařadila (automaticky podle data, nebo ručně) do konkrétního turnaje — kliknutím na štítek se dostaneš rovnou do detailu toho turnaje. Zápas bez štítku appka bere jako osamocený, do žádného turnaje nezařazený.`},
+{q:`Co je na záložce Zápasy?`,
+ a:`Ve vzhledu Trenéra je záložka <b>Zápasy</b> přehled zápasových statistik týmu za aktuální sezónu:<br>• Nahoře odkazy na <b>Záznamy zápasů</b> a <b>Turnaje</b>.<br>• Souhrn: kolik zápasů a turnajů se v sezóně odehrálo, body týmu dohromady a průměrná kvalita příjmu (1 = 100 %, 3 = 50 %, 5 = 0 %).<br>• Tabulka hráček: zápasy, ve kterých má hráčka nějaký záznam, body celkem a průměr bodů na zápas, kvalita příjmu ze všech jejích příjmů dohromady (stejně jako v Overallu a u odznaku Přijímačka) a počet příjmů. Klepnutím na záhlaví sloupce řadíš, klepnutím na jméno otevřeš kartu hráčky. Sloupec Forma ukazuje 🔥/❄️ z posledního turnaje sezóny (viz „Co znamená Forma hráčky“).<br>• Dole posledních pět zápasů (klepnutím otevřeš statistiky zápasu) a poslední turnaje.<br>Zápas spustíš oranžovým tlačítkem vpravo dole nebo v menu ⋮. Ikonou koše u zápasu ho smažeš (s „Vrátit“).`,
+ kw:"záložka zápasy statistiky tým body příjem tabulka sezóna"},
 ]},
 
 {title:"Turnaje a forma hráček",icon:"🏟",qa:[
@@ -7609,7 +7705,7 @@ const HELP_DATA=[
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
 {q:`Jak přepnu Bombito do vzhledu Trenéra a zpátky?`,
- a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
+ a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b> (zápasové statistiky týmu), bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
  kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
  a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
