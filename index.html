@@ -1231,6 +1231,9 @@ html.skin-trener .grp-tbl th{background:var(--paper);color:var(--ink-faint-ink);
 html.skin-trener .grp-tbl td{border-bottom-color:var(--line)}
 html.skin-trener .grp-tbl input{background:var(--paper);border:1px solid var(--line);color:var(--ink)}
 html.skin-trener .grp-tbl input:focus{border-color:var(--court)}
+html.skin-trener .ov-tbl th,html.skin-trener .ov-tbl td,html.skin-trener .grp-tbl th,html.skin-trener .grp-tbl td{text-align:center}
+html.skin-trener .ov-tbl th:first-child,html.skin-trener .ov-tbl td:first-child,html.skin-trener .grp-tbl th:first-child,html.skin-trener .grp-tbl td:first-child{text-align:left}
+html.skin-trener .ov-tbl th+th,html.skin-trener .ov-tbl td+td,html.skin-trener .grp-tbl th+th,html.skin-trener .grp-tbl td+td,html.skin-trener .mil-cmp-tbl th+th,html.skin-trener .mil-cmp-tbl td+td{border-left:1px solid var(--line)}
 html.skin-trener .help-search-wrap input{background:var(--paper);border:1px solid var(--line);color:var(--ink)}
 html.skin-trener .help-group-title{color:var(--court-ink);font-weight:700}
 html.skin-trener .help-block{border-bottom-color:var(--line)}
@@ -3746,7 +3749,7 @@ function renderCmp(){
   const milAct=S.config.milestones.filter(m=>m.active!==false);
   const phChs=phAct.map(m=>`<div class="card"><h3>${metricHeadIco(m.id)}${m.label} (${m.unit})</h3><div class="cw"><canvas id="c_ph_${m.id}"></canvas></div></div>`).join("");
   const gaChs=gaAct.map(m=>`<div class="card"><h3>${metricHeadIco(m.id)}${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
-  const milTbl=milAct.length?`<div class="card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse">
+  const milTbl=milAct.length?`<div class="card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="mil-cmp-tbl" style="width:100%;border-collapse:collapse">
     <tr><th style="text-align:left;padding-bottom:8px;font-size:0.6rem;letter-spacing:1px;color:var(--gm)">MILNÍK</th>${sel.map((p,i)=>`<th style="text-align:center;padding-bottom:8px;font-size:0.71rem;color:${COLORS[i%COLORS.length]}">${playerLabel(p)}</th>`).join("")}</tr>
     ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid var(--x-row)">${m.label}</td>${sel.map(p=>{const cur=milStage(p,m.id);return `<td style="text-align:center;border-bottom:1px solid var(--x-row);padding:6px 4px">${cur?`<span style="color:var(--gl)">${MIL_STAGES[cur-1].emoji}</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id].date)}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`;}).join("")}</tr>`).join("")}
   </table></div></div>`:"";
@@ -7977,8 +7980,8 @@ const HELP_DATA=[
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
 {q:`Jak přepnu Bombito do vzhledu Trenéra a zpátky?`,
- a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b> (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
- kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak"},
+ a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b> (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Tabulky (Přehled, Zápasy, Skupinový test, milníky v Porovnání) mají čísla uprostřed sloupců a sloupce oddělené jemnou linkou. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
+ kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak tabulky sloupce linky zarovnání"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
  a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
  kw:"tmavý světlý noční režim dark barvy barva téma motiv výchozí oranžová zelená"},
