@@ -77,6 +77,10 @@ window.BOMBITO_VZHLED=(function(){
     var el=document.getElementById("fontTrener700");
     if(on&&!el){el=document.createElement("link");el.id="fontTrener700";el.rel="stylesheet";el.href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700&display=swap";document.head.appendChild(el);}
     else if(!on&&el)el.remove();
+    // Kolo 57: rukopis lepíků (Patrick Hand, výchozí písmo lepíku v Trenérovi).
+    var lp=document.getElementById("fontLepik");
+    if(on&&!lp){lp=document.createElement("link");lp.id="fontLepik";lp.rel="stylesheet";lp.href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap";document.head.appendChild(lp);}
+    else if(!on&&lp)lp.remove();
   }
   function apply(v){
     var root=document.documentElement,on=v.skin==="trener",vv=vars(v),k;
@@ -733,6 +737,28 @@ html.skin-trener .kol-st{font-size:12.5px;color:var(--ink-soft);white-space:nowr
 html.skin-trener .kol-none{font-size:13px;color:var(--ink-faint-ink);padding:8px 0}
 html.skin-trener .kol-sec .brow{display:flex;margin-top:8px}
 html.skin-trener .mi-note{font-size:12.5px;color:var(--ink-soft)}
+/* ── Kolo 57: lepíky poznámek — přesně podle lepíku v Trenérovi (.denik-lepik, kolo 15 Trenéra).
+   Papír má pevné barvy (stejné ve světlém i tmavém režimu). Ohnutý roh vlevo dole je skutečný
+   ohyb: roh papíru chybí (clip-path) a cíp .lp-roh leží na papíře se stínem. ── */
+html.skin-trener .bl-lepik{--lp-ohyb:28px;--lp-f:"Patrick Hand","Segoe Print",cursive;--lp-v:19.5px;--lp-r:27px;position:relative;margin:4px 6px 16px;transform:rotate(-.7deg);filter:drop-shadow(0 6px 6px rgba(0,0,0,.18)) drop-shadow(0 1px 1px rgba(0,0,0,.10))}
+html.skin-trener .pdh+.bl-lepik{margin:0 6px 18px}
+html.skin-trener .bl-lepik .lp-papir{position:relative;color:#1F3A7A;font:400 var(--lp-v)/var(--lp-r) var(--lp-f);padding:7px 14px 26px;background:linear-gradient(180deg,#FFF6C2 0%,#FFEFA0 60%,#FCE58A 100%);clip-path:polygon(0 0,100% 0,100% 100%,var(--lp-ohyb) 100%,0 calc(100% - var(--lp-ohyb)))}
+html.skin-trener .bl-lepik .lp-roh{position:absolute;left:0;bottom:0;width:var(--lp-ohyb);height:var(--lp-ohyb);clip-path:polygon(0 0,100% 0,100% 100%);background:linear-gradient(225deg,#FFF7CF 0%,#F3DD7C 55%,#E2C55A 100%);filter:drop-shadow(2px -2px 2px rgba(0,0,0,.25));pointer-events:none}
+html.skin-trener .bl-lepik .lp-hlava{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 1px;padding:2px 0;border:0;background:transparent;font:inherit;font-size:calc(var(--lp-v) - 3px);line-height:1.3;color:#6F6845;cursor:pointer;text-align:left;white-space:nowrap}
+html.skin-trener .bl-lepik .lp-hlava .fa-book-open{font-size:14px;color:var(--chalk);flex:none}
+html.skin-trener .bl-lepik .lp-hlava .lp-kdy{min-width:0;overflow:hidden;text-overflow:ellipsis}
+html.skin-trener .bl-lepik .lp-hlava .fa-chevron-right{margin-left:auto;font-size:12px;flex:none}
+html.skin-trener .bl-lepik .lp-text{cursor:text;overflow-wrap:anywhere;min-height:var(--lp-r)}
+html.skin-trener .bl-lepik .lp-text.stary{color:rgba(31,58,122,.45)}
+html.skin-trener .bl-lepik .lp-text.prazdny{color:rgba(111,104,69,.6)}
+html.skin-trener .bl-lepik .lp-text small{font-size:.8em;color:#8A8360;margin-left:6px;white-space:nowrap}
+html.skin-trener .bl-lepik.sbaleny .lp-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+html.skin-trener .bl-lepik .lp-sbal{position:absolute;right:4px;bottom:1px;width:36px;height:26px;margin:0;padding:0;border:0;background:transparent;color:#8A8360;cursor:pointer;font-size:13px}
+html.skin-trener .bl-lepik .lp-sbal[hidden],html.skin-trener .bl-lepik .lp-zbyva[hidden]{display:none}
+html.skin-trener .bl-lepik .lp-pole{display:block;width:100%;margin:0;padding:0;border:0;background:transparent;resize:none;overflow:hidden;font:inherit;color:inherit;outline:none;box-shadow:none;min-height:0}
+html.skin-trener .bl-lepik .lp-zbyva{position:absolute;right:12px;bottom:5px;font:600 12px 'DM Sans',sans-serif;color:#8A8360}
+html.skin-trener .bl-lepik .lp-zbyva.malo{color:#C0392B}
+html.skin-trener .bl-lepik :focus-visible{outline:2px solid #1F3A7A;outline-offset:2px;border-radius:3px}
 html.skin-trener .pdi .da{grid-column:1/-1;grid-row:4;margin-top:12px;gap:6px;flex-wrap:nowrap;align-items:center}
 html.skin-trener .ba{border-radius:999px;font-size:12px;padding:3px 10px;border-width:0}
 html.skin-trener .da .btn{height:38px;padding:0 11px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
@@ -2514,11 +2540,12 @@ function renderDetail(){
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
   const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
-  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>
+  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>${isTrener()?lepikKartaHtml(p):''}
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
   wireTabsFade();
+  if(isTrener()){lepikSbalTlacitka(el);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(el.isConnected)lepikSbalTlacitka(el);});}
 }
 // Kolo 34 (schválená Varianta 2 z mock-upu): na mobilu se taby nevejdou do šířky a
 // appka je nechává potichu scrollovat (schovaný scrollbar) — bez náznaku, že jde
@@ -2975,6 +3002,7 @@ function buildMil(){
 // Zobrazeno jako druhá karta hned pod Milníky, protože obojí je nečíselný/kvalitativní
 // záznam o hráčce — appka je řadí od nejnovější, žádné omezení počtu.
 function buildPlayerNotesCard(p){
+  if(isTrener())return lepikNastenkaHtml(p);
   const notes=[...(p.notes||[])].reverse();
   const rows=notes.map(n=>`<div class="me" style="align-items:flex-start"><div class="ml"><b>${fmtDate(n.date)}</b><br><span style="font-size:0.8rem;font-weight:400;white-space:pre-wrap">${n.text}</span></div><button class="btn btn-o sm" onclick="openEditNote('${n.id}')">✎</button><button class="btn btn-d sm" onclick="deletePlayerNote('${n.id}')">✕</button></div>`).join("");
   return`<div class="card"><h3>📝 Poznámky k hráčce</h3><button class="btn btn-o sm" style="margin-bottom:10px" onclick="openAddNote()">+ Přidat poznámku</button>${rows||'<div class="no-data">Zatím žádné poznámky</div>'}</div>`;
@@ -3023,6 +3051,140 @@ function deletePlayerNote(id){
     save();renderDetail();toast('Smazáno ✓');
   });
 }
+
+// ═══ Kolo 57: poznámky k hráčce jako lepíky (jen vzhled Trenéra, 1:1 podle lepíku v Trenérovi) ═══
+// Převzato z Trenéra (renderDenikLepik/denikLepikPsat): papír, rukopis, sbalení na jeden řádek
+// (výchozí na úzké obrazovce, pamatuje si zařízení), psaní přímo na papír (Enter uloží, Esc zruší,
+// odchod uloží), max. 180 znaků jednoho odstavce. Lepík na kartě = Trenérův „vzkaz pro příště“:
+// ukazuje nejnovější poznámku; starší než dnešní je vybledlá a psaní založí novou dnešní
+// (jediný rozdíl proti Trenérovi: pole začíná prázdné, aby nevznikla kopie staré poznámky).
+const LEPIK_MAX=180,LEPIK_KLIC='bombito_lepik_sbal';
+let lepikPise=false;
+function lepikEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function lepikText(v){return typeof v==='string'?v.replace(/\s+/g,' ').trim().slice(0,LEPIK_MAX):'';}
+function lepikSiroko(){return window.matchMedia('(min-width: 860px)').matches;}
+function lepikSbaleny(key){
+  try{const o=JSON.parse(localStorage.getItem(LEPIK_KLIC)||'{}'),v=o[(lepikSiroko()?'s:':'u:')+key];if(v===1||v===0)return v===1;}catch(e){}
+  return !lepikSiroko();
+}
+function lepikNastavSbaleny(key,ano){
+  try{const o=JSON.parse(localStorage.getItem(LEPIK_KLIC)||'{}');o[(lepikSiroko()?'s:':'u:')+key]=ano?1:0;localStorage.setItem(LEPIK_KLIC,JSON.stringify(o));}catch(e){}
+}
+function poznamekTvar(n){return n===1?'poznámka':n>=2&&n<=4?'poznámky':'poznámek';}
+function lepikHtml(o){
+  const sb=lepikSbaleny(o.key);
+  const txt=o.prazdny?o.placeholder:lepikEsc(o.text);
+  return`<div class="bl-lepik${sb?' sbaleny':''}" data-lepik="${o.key}" onclick="lepikKlik(event)" onkeydown="lepikKlav(event)"><div class="lp-papir">`
+    +`<button type="button" class="lp-hlava" data-lp="hlava" aria-label="${o.hlavaLabel}"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span class="lp-kdy">${o.hlava}</span><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>`
+    +`<div class="lp-text${o.stary?' stary':''}${o.prazdny?' prazdny':''}" data-lp="psat" role="button" tabindex="0" aria-label="${o.prazdny?'Napsat poznámku':'Upravit poznámku'}">${txt}${o.stary?`<small>z ${fmtDate(o.stary)}</small>`:''}</div>`
+    +`<button type="button" class="lp-sbal" data-lp="sbalit" aria-expanded="${!sb}" aria-label="${sb?'Rozbalit lepík':'Sbalit lepík'}"><i class="fa-solid fa-chevron-${sb?'down':'up'}" aria-hidden="true"></i></button>`
+    +`</div><span class="lp-roh"></span></div>`;
+}
+function lepikPosledni(p){const ns=[...(p.notes||[])].sort((a,b)=>a.date.localeCompare(b.date));return ns[ns.length-1]||null;}
+function lepikKartaHtml(p){
+  const n=(p.notes||[]).length,posl=lepikPosledni(p),dnes=posl&&posl.date===today();
+  return lepikHtml({key:'k:'+p.id,
+    hlava:n?`${n} ${poznamekTvar(n)} · naposledy ${fmtDate(posl.date)}`:'Poznámky k hráčce',
+    hlavaLabel:'Všechny poznámky k hráčce',
+    text:posl?posl.text:'',stary:posl&&!dnes?posl.date:'',prazdny:!posl,placeholder:'Poznámka k hráčce…'});
+}
+function lepikNastenkaHtml(p){
+  const ns=[...(p.notes||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  const lp=ns.map(n=>lepikHtml({key:'n:'+n.id,hlava:fmtDate(n.date),hlavaLabel:`Změnit datum poznámky ${fmtDate(n.date)}`,text:n.text})).join('');
+  return`<div class="card" id="lepikNastenka"><h3>📝 Poznámky k hráčce</h3><button class="btn btn-o sm" style="margin-bottom:12px" onclick="openAddNote()">+ Přidat poznámku</button>${lp||'<div class="no-data">Zatím žádné poznámky</div>'}</div>`;
+}
+// Šipka sbalení jen když je co sbalovat (text se nevejde na jeden řádek) — jako v Trenérovi.
+function lepikSbalTlacitka(root){
+  (root||document).querySelectorAll('.bl-lepik').forEach(el=>{
+    const t=el.querySelector('.lp-text'),b=el.querySelector('.lp-sbal');
+    if(!t||!b||!t.clientWidth)return;
+    const jeden=el.classList.contains('sbaleny')?t.scrollWidth<=t.clientWidth+1:t.scrollHeight<=(parseFloat(getComputedStyle(t).lineHeight)||27)*1.5;
+    b.hidden=jeden;
+  });
+}
+function lepikPrepniSbaleni(el,ano){
+  lepikNastavSbaleny(el.dataset.lepik,ano);
+  el.classList.toggle('sbaleny',ano);
+  const b=el.querySelector('.lp-sbal');
+  if(b){b.setAttribute('aria-expanded',String(!ano));b.setAttribute('aria-label',ano?'Rozbalit lepík':'Sbalit lepík');b.innerHTML=`<i class="fa-solid fa-chevron-${ano?'down':'up'}" aria-hidden="true"></i>`;}
+  lepikSbalTlacitka(el.parentElement);
+}
+function lepikKlik(e){
+  const b=e.target.closest('[data-lp]');if(!b||lepikPise)return;
+  const el=e.currentTarget,key=el.dataset.lepik,a=b.dataset.lp;
+  if(a==='hlava'){
+    if(key.startsWith('n:'))openEditNote(key.slice(2));
+    else{switchTab('milestones');setTimeout(()=>document.getElementById('lepikNastenka')?.scrollIntoView({behavior:'smooth',block:'start'}),60);}
+    return;
+  }
+  if(a==='sbalit'){lepikPrepniSbaleni(el,!el.classList.contains('sbaleny'));return;}
+  if(a==='psat'){
+    const sb=el.querySelector('.lp-sbal');
+    // sbalený lepík s delším textem se ťuknutím nejdřív rozbalí
+    if(el.classList.contains('sbaleny')&&sb&&!sb.hidden){lepikPrepniSbaleni(el,false);return;}
+    lepikPsat(el);
+  }
+}
+function lepikKlav(e){
+  const t=e.target.closest('[data-lp="psat"]');
+  if(t&&e.target===t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();t.click();}
+}
+function lepikZbyva(pole,el){
+  const z=LEPIK_MAX-pole.value.length;
+  el.hidden=z>40;el.textContent=String(z);el.classList.toggle('malo',z<=10);
+}
+function lepikPsat(el){
+  const p=gP(),key=el.dataset.lepik,t=el.querySelector('.lp-text');if(!p||!t)return;
+  let puv='';
+  if(key.startsWith('n:'))puv=(p.notes||[]).find(n=>n.id===key.slice(2))?.text||'';
+  else{const posl=lepikPosledni(p);if(posl&&posl.date===today())puv=posl.text;}
+  lepikPise=true;
+  el.classList.remove('sbaleny');
+  const pole=document.createElement('textarea');
+  pole.className='lp-pole';pole.maxLength=LEPIK_MAX;pole.rows=1;pole.value=lepikText(puv);
+  pole.setAttribute('aria-label','Poznámka k hráčce');
+  const zb=document.createElement('span');zb.className='lp-zbyva';zb.hidden=true;
+  t.replaceWith(pole);
+  el.querySelector('.lp-papir').appendChild(zb);
+  el.querySelector('.lp-sbal').hidden=true;
+  const vyska=()=>{pole.style.height='auto';pole.style.height=pole.scrollHeight+'px';lepikZbyva(pole,zb);};
+  vyska();
+  pole.focus({preventScroll:true});
+  pole.setSelectionRange(pole.value.length,pole.value.length);
+  let hotovo=false;
+  const konec=ulozit=>{
+    if(hotovo)return;hotovo=true;lepikPise=false;
+    if(ulozit)lepikUloz(key,pole.value);else renderDetail();
+  };
+  pole.addEventListener('input',vyska);
+  pole.addEventListener('keydown',ev=>{
+    if(ev.key==='Enter'&&!ev.shiftKey){ev.preventDefault();konec(true);}
+    else if(ev.key==='Escape'){ev.preventDefault();konec(false);}
+  });
+  pole.addEventListener('blur',()=>konec(true));
+}
+function lepikUloz(key,raw){
+  const p=gP();if(!p){renderDetail();return;}
+  const text=lepikText(raw);
+  if(!p.notes)p.notes=[];
+  let n=null;
+  if(key.startsWith('n:'))n=p.notes.find(x=>x.id===key.slice(2))||null;
+  else{const posl=lepikPosledni(p);if(posl&&posl.date===today())n=posl;}
+  if(n&&text===lepikText(n.text)){renderDetail();return;}
+  if(!n&&!text){renderDetail();return;}
+  if(n&&!text){
+    // Vymazaný text = smazaná poznámka (jako vzkaz v Trenérovi), s možností Vrátit.
+    const snap=undoSnapshot();
+    p.notes=p.notes.filter(x=>x!==n);
+    save();renderDetail();offerUndo(snap,'Poznámka smazána');
+    return;
+  }
+  if(n)n.text=text;
+  else p.notes.push({id:'n_'+Date.now(),date:today(),text});
+  p.notes.sort((a,b)=>a.date.localeCompare(b.date));
+  save();renderDetail();
+}
+window.matchMedia('(min-width: 860px)').addEventListener('change',()=>{if(isTrener()&&S.activeId&&!lepikPise&&document.getElementById('playerDetail')?.style.display!=='none')renderDetail();});
 
 // ═══ COMPARE ═══
 function renderCmp(){
@@ -6912,7 +7074,7 @@ const HELP_DATA=[
  a:`Přímo na kartě hráčky v sekci Milníků nahoře aplikace ukazuje souhrn (kolik milníků je v jaké fázi) a u každého milníku zvlášť jeho aktuální fázi s datem. Klepnutím na souhrnný řádek se navíc rozbalí vysvětlení, co který emoji fáze znamená. V Přehledu týmu (📊) pak aplikace u každé hráčky zobrazuje totéž jako malou barevnou mřížku čtverečků — čím světlejší čtvereček, tím nižší fáze, tmavý/prázdný znamená ještě nezačato — a podržením na čtverečku aplikace ukáže, o který konkrétní milník jde.`,
  kw:"vysvětlení emoji fází legenda přehled týmu barevná mřížka"},
 {q:`Co jsou „Poznámky k hráčce" a čím se liší od Milníků?`,
- a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější.`,
+ a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější. Ve vzhledu Trenéra jsou poznámky žluté lepíky a nejnovější je i na kartě hráčky pod tlačítky (viz Nápověda „Vzhled Trenéra“ → „Jak fungují lepíky s poznámkami k hráčce?“).`,
  kw:"poznámky hráčka deník zápisník postřehy"},
 {q:`Jak poznámku k hráčce přidám, upravím nebo smažu?`,
  a:`V sekci Milníků na kartě hráčky klikni na „+ Přidat poznámku" — appka nabídne datum (jde změnit) a textové pole. Existující poznámku appka nechá upravit tlačítkem „✎" u ní, nebo smazat tlačítkem „✕" (appka se zeptá na potvrzení). Počet poznámek appka nijak neomezuje.`},
@@ -7112,6 +7274,9 @@ const HELP_DATA=[
 {q:`Co dělá tlačítko Zpět na telefonu?`,
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, chová se Zpět jako dřív. Mezi obrazovkami (hráčka, Domů, Přehled…) se dál pohybuješ spodní lištou „Zpět / Dopředu", na počítači šipkami v hlavičce.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
+{q:`Jak fungují lepíky s poznámkami k hráčce?`,
+ a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.`,
+ kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér"},
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
  a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
  kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
