@@ -39,7 +39,9 @@ window.BOMBITO_VZHLED=(function(){
   // Výchozí hlavní barva je o kousek tmavší než #339933 v Trenérovi (Mek 26. 10.) — na #339933
   // má bílý text tlačítek jen 3,66 : 1, na #2B7D2B 5,16 : 1. Kdo měl uloženou starou výchozí
   // #339933, dostane novou výchozí (vlastní volbu jinou barvou to nemění).
-  var DEF={skin:"klasik",dark:false,primary:"#2B7D2B",accent:"#E8622C"},STARA_VYCHOZI="#339933";
+  var DEF={skin:"klasik",dark:false,primary:"#2B7D2B",accent:"#E8622C",pismo:"patrick"},STARA_VYCHOZI="#339933";
+  // Kolo 66 (P2): rukopis lepíků jako ve Vzhledu Deníčku v Trenérovi (DENIK_PISMA).
+  var PISMA={patrick:{rodina:"Patrick Hand",dotaz:"Patrick+Hand",nazev:"Úhledný"},caveat:{rodina:"Caveat",dotaz:"Caveat",nazev:"Rychlý"},kalam:{rodina:"Kalam",dotaz:"Kalam",nazev:"Fixou"}};
   function read(){
     var v=null;
     try{v=JSON.parse(localStorage.getItem("bombito_vzhled")||"null");}catch(e){}
@@ -47,6 +49,7 @@ window.BOMBITO_VZHLED=(function(){
     if(v&&typeof v==="object")for(var k2 in DEF)if(v[k2]!==undefined)o[k2]=v[k2];
     if(!/^#[0-9a-fA-F]{6}$/.test(o.primary)||o.primary.toUpperCase()===STARA_VYCHOZI)o.primary=DEF.primary;
     if(!/^#[0-9a-fA-F]{6}$/.test(o.accent))o.accent=DEF.accent;
+    if(!PISMA[o.pismo])o.pismo=DEF.pismo;
     return o;
   }
   function write(v){try{localStorage.setItem("bombito_vzhled",JSON.stringify(v));}catch(e){}}
@@ -83,13 +86,14 @@ window.BOMBITO_VZHLED=(function(){
   function themeColor(c){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",c);}
   // Tučný řez DM Sans 700 jen pro vzhled Trenéra — kdyby se přidal do společného odkazu
   // na Google Fonts, změnil by se tučný text (font-weight:700) i v klasickém vzhledu.
-  function font700(on){
+  function font700(on,pismo){
     var el=document.getElementById("fontTrener700");
     if(on&&!el){el=document.createElement("link");el.id="fontTrener700";el.rel="stylesheet";el.href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@700&display=swap";document.head.appendChild(el);}
     else if(!on&&el)el.remove();
-    // Kolo 57: rukopis lepíků (Patrick Hand, výchozí písmo lepíku v Trenérovi).
-    var lp=document.getElementById("fontLepik");
-    if(on&&!lp){lp=document.createElement("link");lp.id="fontLepik";lp.rel="stylesheet";lp.href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap";document.head.appendChild(lp);}
+    // Kolo 57: rukopis lepíků; kolo 66: podle volby (výchozí Patrick Hand jako v Trenérovi).
+    var lp=document.getElementById("fontLepik"),href="https://fonts.googleapis.com/css2?family="+(PISMA[pismo]||PISMA.patrick).dotaz+"&display=swap";
+    if(on&&!lp){lp=document.createElement("link");lp.id="fontLepik";lp.rel="stylesheet";lp.href=href;document.head.appendChild(lp);}
+    else if(on&&lp.href!==href)lp.href=href;
     else if(!on&&lp)lp.remove();
   }
   function apply(v){
@@ -99,9 +103,17 @@ window.BOMBITO_VZHLED=(function(){
     for(k in vv){if(on)root.style.setProperty(k,vv[k]);else root.style.removeProperty(k);}
     if(!root.getAttribute("style"))root.removeAttribute("style");
     themeColor(on?v.primary:"#1a4d22");
-    font700(on);
+    if(on)root.setAttribute("data-pismo",v.pismo);else root.removeAttribute("data-pismo");
+    font700(on,v.pismo);
   }
-  return {DEF:DEF,read:read,write:write,apply:apply,darkenHex:darkenHex,contrast:contrast,inkFor:inkFor,mix:mix};
+  // Ukázka všech tří rukopisů v Nastavení › Vzhled (načte se, až když se Vzhled otevře).
+  function nahledPisem(){
+    if(document.getElementById("fontLepikNahled"))return;
+    var el=document.createElement("link");el.id="fontLepikNahled";el.rel="stylesheet";
+    el.href="https://fonts.googleapis.com/css2?"+Object.keys(PISMA).map(function(k){return "family="+PISMA[k].dotaz;}).join("&")+"&display=swap";
+    document.head.appendChild(el);
+  }
+  return {DEF:DEF,PISMA:PISMA,nahledPisem:nahledPisem,read:read,write:write,apply:apply,darkenHex:darkenHex,contrast:contrast,inkFor:inkFor,mix:mix};
 })();
 (function(){try{var v=BOMBITO_VZHLED.read();if(v.skin==="trener")BOMBITO_VZHLED.apply(v);}catch(e){}})();
 </script>
@@ -771,6 +783,9 @@ html.skin-trener .fa-pick-b.sel{border:2px solid var(--court);background:var(--a
    ohyb: roh papíru chybí (clip-path) a cíp .lp-roh leží na papíře se stínem. ── */
 html.skin-trener .bl-lepik{--lp-ohyb:28px;--lp-f:"Patrick Hand","Segoe Print",cursive;--lp-v:19.5px;--lp-r:27px;position:relative;margin:4px 6px 16px;transform:rotate(-.7deg);filter:drop-shadow(0 6px 6px rgba(0,0,0,.18)) drop-shadow(0 1px 1px rgba(0,0,0,.10))}
 html.skin-trener .pdh+.bl-lepik{margin:0 6px 18px}
+html.skin-trener[data-pismo="caveat"] .bl-lepik{--lp-f:"Caveat","Segoe Print",cursive;--lp-v:23px;--lp-r:30px}
+html.skin-trener[data-pismo="kalam"] .bl-lepik{--lp-f:"Kalam","Segoe Print",cursive;--lp-v:17.5px;--lp-r:28px}
+html.skin-trener .sk-kapsle.sk-pismo button{font-weight:400;font-size:18px;padding:0 12px}
 html.skin-trener .bl-lepik .lp-papir{position:relative;color:#1F3A7A;font:400 var(--lp-v)/var(--lp-r) var(--lp-f);padding:7px 14px 26px;background:linear-gradient(180deg,#FFF6C2 0%,#FFEFA0 60%,#FCE58A 100%);clip-path:polygon(0 0,100% 0,100% 100%,var(--lp-ohyb) 100%,0 calc(100% - var(--lp-ohyb)))}
 html.skin-trener .bl-lepik .lp-roh{position:absolute;left:0;bottom:0;width:var(--lp-ohyb);height:var(--lp-ohyb);clip-path:polygon(0 0,100% 0,100% 100%);background:linear-gradient(225deg,#FFF7CF 0%,#F3DD7C 55%,#E2C55A 100%);filter:drop-shadow(2px -2px 2px rgba(0,0,0,.25));pointer-events:none}
 html.skin-trener .bl-lepik .lp-hlava{display:flex;align-items:center;gap:8px;width:100%;margin:0 0 1px;padding:2px 0;border:0;background:transparent;font:inherit;font-size:calc(var(--lp-v) - 3px);line-height:1.3;color:#6F6845;cursor:pointer;text-align:left;white-space:nowrap}
@@ -2350,7 +2365,9 @@ function vzhledSectionHtml(){
       <label><span>Hlavní barva</span><input type="color" id="vzPrimary" value="${v.primary}" oninput="setVzhled({primary:this.value},true)" onchange="setVzhled({primary:this.value})"></label>
       <label><span>Zvýrazňovací barva</span><input type="color" id="vzAccent" value="${v.accent}" oninput="setVzhled({accent:this.value},true)" onchange="setVzhled({accent:this.value})"></label>
     </div>
-    <div style="display:flex;justify-content:flex-end;margin-top:6px"><button type="button" class="sk-ghost" onclick="setVzhled({primary:BOMBITO_VZHLED.DEF.primary,accent:BOMBITO_VZHLED.DEF.accent})"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i>Výchozí barvy</button></div>`;
+    <div style="display:flex;justify-content:flex-end;margin-top:6px"><button type="button" class="sk-ghost" onclick="setVzhled({primary:BOMBITO_VZHLED.DEF.primary,accent:BOMBITO_VZHLED.DEF.accent})"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i>Výchozí barvy</button></div>
+    <div class="sk-set-row"><span class="sk-set-lbl" id="vzPismoLbl">Rukopis lepíků</span><div class="sk-kapsle sk-pismo" role="group" aria-labelledby="vzPismoLbl">${Object.keys(BOMBITO_VZHLED.PISMA).map(k=>{const p=BOMBITO_VZHLED.PISMA[k];return`<button type="button" aria-pressed="${v.pismo===k}" title="${p.nazev} rukopis" style="font-family:'${p.rodina}',cursive" onclick="setVzhled({pismo:'${k}'})">${p.nazev}</button>`;}).join('')}</div></div>`;
+  if(on)BOMBITO_VZHLED.nahledPisem();
   return h+'</div>';
 }
 function openEditorTrener(){
@@ -7607,8 +7624,8 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, vrátí tě na předchozí obrazovku (hráčka, Domů, Přehled, Porovnání…), stejně jako dřív spodní lišta, která ve vzhledu Trenéra na telefonu už není. Na první obrazovce po spuštění Zpět Bombito opustí.<br>Na iPhonu nainstalovaná aplikace systémové Zpět nemá, proto je v hlavičce šipka Zpět (ukáže se, jen když je kam se vrátit). Na počítači jsou v hlavičce šipky Zpět i Dopředu.<br>Tlačítko „Vrátit poslední akci“ v živém zápase (když se při zapisování uklikneš) zůstává, jak bylo.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
- a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.`,
- kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér"},
+ a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
+ kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér rukopis písmo"},
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
  a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
  kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
