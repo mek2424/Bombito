@@ -751,6 +751,8 @@ html.skin-trener .kol.big .kol-c{inset:6px;font-size:28px}
 #denikView .dh-btn.ghost:hover{background:rgba(27,36,48,.05)}
 #denikView .dh-btn[hidden]{display:none}
 #denikView .hidden{display:none!important}
+/* Kolo 71 (Mek 27. 10.): měsíc NEZAČÍNÁ novou stránku jako v Trenérovi — zápisy jedné hráčky bývají každý z jiného měsíce a každý pak ležel na vlastní stránce. Zápisy plynou za sebou, razítko je na stránce, kde měsíc začíná. */
+#denikView .sesit .zapis.novy-mesic{break-before:auto}
 #denikView .dh-btn .fa-chevron-down{font-size:10px}
 @media (max-width:599px){#denikDopsatBtn{width:36px;padding:0}#denikDopsatBtn span{display:none}}
 
@@ -7976,7 +7978,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, vrátí tě na předchozí obrazovku (hráčka, Domů, Přehled, Porovnání…), stejně jako dřív spodní lišta, která ve vzhledu Trenéra na telefonu už není. Na první obrazovce po spuštění Zpět Bombito opustí.<br>Na iPhonu nainstalovaná aplikace systémové Zpět nemá, proto je v hlavičce šipka Zpět (ukáže se, jen když je kam se vrátit). Na počítači jsou v hlavičce šipky Zpět i Dopředu.<br>Tlačítko „Vrátit poslední akci“ v živém zápase (když se při zapisování uklikneš) zůstává, jak bylo.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
 {q:`Co je Deníček?`,
- a:`Ve vzhledu Trenéra je Deníček poslední záložka nahoře (oranžová ikona knihy). Je to stejný sešit jako Deníček v Trenérovi: linkovaný papír, datum a den na okraji, rukopis, měsíce s razítkem a listování.<br>• <b>Co v něm je:</b> poznámky k hráčkám (stejné jako na lepíku na kartě) a zápisy o celém týmu. Bez filtru vidíš od každé hráčky a od týmu jen <b>poslední zápis</b>. Tlačítkem s jménem nahoře (Všichni) vybereš Tým nebo jednu hráčku a uvidíš <b>všechny</b> jejich zápisy. Zpátky na všechny se vrátíš šipkou vlevo nahoře nebo systémovým Zpět.<br>• <b>Nový zápis:</b> tlačítko s plusem. Ve filtru hned píšeš k vybrané hráčce nebo týmu, jinak nejdřív vybereš komu. Zápis má dnešní datum.<br>• <b>Psaní:</b> ťukni na text zápisu a piš rovnou do sešitu. Nad textem je lišta: tučně, kurzíva, odrážky, číslovaný seznam a odsazení. Zápis se uloží sám, jakmile ťukneš jinam (s „Vrátit“). Esc psaní zruší, Ctrl+Enter uloží. Koš vpravo zápis smaže (s „Vrátit“). Zápis, ve kterém nic nenapíšeš, zmizí.<br>• <b>Datum</b> změníš ťuknutím na datum na okraji. Jméno hráčky otevře její kartu.<br>• <b>Listování:</b> šipky v rozích nahoře, přetažení prstem do strany, na počítači šipky na klávesnici. List se otočí ohnutým rohem a zašustí; při smazání je slyšet guma.<br>• <b>Vzhled sešitu</b> (ikona vpravo nahoře): papír tlumený nebo bílý, linky nebo čtverečky, rukopis (stejný jako u lepíků), velikost písma, rychlost listování a zvuky. Vzhled si pamatuje zařízení.<br>Zápisy jsou součástí dat Bombita, takže jsou i v záloze.`,
+ a:`Ve vzhledu Trenéra je Deníček poslední záložka nahoře (oranžová ikona knihy). Je to stejný sešit jako Deníček v Trenérovi: linkovaný papír, datum a den na okraji, rukopis a listování. Zápisy jdou za sebou bez ohledu na měsíc a razítko nahoře ukazuje, které měsíce na stránce jsou (třeba „Leden – Květen 2026“).<br>• <b>Co v něm je:</b> poznámky k hráčkám (stejné jako na lepíku na kartě) a zápisy o celém týmu. Bez filtru vidíš od každé hráčky a od týmu jen <b>poslední zápis</b>. Tlačítkem s jménem nahoře (Všichni) vybereš Tým nebo jednu hráčku a uvidíš <b>všechny</b> jejich zápisy. Zpátky na všechny se vrátíš šipkou vlevo nahoře nebo systémovým Zpět.<br>• <b>Nový zápis:</b> tlačítko s plusem. Ve filtru hned píšeš k vybrané hráčce nebo týmu, jinak nejdřív vybereš komu. Zápis má dnešní datum.<br>• <b>Psaní:</b> ťukni na text zápisu a piš rovnou do sešitu. Nad textem je lišta: tučně, kurzíva, odrážky, číslovaný seznam a odsazení. Zápis se uloží sám, jakmile ťukneš jinam (s „Vrátit“). Esc psaní zruší, Ctrl+Enter uloží. Koš vpravo zápis smaže (s „Vrátit“). Zápis, ve kterém nic nenapíšeš, zmizí.<br>• <b>Datum</b> změníš ťuknutím na datum na okraji. Jméno hráčky otevře její kartu.<br>• <b>Listování:</b> šipky v rozích nahoře, přetažení prstem do strany, na počítači šipky na klávesnici. List se otočí ohnutým rohem a zašustí; při smazání je slyšet guma.<br>• <b>Vzhled sešitu</b> (ikona vpravo nahoře): papír tlumený nebo bílý, linky nebo čtverečky, rukopis (stejný jako u lepíků), velikost písma, rychlost listování a zvuky. Vzhled si pamatuje zařízení.<br>Zápisy jsou součástí dat Bombita, takže jsou i v záloze.`,
  kw:"deníček sešit poznámky tým zápis listování formátování tučně odrážky"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
  a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ otevře Deníček jen s touto hráčkou, kde jsou všechny její poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem nebo s formátováním (tučně, odrážky…) napíšeš v Deníčku. Formátovanou dnešní poznámku lepík otevře rovnou v Deníčku, aby formátování nezmizelo.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
@@ -8400,6 +8402,10 @@ function dkListy(){
   vse.forEach(z=>{const m=z.den.slice(0,7);let l=out[out.length-1];if(!l||l.mesic!==m){l={mesic:m,text:dkMesicText(z.den),zapisy:[]};out.push(l);}l.zapisy.push(z);});
   return out;
 }
+function dkMesicRozsah(a,b){
+  if(!a||a===b)return dkMesicText(b+'-01');
+  return a.slice(0,4)===b.slice(0,4)?(DK_MESICE[+a.slice(5,7)-1]||'')+' – '+dkMesicText(b+'-01'):dkMesicText(a+'-01')+' – '+dkMesicText(b+'-01');
+}
 function dkMesicText(den){const m=/^(\d{4})-(\d{2})/.exec(den||'');return m?(DK_MESICE[+m[2]-1]||'')+' '+m[1]:'';}
 function dkDenText(den){
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(den||'');if(!m)return'';
@@ -8487,11 +8493,14 @@ function dkRozvrh(){
   if(clanky.length){
     const kusy=clanky[clanky.length-1].getClientRects();
     dkStran=Math.max(zac[zac.length-1],strana(kusy[kusy.length-1].left))+1;
+    // Kolo 71: měsíce nezačínají novou stránku, takže na jedné stránce může být víc měsíců —
+    // razítko (nebo tužka) ukáže rozsah od prvního do posledního měsíce na stránce.
     let j=0,mesic=clanky[0].dataset.mesic;
     for(let p=0;p<dkStran;p++){
-      let zacatek=false;
-      while(j<clanky.length&&zac[j]<=p){if(clanky[j].classList.contains('novy-mesic')&&zac[j]===p)zacatek=true;mesic=clanky[j].dataset.mesic;j++;}
-      dkMapa.push({mesic,text:dkMesicText(mesic+'-01'),zacatek});
+      const od=mesic,ms=[];let zacatek=false;
+      while(j<clanky.length&&zac[j]<=p){if(zac[j]===p&&clanky[j].classList.contains('novy-mesic'))zacatek=true;mesic=clanky[j].dataset.mesic;ms.push(mesic);j++;}
+      const prvni=ms.length?ms[0]:od; // zápisy se mezi stránky nedělí (break-inside:avoid)
+      dkMapa.push({mesic,text:dkMesicRozsah(prvni,mesic),zacatek});
     }
   }
   let cil=dkStran-1;
@@ -8648,10 +8657,9 @@ function dkVzhledNastav(zmena){
   dkPouzijVzhled();dkRozvrh();
 }
 // ---- filtr a nový zápis ----
-function dkPocet(kdo){return Object.values(dkZaznamy()).filter(z=>z.kdo===kdo).length;}
 function dkVyberHtml(akce){
-  const row=(kdo,fa,txt,pocet)=>`<button class="sk-row-btn" onclick="${akce}('${kdo}')"><i class="fa-solid fa-${fa}" aria-hidden="true"></i>${lepikEsc(txt)}${pocet!=null?`<span class="sk-row-n">${pocet}</span>`:''}<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i></button>`;
-  return`<div class="sk-rows" style="margin-top:12px">${akce==='dkFiltruj'?row('','book-open','Poslední zápisy všech',null):''}${row('tym','users','Tým',dkPocet('tym'))}${getActiveP().map(p=>row(p.id,'user',p.name,dkPocet(p.id))).join('')}</div>`;
+  const row=(kdo,fa,txt)=>`<button class="sk-row-btn" onclick="${akce}('${kdo}')"><i class="fa-solid fa-${fa}" aria-hidden="true"></i>${lepikEsc(txt)}<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i></button>`;
+  return`<div class="sk-rows" style="margin-top:12px">${akce==='dkFiltruj'?row('','book-open','Poslední zápisy všech'):''}${row('tym','users','Tým')}${getActiveP().map(p=>row(p.id,'user',p.name)).join('')}</div>`;
 }
 function dkOtevriFiltr(){dkZavriUpravu(true,true);openModal(`${skHubHead('Koho ukázat')}${dkVyberHtml('dkFiltruj')}`);}
 function dkFiltruj(kdo){closeModal();openDenik(kdo||null);}
