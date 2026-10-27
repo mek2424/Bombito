@@ -25,6 +25,16 @@
    startu ani na okamžik nesvítí klasicky — stejný princip jako dark-mode-preload v Trenérovi.
    V klasickém vzhledu se na <html> nesahá vůbec, takže klasik zůstává přesně jako dřív.
    BOMBITO_VZHLED je jediné místo s výpočtem barev; applySkin() ve skriptu níž ho používá taky. */
+/* Kolo 60 (C5): nabídka instalace jako v Trenérovi. Chrome/Edge pošlou beforeinstallprompt, jen
+   když jde Bombito nainstalovat a ještě nainstalované není; zachytává se hned tady, ať ji pozdější
+   skript nepropásne. Ve vzhledu Trenéra ji pak nabídne ikona v hlavičce (bombitoInstalaceUpdate),
+   v klasiku zůstává vlastní lišta prohlížeče jako dřív. */
+window.__bombitoInstall=null;
+window.addEventListener("beforeinstallprompt",function(e){
+  if(!document.documentElement.classList.contains("skin-trener"))return;
+  e.preventDefault();window.__bombitoInstall=e;
+  if(typeof window.bombitoInstalaceUpdate==="function")window.bombitoInstalaceUpdate();
+});
 window.BOMBITO_VZHLED=(function(){
   // Výchozí hlavní barva je o kousek tmavší než #339933 v Trenérovi (Mek 26. 10.) — na #339933
   // má bílý text tlačítek jen 3,66 : 1, na #2B7D2B 5,16 : 1. Kdo měl uloženou starou výchozí
@@ -739,6 +749,8 @@ html.skin-trener .kol-sec .brow{display:flex;margin-top:8px}
 html.skin-trener .mi-note{font-size:12.5px;color:var(--ink-soft)}
 /* ── Kolo 58: odznaky s ikonou Font Awesome ── */
 html.skin-trener .bt.on,html.skin-trener .bt.sp-on{color:var(--ink)!important}
+html.skin-trener .bt.auto{cursor:default}
+html.skin-trener .bt.auto:not(.on){opacity:.6}
 html.skin-trener .kol-b.fa{font-size:8px}
 html.skin-trener .kol.big .kol-b.fa{font-size:11px}
 html.skin-trener .kol-b.sp.fa,html.skin-trener .kol-sp{color:var(--gold-ink)}
@@ -781,6 +793,9 @@ html.skin-trener .da .da-ic{order:5;width:36px;height:36px;padding:0;justify-con
 html.skin-trener .da .da-ic:hover{background:var(--paper)}
 html.skin-trener .da .da-ic.da-del{color:var(--danger-ink)}
 html.skin-trener .da .da-ic.da-ed{margin-left:auto}
+/* Kolo 60 (C4): Upravit/Kopírovat/Smazat jsou pod ⋮ (openKartaMenu). */
+html.skin-trener .da .da-ic:not(.da-more){display:none}
+html.skin-trener .da .da-ic.da-more{display:inline-flex;margin-left:auto;width:40px;height:40px;font-size:16px}
 html.skin-trener .tabs{border-bottom:1px solid var(--line)}
 html.skin-trener .tab{padding:8px 4px;margin-right:16px;font-size:14px;font-weight:600;color:var(--ink-faint-ink);border-bottom-width:2px;margin-bottom:-1px}
 html.skin-trener .tab:hover{color:var(--ink)}
@@ -887,12 +902,21 @@ html.skin-trener .sk-row-btn>i{width:18px;text-align:center;color:var(--ink-soft
 html.skin-trener .sk-row-btn .chev{margin-left:auto;color:var(--ink-faint-ink);font-size:12px}
 html.skin-trener .sk-row-btn.mn-start,html.skin-trener .sk-row-btn.mn-start>i{color:var(--court-ink)}
 html.skin-trener .sk-row-btn.sk-danger,html.skin-trener .sk-row-btn.sk-danger>i{color:var(--danger-ink)}
-/* Kolo 59 (U2): nad Přehledem týmu jen přepínač normy, vysvětlivky jsou v Nápovědě. */
-html.skin-trener .sk-norm{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 14px;padding:8px 12px;min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink-soft);font:500 13px 'DM Sans',sans-serif;cursor:pointer}
-html.skin-trener .sk-norm b{color:var(--ink);font-weight:700}
-html.skin-trener .sk-norm span{color:var(--ink-faint-ink)}
-html.skin-trener .sk-norm i{color:var(--court-ink)}
-html.skin-trener .sk-norm:hover{border-color:var(--court)}
+/* Kolo 60 (C5): ikona instalace v hlavičce; pulzuje, dokud na ni jednou neklepneš (jako v Trenérovi). */
+html.skin-trener #hdrInstall{display:none}
+html.skin-trener #hdrInstall.ukaz{display:grid}
+@keyframes installPulse{0%,100%{background:rgba(255,255,255,.12);box-shadow:0 0 0 0 rgba(255,255,255,0)}50%{background:rgba(255,255,255,.34);box-shadow:0 0 0 4px rgba(255,255,255,.18)}}
+html.skin-trener #hdrInstall.pulse-install{animation:installPulse 1.6s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){html.skin-trener #hdrInstall.pulse-install{animation:none}}
+/* Kolo 60 (P1): norma v Přehledu týmu jako kapsle se dvěma segmenty (vzor kapslí z Trenéra). */
+html.skin-trener .sk-norm-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 14px;font-size:13px;color:var(--ink-soft)}
+html.skin-trener .sk-norm-row>i{color:var(--court-ink)}
+html.skin-trener .sk-kapsle{display:flex;align-items:stretch;background:var(--card);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+html.skin-trener .sk-kapsle button{border:0;border-radius:0;background:none;padding:0 14px;min-height:40px;font:600 13px 'DM Sans',sans-serif;color:var(--ink-soft);cursor:pointer}
+html.skin-trener .sk-kapsle button+button{border-left:1px solid var(--line)}
+html.skin-trener .sk-kapsle button[aria-pressed="true"]{background:var(--av-bg);color:var(--av-ink)}
+html.skin-trener .sk-kapsle button:active{transform:none}
+html.skin-trener .sk-norm-row .sk-norm-n{color:var(--ink-faint-ink)}
 /* Kolo 59 (C2): dotyková odezva jako v Trenérovi, tlačítko se při stisku ztmaví ve své barvě. */
 html.skin-trener button:active,html.skin-trener .btn:active,html.skin-trener .sk-row-btn:active{filter:brightness(.9)}
 html.skin-trener{-webkit-tap-highlight-color:transparent}
@@ -1030,6 +1054,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
   <button class="sk-hbtn t-only" id="hdrBack" onclick="navBack()" aria-label="Zpět" title="Zpět"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
   <button class="sk-hbtn t-only" id="hdrFwd" onclick="navForward()" aria-label="Dopředu" title="Dopředu"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
   <button class="sk-hbtn t-only" id="hdrHelp" onclick="openHelp()" aria-label="Nápověda" title="Nápověda"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></button>
+  <button class="sk-hbtn t-only" id="hdrInstall" onclick="bombitoInstaluj()" aria-label="Nainstalovat Bombito" title="Nainstalovat Bombito"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
   <button id="menuToggle" onclick="toggleMenu()" aria-label="Menu"><span class="i-em">⋮</span><i class="i-fa fa-solid fa-ellipsis-vertical" aria-hidden="true"></i><span class="stale-dot mh-dot" style="display:none"></span></button>
   <div class="menu-dropdown" id="menuDropdown">
     <button class="btn btn-o" onclick="goHome();closeMenu()"><span class="k-only">🏠 Domů</span><span class="t-only t-lbl"><i class="fa-solid fa-house" aria-hidden="true"></i>Domů</span></button>
@@ -1231,12 +1256,16 @@ const DEF_BADGES=[
   {id:"capacka",     label:"Čapačka",    icon:"🤿", color:"#4ae8c8"},
   {id:"hecirka",     label:"Hecířka",    icon:"🔥", color:CACC},
   {id:"kapitanka",   label:"Kapitánka",  icon:"👑", color:CACC, special:true},
+  // Kolo 60 (Mek 27. 10.): přiděluje se samo podle příjmu v zápasech, viz syncAutoBadges().
+  {id:"prijimacka",  label:"Přijímačka", icon:"🙌", color:"#c84ae8", auto:"prijem"},
 ];
 // Kolo 58: ve vzhledu Trenéra má odznak ikonu Font Awesome (b.fa), emoji (b.icon) zůstává pro
 // klasik a jako záloha. Ikony se schválně nepotkávají s ikonami metrik (METRIC_FA), aby se
 // v koláži nepletl odznak se silnou stránkou. Výchozí odznaky ji dostanou při načtení (load).
-const BADGE_FA_DEF={blokar:'cubes-stacked',servis_girl:'paper-plane',bomberka:'bomb',capacka:'person-swimming',hecirka:'bullhorn',kapitanka:'crown'};
-const BADGE_FA_VYBER=['crown','bomb','bullhorn','paper-plane','person-swimming','cubes-stacked','trophy','medal','award','gem','brain','feather','mountain','handshake','anchor','heart'];
+// Kolo 60 (Mek 27. 10.): Čapačka = obrana v poli → ruce chytající míč místo plavce; Přijímačka =
+// přesnost → šipky do středu (terč už má metrika Útok na cíl, v koláži by se pletly).
+const BADGE_FA_DEF={blokar:'cubes-stacked',servis_girl:'paper-plane',bomberka:'bomb',capacka:'hands-holding-circle',hecirka:'bullhorn',kapitanka:'crown',prijimacka:'arrows-to-circle'};
+const BADGE_FA_VYBER=['crown','bomb','bullhorn','paper-plane','hands-holding-circle','arrows-to-circle','person-falling','cubes-stacked','trophy','medal','award','gem','brain','feather','mountain','handshake','anchor','heart'];
 DEF_BADGES.forEach(b=>{b.fa=BADGE_FA_DEF[b.id];});
 
 let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[],tournaments:[],minihry:[]};
@@ -1311,7 +1340,15 @@ function load(){
     if(m.defaultMax==null)m.defaultMax=m.max||10;
     delete m.max; // migrate old format
   });
-  S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?CACC:CGREEN;if(b.fa===undefined&&BADGE_FA_DEF[b.id])b.fa=BADGE_FA_DEF[b.id];});
+  S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?CACC:CGREEN;if(b.fa===undefined&&BADGE_FA_DEF[b.id])b.fa=BADGE_FA_DEF[b.id];
+    if(b.id==='capacka'&&b.fa==='person-swimming')b.fa='hands-holding-circle'; // Kolo 60: jen původní výchozí, vlastní volba zůstává
+  });
+  // Kolo 60: odznak Přijímačka se do uloženého nastavení přidá jednou; když ho trenér později
+  // smaže, příznak zajistí, že se sám nevrátí.
+  if(!S.config.prijimackaPridana){
+    if(!S.config.badges.some(b=>b.id==='prijimacka'))S.config.badges.push(JSON.parse(JSON.stringify(DEF_BADGES.find(b=>b.id==='prijimacka'))));
+    S.config.prijimackaPridana=true;
+  }
   if(!S.normScope)S.normScope="all";
   if(!S.matches)S.matches=[];
   if(!S.tournaments)S.tournaments=[];
@@ -2039,15 +2076,60 @@ function deletePlayer(){
 // ═══ BADGES ═══
 function openBadges(){
   const p=gP();if(!p)return;
-  const btns=S.config.badges.map(b=>{
+  const btns=S.config.badges.map(b0=>{
+    const b=badgeView(b0,p);
     const on=p.badges.includes(b.id);
     const style=on?`border-color:${b.color};background:${b.color}22;color:${b.color}`:"";
-    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"><div class="bi"${(()=>{const t=badgeTint(b);return t?` style="background:${t.bg};color:${t.ink}"`:'';})()}>${badgeIco(b)}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
+    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}${b.auto?" auto":""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"${b.auto?` title="${b.label} se přidělí sama podle příjmu v zápasech" aria-disabled="true"`:''}><div class="bi"${(()=>{const t=badgeTint(b);return t?` style="background:${t.bg};color:${t.ink}"`:'';})()}>${badgeIco(b)}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
   }).join("");
   openModal(`<h2>🏅 Odznaky</h2><p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${p.name}</p><div class="btg">${btns}</div><div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
+// Kolo 60: automatické odznaky. Přijímačka = průměrný příjem v zápasech aktuální sezóny
+// víc než PRIJIMACKA_PCT % (sdružené příjmy z posledních OVERALL_MATCH_CAP zápasů, stejně jako
+// v Overallu). Proti náhodě aspoň PRIJIMACKA_MIN_ZAPASY zápasů s příjmem a PRIJIMACKA_MIN_N příjmů.
+// Odznak se přidá i odebere sám (při každém překreslení), ručně se zapnout nedá.
+const PRIJIMACKA_PCT=55,PRIJIMACKA_MIN_N=8,PRIJIMACKA_MIN_ZAPASY=OVERALL_GAP_MIN_MATCHES;
+function prijemSezona(p){
+  const ms=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'prijem')!=null).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+  const pool=playerReceptionPool(p,ms);
+  return pool?{pct:pool.avg,n:pool.n,zapasy:ms.length}:null;
+}
+function autoBadgeOk(p,b){
+  if(b.auto!=='prijem')return false;
+  const r=prijemSezona(p);
+  return !!r&&r.zapasy>=PRIJIMACKA_MIN_ZAPASY&&r.n>=PRIJIMACKA_MIN_N&&r.pct>PRIJIMACKA_PCT;
+}
+// Barva Přijímačky podle T-skóre příjmu (Mek 27. 10.): stejná pásma jako štítky T a Overall —
+// T 75+ zlatá, T 60–74 zelená, jinak barva odznaku z nastavení. T se počítá jako v Overallu
+// (sdružené příjmy, uhlazení shrinkPct, aktivní norma).
+function prijemT(p,norms){
+  const r=prijemSezona(p);if(!r)return null;
+  norms=norms||activeNorms();
+  return tRaw(shrinkPct(r.pct,r.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM),norms.prijem_zapas);
+}
+function badgeView(b,p,norms){
+  if(!b||b.auto!=='prijem'||!p)return b;
+  const t=prijemT(p,norms);if(t==null)return b;
+  const c=t>=75?CACC:t>=60?CGREEN:null;
+  return c?{...b,color:c}:b;
+}
+function syncAutoBadges(){
+  const auto=(S.config.badges||[]).filter(b=>b.auto);if(!auto.length)return false;
+  let zmena=false;
+  S.players.filter(p=>!p.archived).forEach(p=>{
+    if(!p.badges)p.badges=[];
+    auto.forEach(b=>{
+      const ma=p.badges.includes(b.id),ok=autoBadgeOk(p,b);
+      if(ok&&!ma){p.badges.push(b.id);zmena=true;}
+      else if(!ok&&ma){p.badges=p.badges.filter(x=>x!==b.id);zmena=true;}
+    });
+  });
+  return zmena;
+}
 function toggleBadge(id){
   const p=gP();if(!p)return;
+  const bd=S.config.badges.find(x=>x.id===id);
+  if(bd?.auto){toast(`${bd.label} se přidělí sama podle příjmu v zápasech`);return;}
   if(p.badges.includes(id))p.badges=p.badges.filter(x=>x!==id);else p.badges.push(id);
   save();
   const b=S.config.badges.find(x=>x.id===id);const el=document.getElementById("bt_"+id);
@@ -2056,7 +2138,7 @@ function toggleBadge(id){
 }
 function renderBRow(){
   const p=gP();const el=document.getElementById("badgeRowEl");if(!el||!p)return;
-  el.innerHTML=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";const style=b.special?"":badgeTagStyle(b.color,'ba');return`<span class="ba ${b.special?"sp":""}" style="${style}">${b.icon} ${b.label}</span>`;}).join("")||`<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>`;
+  el.innerHTML=p.badges.map(id=>{const b=badgeView(S.config.badges.find(x=>x.id===id),p);if(!b)return"";const style=b.special?"":badgeTagStyle(b.color,'ba');return`<span class="ba ${b.special?"sp":""}" style="${style}">${b.icon} ${b.label}</span>`;}).join("")||`<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>`;
 }
 
 // ═══ TEST ═══
@@ -2238,6 +2320,13 @@ function openMatchesHub(){
 // bez vysvětlující věty (patří do Nápovědy). Klasik beze změny.
 function skHubRow(fn,fa,txt,cls){return`<button class="sk-row-btn${cls?' '+cls:''}" onclick="${fn}"><i class="fa-solid fa-${fa}" aria-hidden="true"></i>${txt}<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i></button>`;}
 function skHubHead(t){return`<div class="sk-modal-head"><h2>${t}</h2><button class="sk-close" onclick="closeModal()" aria-label="Zavřít" title="Zavřít"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>`;}
+// Kolo 60 (C4): méně časté akce s hráčkou (upravit, kopírovat, smazat) jsou ve vzhledu
+// Trenéra pod „⋮“ na kartě, jako v Trenérovi — řádek tlačítek je klidnější a smazání
+// se hůř trefí omylem.
+function openKartaMenu(){
+  const p=gP();if(!p)return;
+  openModal(`${skHubHead(p.name)}<div class="sk-rows" style="margin-top:14px">${skHubRow('openRenamePlayer()','pen','Upravit hráčku')}${skHubRow('openCopyPlayer()','copy','Kopírovat hráčku')}${skHubRow('closeModal();deletePlayer()','trash-can','Smazat hráčku','sk-danger')}</div>`);
+}
 function openSeasonHub(){
   if(isTrener()){
     openModal(`${skHubHead('Sezóna')}<div class="sk-rows" style="margin-top:14px">${skHubRow('openArchiveWizard()','box-archive','Uzavřít sezónu a archivovat')}${skHubRow('openArchiveView()','folder-open','Archiv sezón')}</div>`);
@@ -2400,6 +2489,7 @@ function toggleCmpP(id){if(S.cmpIds.includes(id))S.cmpIds=S.cmpIds.filter(x=>x!=
 
 // ═══ RENDER ═══
 function render(){
+  if(syncAutoBadges())save();
   const sub=document.getElementById("subtitleEl");if(sub)sub.value=S.subtitle||"SK Meteor Praha";
   renderPL();
   document.getElementById("emptyState").style.display="none";
@@ -2544,7 +2634,7 @@ function setNavActive(which){
 }
 function renderPL(){
   document.getElementById("playerList").innerHTML=getActiveP().map(p=>{
-    const b=p.badges.map(id=>{const bd=S.config.badges.find(x=>x.id===id);if(!bd)return"";const st=bd.special?"":badgeTagStyle(bd.color,'bc');return`<span class="bc ${bd.special?"sp":""}" style="${st}">${badgeIco(bd)}</span>`;}).join("");
+    const b=p.badges.map(id=>{const bd=badgeView(S.config.badges.find(x=>x.id===id),p);if(!bd)return"";const st=bd.special?"":badgeTagStyle(bd.color,'bc');return`<span class="bc ${bd.special?"sp":""}" style="${st}">${badgeIco(bd)}</span>`;}).join("");
     const kap=hasKap(p);
     const cls=["pc",kap?"has-kap":"",S.cmpMode?(S.cmpIds.includes(p.id)?"cmp-sel":""):(p.id===S.activeId?"active":"")].filter(Boolean).join(" ");
     return`<div class="${cls}" onclick="${S.cmpMode?"toggleCmpP":"selectPlayer"}('${p.id}')"><div class="pc-name">${p.name}${staleDot(p)}</div><div class="pc-b">${b||''}</div></div>`;
@@ -2606,14 +2696,14 @@ function renderDetail(){
   el.style.display="block";
   if(toTop){const mn=document.querySelector("main");if(mn)mn.scrollTop=0;window.scrollTo(0,0);}
   const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  const brow=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";const style=b.special?"":badgeTagStyle(b.color,'ba');return`<span class="ba ${b.special?"sp":""}" style="${style}">${b.icon} ${b.label}</span>`;}).join("");
+  const brow=p.badges.map(id=>{const b=badgeView(S.config.badges.find(x=>x.id===id),p);if(!b)return"";const style=b.special?"":badgeTagStyle(b.color,'ba');return`<span class="ba ${b.special?"sp":""}" style="${style}">${b.icon} ${b.label}</span>`;}).join("");
   const ovNorms=activeNorms(),ovMax=teamMaxCovered(getActiveP(),ovNorms),ov=overallForPlayer(p,ovNorms,ovMax);
   const ovScopeIcon=S.normScope==="current"?"👥":"🗃",ovScopeTitle=S.normScope==="current"?"aktuální tým":"celá databáze";
   const ovHtml=ov.score==null
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
   const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
-  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button></div></div></div>${isTrener()?lepikKartaHtml(p):''}
+  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -4526,7 +4616,7 @@ function strengthTs(p,norms){
 }
 function playerStrengths(p,norms){return strengthTs(p,norms).filter(x=>x.t>=STRENGTH_T).sort((a,b)=>b.t-a.t);}
 function playerBadgesOrdered(p){
-  const bs=(p.badges||[]).map(id=>S.config.badges.find(b=>b.id===id)).filter(Boolean);
+  const bs=(p.badges||[]).map(id=>badgeView(S.config.badges.find(b=>b.id===id),p)).filter(Boolean);
   return[...bs.filter(b=>b.special),...bs.filter(b=>!b.special)];
 }
 function collageData(p,norms){
@@ -4860,7 +4950,7 @@ function renderOverview(){
 
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
-    ${isTrener()?`<button type="button" class="sk-norm" onclick="toggleNormScope()" title="Přepnout normu"><i class="fa-solid fa-users" aria-hidden="true"></i>Norma<b>${S.normScope==="current"?"Aktuální tým":"Celá databáze"}</b><span>${normPlayers().length} hráček</span><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button>`:`<p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>`}
+    ${isTrener()?`<div class="sk-norm-row"><i class="fa-solid fa-users" aria-hidden="true"></i><span id="skNormLbl">Norma</span><div class="sk-kapsle" role="group" aria-labelledby="skNormLbl"><button type="button" aria-pressed="${S.normScope==="current"}" onclick="if(S.normScope!=='current')toggleNormScope()">Aktuální tým</button><button type="button" aria-pressed="${S.normScope!=="current"}" onclick="if(S.normScope==='current')toggleNormScope()">Celá databáze</button></div><span class="sk-norm-n">${normPlayers().length} hráček</span></div>`:`<p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>`}
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
@@ -6930,7 +7020,7 @@ const HELP_DATA=[
  a:`Ano — appka je takzvaná PWA (progresivní webová appka) a jakmile ji jednou otevřeš, funguje pak úplně celá i bez připojení k internetu, klidně v tělocvičně bez signálu. Internet appka potřebuje jen při úplně prvním stažení a případně při aktualizaci na novou verzi.`,
  kw:"offline pwa bez signálu bez wifi"},
 {q:`Jak appku přidám na plochu telefonu?`,
- a:`V prohlížeči telefonu otevři appku a najdi v jeho menu volbu jako „Přidat na plochu" nebo „Nainstalovat appku" (na iPhonu je to v nabídce sdílení, na Androidu obvykle přímo v menu prohlížeče se třemi tečkami). Appka se pak zobrazí jako normální ikonka na ploše a otevírá se jako samostatná appka, bez adresního řádku prohlížeče.`,
+ a:`V prohlížeči telefonu otevři appku a najdi v jeho menu volbu jako „Přidat na plochu" nebo „Nainstalovat appku" (na iPhonu je to v nabídce sdílení, na Androidu obvykle přímo v menu prohlížeče se třemi tečkami). Appka se pak zobrazí jako normální ikonka na ploše a otevírá se jako samostatná appka, bez adresního řádku prohlížeče. Ve vzhledu Trenéra je to jednodušší: když jde Bombito nainstalovat, ukáže se v hlavičce ikona se šipkou dolů (dokud na ni jednou neklepneš, jemně bliká). Klepnutím otevřeš nabídku instalace. Na iPhonu ikona ukáže, kde v Safari najdeš „Přidat na plochu“. Když už Bombito nainstalované máš, ikona se neukazuje.`,
  kw:"instalace ikona plocha telefon pwa install"},
 {q:`Proč appka občas vyskočí s připomínkou zálohy?`,
  a:`Appka si hlídá, kdy jsi naposledy udělal Export JSON (zálohu dat), a pokud je to buď nikdy, nebo víc než 7 dní, ukáže dole bublinu s připomínkou a tlačítky „⬇ Exportovat" a „Připomenout později". Je to proto, že appka data drží jen u tebe v prohlížeči (viz otázka o bezpečí dat výš) — bez vlastní zálohy bys je při ztrátě telefonu nebo smazání dat prohlížeče měl nenávratně pryč. Klikneš-li na kterékoli z těch dvou tlačítek, appka připomínku na dalších 7 dní ztiší, i kdyby sis nakonec zálohu nestáhla. Appka se stejnou bublinou navíc připomene i hned po uzavření turnaje nebo sezóny, bez ohledu na těch 7 dní — je to chvíle, kdy zrovna přibylo hodně cenných dat.`,
@@ -6971,7 +7061,7 @@ const HELP_DATA=[
 {q:`Jak archivovanou hráčku vrátím zpátky (Obnovit)?`,
  a:`V menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón" najdeš seznam archivovaných hráček (buď pod sezónou, do které patřily, nebo v sekci „Ostatní archivované hráčky") a u každé je tlačítko „↩ Obnovit" — po kliknutí se hráčka vrátí zpátky do aktivního seznamu se všemi svými starými daty beze změny.`},
 {q:`Jak hráčku úplně smažu — a dá se to vrátit?`,
- a:`Na kartě hráčky najdeš v jejím menu možnost smazání; appka se nejdřív zeptá na potvrzení, protože jde o TRVALÉ smazání — na rozdíl od archivace appka v tomhle případě hráčku i všechna její data (testy, zápasy, vše) úplně a nenávratně odstraní. Appka to neumí vrátit zpět — jediná záchrana je mít předtím staženou zálohu Export JSON a z ní hráčku ručně obnovit importem. Pokud si nejsi jistý, jestli hráčku ještě budeš chtít, použij radši Archivaci (viz výš) — ta data nemaže, jen schová.`,
+ a:`Na kartě hráčky najdeš v jejím menu možnost smazání; appka se nejdřív zeptá na potvrzení, protože jde o TRVALÉ smazání — na rozdíl od archivace appka v tomhle případě hráčku i všechna její data (testy, zápasy, vše) úplně a nenávratně odstraní. Appka to neumí vrátit zpět — jediná záchrana je mít předtím staženou zálohu Export JSON a z ní hráčku ručně obnovit importem. Pokud si nejsi jistý, jestli hráčku ještě budeš chtít, použij radši Archivaci (viz výš) — ta data nemaže, jen schová.<br>Ve vzhledu Trenéra je smazání (stejně jako Upravit a Kopírovat hráčku) pod tlačítkem ⋮ vpravo v řádku tlačítek na kartě hráčky. Po smazání se tam navíc na pár sekund ukáže „Vrátit“.`,
  kw:"smazání hráčky trvalé nevratné"},
 {q:`Co je ta barevná kolečková ikonka (avatar/iniciály) u jména?`,
  a:`Je to jednoduchý „avatar" hráčky — appka žádné fotky neumí nahrávat, takže si místo toho pro každou hráčku vygeneruje barevné kolečko s jejími iniciálami, aby se hráčky v seznamech a přehledech daly od sebe rychleji vizuálně rozeznat.`},
@@ -7164,10 +7254,13 @@ const HELP_DATA=[
 {q:`Co jsou Odznaky a co znamenají jednotlivé ikonky?`,
  a:`Odznaky jsou appčin způsob, jak hráčce dát viditelné ocenění/nálepku za nějakou vlastnost nebo úspěch (třeba 🧱 Blokař, 🎯 Servis Girl, 💣 Bomberka, 🤿 Čapačka, 🔥 Hecířka) — na rozdíl od milníků appka odznaky NEPOČÍTÁ ani neodvozuje sama z naměřených dat, jsou to čistě tvoje vlastní ocenění podle toho, co u hráčky vidíš na tréninku. Appka má i speciální odznak 👑 Kapitánka se zvláštním „třpytivým" vzhledem, který ji odlišuje od ostatních. Přesný seznam a vzhled odznaků jde upravit v Nastavení.`},
 {q:`Proč mají odznaky ve vzhledu Trenéra jiné ikony než emoji?`,
- a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka = plavec, Hecířka = megafon, Kapitánka = koruna. Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
+ a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka (obrana v poli) = ruce chytající míč, Hecířka = megafon, Kapitánka = koruna, Přijímačka = šipky mířící do středu (přesnost). Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
  kw:"odznak ikona font awesome emoji trenér vzhled vybrat ikonu koruna megafon"},
+{q:`Jak funguje odznak Přijímačka?`,
+ a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Hráčka ho má, dokud má v zápasech aktuální sezóny průměrný příjem víc než 55 %. Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když průměr klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br>Barva odznaku ukazuje T-skóre příjmu vůči zvolené normě: zlatá = T 75 a víc, zelená = T 60–74, jinak fialová. Název, emoji, ikonu i výchozí barvu změníš v Nastavení → Odznaky. Když odznak smažeš, už se sám nevrátí.`,
+ kw:"přijímačka příjem automatický odznak 55 % procent zápas sám barva"},
 {q:`Jak appka odznak hráčce přidělí?`,
- a:`Appka to nedělá sama automaticky — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
+ a:`Appka to nedělá sama automaticky (jedinou výjimkou je Přijímačka, viz výš) — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
  kw:"udělení odznaku manuálně přiřazení"},
 {q:`Kde všude appka odznaky u hráčky ukazuje?`,
  a:`Appka je ukazuje přímo na kartě hráčky pod jejím jménem a taky v Domovské obrazovce na její kartičce v mřížce — takže je vidíš i bez otevírání karty jednotlivě. Ve vzhledu Trenéra jsou odznaky jako emoji v kolečku hráčky (koláž dovedností) na Domů i na kartě; jejich názvy uvidíš po klepnutí na kolečko na kartě hráčky.`,
@@ -7246,7 +7339,7 @@ const HELP_DATA=[
 
 {title:"Přehled týmu",icon:"📊",qa:[
 {q:`Co appka ukazuje v „Přehledu týmu"?`,
- a:`Appka tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“ (aktuální tým / celá databáze, s počtem hráček v normě) a klepnutím na něj normu přepneš.`},
+ a:`Appka tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“: kapsle se dvěma díly „Aktuální tým“ a „Celá databáze“ (vybraný je zvýrazněný) a vedle počet hráček v normě. Klepnutím na druhý díl normu přepneš.`},
 {q:`Jak podle sloupce seřadím hráčky (třeba podle Overallu)?`,
  a:`Klikni přímo na název sloupce v záhlaví tabulky — appka podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně).`},
 {q:`Co znamená hvězdička/horní index u čísla v tabulce?`,
@@ -7478,6 +7571,7 @@ function setVzhled(patch,live){
     applyChartSkin();rerenderCurrent();
     if(document.getElementById('vzSkin')&&!live)openEditor();
     skinIcons(document.body);
+    if(window.bombitoInstalaceUpdate)window.bombitoInstalaceUpdate();
   };
   if(live)_vzhledLiveTm=setTimeout(redraw,250);else redraw();
 }
@@ -7608,6 +7702,32 @@ function skinIcons(root){
   }).observe(document.body,{childList:true,subtree:true});
 })();
 
+// Kolo 60 (C5): ikona instalace v hlavičce (jen vzhled Trenéra). Jako v Trenérovi pulzuje,
+// dokud na ni jednou neklepneš; na iPhonu (bez nabídky prohlížeče) ukáže, jak Bombito přidat na plochu.
+const INSTALL_VIDENO='bombito_install_videno';
+function bombitoBeziNainstalovane(){return(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}
+function bombitoApple(){return/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+function bombitoInstalaceVidena(){try{return localStorage.getItem(INSTALL_VIDENO)==='1';}catch(e){return false;}}
+window.bombitoInstalaceUpdate=function(){
+  const b=document.getElementById('hdrInstall');if(!b)return;
+  const show=isTrener()&&!bombitoBeziNainstalovane()&&(!!window.__bombitoInstall||bombitoApple());
+  b.classList.toggle('ukaz',show);
+  b.classList.toggle('pulse-install',show&&!bombitoInstalaceVidena());
+};
+async function bombitoInstaluj(){
+  try{localStorage.setItem(INSTALL_VIDENO,'1');}catch(e){}
+  const ev=window.__bombitoInstall;
+  if(ev){
+    window.__bombitoInstall=null; // prompt() jde na jedné události zavolat jen jednou
+    window.bombitoInstalaceUpdate();
+    try{ev.prompt();await ev.userChoice;}catch(e){}
+    window.bombitoInstalaceUpdate();
+    return;
+  }
+  window.bombitoInstalaceUpdate();
+  if(bombitoApple())openModal(`${skHubHead('Bombito na plochu')}<p style="font-size:14px;line-height:1.5;margin:12px 0 4px">Na iPhonu to jde jen ručně: v Safari klepni na Sdílet (podle verze iOS je dole, nebo pod třemi tečkami) a vyber „Přidat na plochu“. Pak Bombito otevírej z plochy.</p><div class="ma"><button class="btn btn-p" onclick="closeModal()">Rozumím</button></div>`);
+}
+window.addEventListener('appinstalled',()=>{window.__bombitoInstall=null;window.bombitoInstalaceUpdate();});
 // Kolo 59 (C3): tlačítko Nahoru jako v Trenérovi — jen ve vzhledu Trenéra, objeví se po
 // odscrollování o víc než 400 px v hlavní ploše (<main>) nebo v otevřeném okně (třeba Nápověda).
 (function(){
@@ -7625,7 +7745,7 @@ function skinIcons(root){
   document.body.appendChild(b);
   new MutationObserver(()=>{cil=document.getElementById('modal').style.display!=='none'?document.querySelector('#modal .md'):document.querySelector('main');videt();}).observe(document.getElementById('modal'),{attributes:true,attributeFilter:['style']});
 })();
-load();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);
+load();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
 
 </script>
 <script>
