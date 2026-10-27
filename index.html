@@ -739,6 +739,29 @@ html.skin-trener .kol{position:relative;width:44px;height:44px;flex-shrink:0;bor
 html.skin-trener .kol.big{width:72px;height:72px}
 html.skin-trener .kol-c{position:absolute;inset:4px;border-radius:50%;background:var(--av-bg);color:var(--court-ink);display:flex;align-items:center;justify-content:center;font-size:17px}
 html.skin-trener .kol.big .kol-c{inset:6px;font-size:28px}
+/* Kolo 69 (P4): týmový sešit poznámek — papír jako Deníček v Trenérovi (linky, svislá čára v hlavní
+   barvě, rukopis podle volby lepíků), jen bez listování: dny pod sebou, nejnovější nahoře. */
+#sesitBtnM{display:none!important}
+html.skin-trener #sesitBtnM{display:flex!important}
+html.skin-trener .sk-sesit{--s-papir:#FDFDF8;--s-linka:#BCD3EA;--s-okraj:#E08A8A;--s-ink:#1F3A7A;--radek:30px;--oks:62px;
+  --s-f:"Patrick Hand","Segoe Print",cursive;--s-v:19.5px;
+  background-color:var(--s-papir);color:var(--s-ink);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.14);padding:var(--radek) 12px var(--radek) 0;margin-top:12px;
+  background-image:linear-gradient(to right,transparent calc(var(--oks) - 1px),var(--s-okraj) calc(var(--oks) - 1px),var(--s-okraj) calc(var(--oks) + .5px),transparent calc(var(--oks) + .5px)),
+    repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--radek) - 1px),var(--s-linka) calc(var(--radek) - 1px),var(--s-linka) var(--radek));
+  font:400 var(--s-v)/var(--radek) var(--s-f)}
+@supports (color:color-mix(in srgb,red 50%,blue)){html.skin-trener .sk-sesit{--s-okraj:color-mix(in srgb,var(--court) 65%,var(--s-papir))}}
+html.skin-trener[data-pismo="caveat"] .sk-sesit{--s-f:"Caveat","Segoe Print",cursive;--s-v:23px}
+html.skin-trener[data-pismo="kalam"] .sk-sesit{--s-f:"Kalam","Segoe Print",cursive;--s-v:17.5px}
+html.skin-trener .ss-den{display:grid;grid-template-columns:var(--oks) minmax(0,1fr);margin-bottom:var(--radek)}
+html.skin-trener .ss-datum{text-align:center;color:#8A8F99;font-size:.82em;white-space:nowrap;line-height:var(--radek)}
+html.skin-trener .ss-z{padding-left:10px;overflow-wrap:anywhere;min-height:var(--radek)}
+html.skin-trener .ss-jm{border:0;background:none;padding:0;font:inherit;color:#A8431C;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+html.skin-trener .ss-tym{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
+html.skin-trener .ss-tym b{color:#2B6B2B}
+html.skin-trener .ss-prazdny{padding-left:calc(var(--oks) + 10px);color:#8A8F99}
+html.skin-trener .ss-form{display:flex;flex-direction:column;gap:8px}
+html.skin-trener .ss-form .ss-r{display:flex;gap:8px;align-items:center}
+html.skin-trener .ss-form textarea{min-height:64px}
 html.skin-trener .kol-tlum .kol-c{background:var(--flat-bg);color:var(--ink-faint-ink)}
 html.skin-trener .m-t.kol-t-tlum{background:var(--flat-bg);color:var(--ink-faint-ink)}
 html.skin-trener .kol-em{font-size:18px}
@@ -1128,6 +1151,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
     <button class="btn btn-o" id="ovBtnM" onclick="toggleOverview();closeMenu()"><span class="k-only">📊 Přehled týmu</span><span class="t-only t-lbl"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Přehled týmu</span></button>
     <button class="btn btn-o" id="cmpBtnM" onclick="toggleCmp();closeMenu()"><span class="k-only">⚖ Porovnání</span><span class="t-only t-lbl"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Porovnání</span></button>
     <button class="btn btn-o" onclick="openMinihry();closeMenu()"><span class="k-only">🎮 Minihry</span><span class="t-only t-lbl"><i class="fa-solid fa-gamepad" aria-hidden="true"></i>Minihry</span><span class="stale-dot mh-dot" style="display:none"></span></button>
+    <button class="btn btn-o" id="sesitBtnM" onclick="openSesit();closeMenu()"><span class="t-only t-lbl"><i class="fa-solid fa-book-open" aria-hidden="true"></i>Sešit poznámek</span></button>
     <hr class="sep-line"><div class="mnu-eyebrow">Zápasy</div>
     <button class="btn btn-p mn-start" onclick="openLiveMatch();closeMenu()"><span class="k-only">🏆 Spustit zápas</span><span class="t-only t-lbl"><i class="fa-solid fa-play" aria-hidden="true"></i>Spustit zápas</span></button>
     <button class="btn btn-o" onclick="openAllMatchesLibrary();closeMenu()"><span class="k-only">📚 Záznamy zápasů</span><span class="t-only t-lbl"><i class="fa-solid fa-list" aria-hidden="true"></i>Záznamy zápasů</span></button>
@@ -1420,6 +1444,7 @@ function load(){
   if(!S.normScope)S.normScope="all";
   if(!S.matches)S.matches=[];
   if(!S.tournaments)S.tournaments=[];
+  if(!S.teamNotes)S.teamNotes=[]; // Kolo 69: týmové zápisy v sešitu {id,date,text}
   if(!S.minihry)S.minihry=[];
   // Migrate: rename "Balony zadarmo" → "Zdarma"
   if(S.config.game){S.config.game.forEach(m=>{if(m.id==='balony_zadarmo'&&m.label==='Balony zadarmo')m.label='Zdarma';});}
@@ -2327,6 +2352,55 @@ function revertMil(id){
     else p.milestones[id]={stage:targetN,date:today()};
     save();renderDetail();
   },{icon:'↩️',note,btnCls:'btn-gray'});
+}
+
+// ═══ Kolo 69 (P4): TÝMOVÝ SEŠIT POZNÁMEK (jen vzhled Trenéra, menu ⋮ → Sešit poznámek) ═══
+// Všechny poznámky k hráčkám (p.notes, píšou se dál do lepíků) a týmové zápisy (S.teamNotes, píšou se
+// tady) po dnech, nejnovější nahoře. Jméno otevře kartu hráčky, týmový zápis jde upravit nebo smazat.
+function sesitDnyHtml(){
+  const dny={};
+  (S.teamNotes||[]).forEach(n=>{(dny[n.date]=dny[n.date]||[]).push({tym:n});});
+  getActiveP().forEach(p=>(p.notes||[]).forEach(n=>{if(n.text)(dny[n.date]=dny[n.date]||[]).push({p,n});}));
+  const klice=Object.keys(dny).sort((a,b)=>b.localeCompare(a));
+  if(!klice.length)return'<div class="ss-prazdny">Zatím žádné poznámky</div>';
+  return klice.map(d=>{
+    const z=dny[d].sort((a,b)=>(a.tym?0:1)-(b.tym?0:1)||(a.p&&b.p?a.p.name.localeCompare(b.p.name,'cs'):0)).map(x=>x.tym
+      ?`<div class="ss-z"><button type="button" class="ss-tym" onclick="upravTymZapis('${x.tym.id}')"><b>Tým:</b> ${lepikEsc(x.tym.text)}</button></div>`
+      :`<div class="ss-z"><button type="button" class="ss-jm" onclick="closeModal();selectPlayer('${x.p.id}')">${lepikEsc(playerLabel(x.p))}</button>: ${lepikEsc(x.n.text)}</div>`).join('');
+    return`<div class="ss-den"><div class="ss-datum">${fmtDate(d,true)}</div><div>${z}</div></div>`;
+  }).join('');
+}
+function openSesit(){
+  openModal(`${skHubHead('Sešit poznámek')}
+    <div class="ss-form" style="margin-top:12px"><div class="fg" style="margin:0"><label for="ssText">Zápis k týmu</label><textarea id="ssText" maxlength="400"></textarea></div>
+      <div class="ss-r fg" style="margin:0"><input id="ssDate" type="date" value="${today()}" style="flex:1"><button class="btn btn-p" onclick="pridatTymZapis()"><i class="fa-solid fa-pen" aria-hidden="true"></i> Zapsat</button></div></div>
+    <div class="sk-sesit" id="ssPapir">${sesitDnyHtml()}</div>`);
+}
+function pridatTymZapis(){
+  const t=(document.getElementById('ssText')?.value||'').trim();
+  if(!t){toast('Napiš zápis','err');return;}
+  S.teamNotes=S.teamNotes||[];
+  S.teamNotes.push({id:'tn_'+Date.now(),date:document.getElementById('ssDate').value||today(),text:t});
+  save();document.getElementById('ssText').value='';
+  document.getElementById('ssPapir').innerHTML=sesitDnyHtml();toast('Zapsáno do sešitu');
+}
+function upravTymZapis(id){
+  const n=(S.teamNotes||[]).find(x=>x.id===id);if(!n)return;
+  openModal(`${skHubHead('Zápis k týmu')}
+    <div class="fg" style="margin-top:12px"><textarea id="ssEdit" maxlength="400">${lepikEsc(n.text)}</textarea></div>
+    <div class="fg"><label>Datum</label><input id="ssEditDate" type="date" value="${n.date}"></div>
+    <div class="ma"><button class="btn btn-d" onclick="smazatTymZapis('${id}')"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Smazat</button><button class="btn btn-o" onclick="openSesit()">Zpět</button><button class="btn btn-p" onclick="ulozitTymZapis('${id}')">Uložit</button></div>`);
+}
+function ulozitTymZapis(id){
+  const n=(S.teamNotes||[]).find(x=>x.id===id);if(!n)return;
+  const t=(document.getElementById('ssEdit')?.value||'').trim();
+  if(!t){smazatTymZapis(id);return;}
+  n.text=t;n.date=document.getElementById('ssEditDate').value||n.date;save();openSesit();toast('Uloženo ✓');
+}
+function smazatTymZapis(id){
+  const snap=undoSnapshot();
+  S.teamNotes=(S.teamNotes||[]).filter(x=>x.id!==id);save();openSesit();
+  offerUndo(snap,'Zápis smazán',()=>{if(document.getElementById('ssPapir'))openSesit();});
 }
 
 // ═══ NOTES ═══
@@ -7742,6 +7816,9 @@ const HELP_DATA=[
 {q:`Co dělá tlačítko Zpět na telefonu?`,
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, vrátí tě na předchozí obrazovku (hráčka, Domů, Přehled, Porovnání…), stejně jako dřív spodní lišta, která ve vzhledu Trenéra na telefonu už není. Na první obrazovce po spuštění Zpět Bombito opustí.<br>Na iPhonu nainstalovaná aplikace systémové Zpět nemá, proto je v hlavičce šipka Zpět (ukáže se, jen když je kam se vrátit). Na počítači jsou v hlavičce šipky Zpět i Dopředu.<br>Tlačítko „Vrátit poslední akci“ v živém zápase (když se při zapisování uklikneš) zůstává, jak bylo.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
+{q:`Co je Sešit poznámek?`,
+ a:`Ve vzhledu Trenéra je v menu ⋮ <b>Sešit poznámek</b>: jedno místo, kde si přečteš, co se o týmu psalo. Na linkovaném papíře (jako Deníček v Trenérovi, stejným rukopisem jako lepíky) jsou dny pod sebou, nejnovější nahoře, datum na okraji.<br>• <b>Poznámky k hráčkám</b> z lepíků. Klepnutím na jméno otevřeš kartu hráčky. Píšou se dál do lepíku na kartě.<br>• <b>Zápisy k týmu</b> (označené „Tým:“), které nepatří žádné hráčce, třeba jak proběhl trénink. Napíšeš je nahoře v sešitu, datum je předvyplněné na dnešek. Klepnutím na zápis ho upravíš nebo smažeš (s „Vrátit“).<br>Zápisy k týmu jsou součástí dat Bombita, takže jsou i v záloze.`,
+ kw:"sešit deníček poznámky tým zápis trénink"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
  a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
  kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér rukopis písmo"},
