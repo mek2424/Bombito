@@ -2090,7 +2090,7 @@ function overallBreakdownHtml(p,norms,ovMax){
     :'';
   const gapBadge=matchGapBadge(ov);
   const gapHtml=gapBadge?`<p style="font-size:0.8rem;color:var(--acc);margin-top:6px">${gapBadge.icon} ${gapBadge.title}</p>`:'';
-  const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů aktuální sezóny (appka bere max ${OVERALL_MATCH_CAP}).</p>`:'';
+  const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů aktuální sezóny (aplikace bere max ${OVERALL_MATCH_CAP}).</p>`:'';
   return`<h2>📊 Overall — rozpad</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${p.name}</p>
     <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${overallColor(ov.tAvg)}">${ov.score??'–'}</div></div>
     ${overallTimelineHtml(p,norms)}
@@ -2254,16 +2254,16 @@ function confirmImport(filename,d){
   const curTxt=curDate?fmtDate(curDate):'žádná data';
   const newTxt=newDate?fmtDate(newDate):'žádná data';
   const older=curDate&&newDate&&newDate<curDate;
-  const warn=older?`<p style="color:var(--red);font-weight:600;font-size:0.82rem;margin-bottom:14px">⚠ Tenhle soubor vypadá STARŠÍ než data, co appka má teď — pravděpodobně bys přepsal novější data staršími.</p>`:'';
+  const warn=older?`<p style="color:var(--red);font-weight:600;font-size:0.82rem;margin-bottom:14px">⚠ Tenhle soubor vypadá STARŠÍ než data, co aplikace má teď — pravděpodobně bys přepsal novější data staršími.</p>`:'';
   openModal(`<div style="text-align:center;padding:8px 0">
     <div style="font-size:2rem;margin-bottom:10px">⚠️</div>
     <h2 style="margin-bottom:8px">Nahradit všechna data souborem „${filename}"?</h2>
     <div style="text-align:left;background:var(--x-inset);border:1px solid var(--brd);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.8rem">
-      <div style="margin-bottom:4px">📱 <b>V appce teď:</b> ${S.players.length} hráček, poslední data ${curTxt}</div>
+      <div style="margin-bottom:4px">📱 <b>V aplikaci teď:</b> ${S.players.length} hráček, poslední data ${curTxt}</div>
       <div>📄 <b>V souboru:</b> ${d.players.length} hráček, poslední data ${newTxt}</div>
     </div>
     ${warn}
-    <p style="color:var(--gm);font-size:0.82rem;margin-bottom:20px">Tuto akci nelze vrátit (appka si ale schová stav před importem, viz „Vrátit stav před posledním importem").</p>
+    <p style="color:var(--gm);font-size:0.82rem;margin-bottom:20px">Tuto akci nelze vrátit (aplikace si ale schová stav před importem, viz „Vrátit stav před posledním importem").</p>
     <div style="display:flex;gap:10px;justify-content:center">
       <button class="btn btn-o" style="min-width:100px" onclick="closeModal()">Zpět</button>
       <button class="btn btn-d" style="min-width:100px" onclick="doImport()">Potvrdit</button>
@@ -2489,7 +2489,7 @@ function suspiciousTestValues(physical){
 }
 function confirmSuspiciousTest(susp){
   const rows=susp.map(x=>`<div style="padding:6px 0;border-bottom:1px solid var(--brd);font-size:0.82rem">⚠ <b>${x.label}</b>: zadáno ${x.value} ${x.unit} <span style="color:var(--gm)">(běžně kolem ${Math.round(x.mu*10)/10} ${x.unit})</span></div>`).join('');
-  openModal(`<h2>⚠ Zkontroluj hodnoty</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:10px">Appka neví, jestli je to překlep, nebo je to fakt takhle — jen chce mít jistotu, než to appka uloží.</p>${rows}<div class="ma"><button class="btn btn-o" onclick="closeModal()">← Zpět, opravím</button><button class="btn btn-p" onclick="commitPendingTest()">Uložit i tak</button></div>`);
+  openModal(`<h2>⚠ Zkontroluj hodnoty</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:10px">Aplikace neví, jestli je to překlep, nebo je to fakt takhle — jen chce mít jistotu, než to aplikace uloží.</p>${rows}<div class="ma"><button class="btn btn-o" onclick="closeModal()">← Zpět, opravím</button><button class="btn btn-p" onclick="commitPendingTest()">Uložit i tak</button></div>`);
 }
 function commitPendingTest(){
   if(!_pendingTest)return;
@@ -2578,7 +2578,7 @@ function openEditor(){
   if(isTrener()){openEditorTrener();return;}
   openModal(`<h2>⚙ Nastavení</h2>
     ${vzhledSectionHtml()}
-    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Definice metrik, milníků a odznaků — co appka měří a jak.</p>
+    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Definice metrik, milníků a odznaků — co se měří a jak.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-o" onclick="openPhysEd()">💪 Fyzické metriky</button>
       <button class="btn btn-o" onclick="openGameEd()">🎯 Herní metriky</button>
@@ -2652,7 +2652,7 @@ function openDataHub(){
     return;
   }
   openModal(`<h2>💾 Data a zálohy</h2>
-    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Export, import a bezpečnostní akce nad daty appky.</p>
+    <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Export, import a bezpečnostní akce nad daty aplikace.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-o" onclick="exportData();closeModal()">⬇ Exportovat data (JSON)</button>
       <label class="btn btn-o" style="cursor:pointer;text-align:center">⬆ Importovat data (JSON)<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
@@ -3350,7 +3350,7 @@ function openAttackTransition(){
   const cur=p.attackHarderSince||today();
   const hasVal=!!p.attackHarderSince;
   openModal(`<h2>🎯 Přechod na těžší variantu útoku</h2>
-    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:10px">Od tohoto data appka v grafu "Útok" použije místo metriky "Útok do pole (lehčí varianta)" metriku "Útok na cíl". Starší testování zůstanou zachovaná — v grafu se jen ukážou jako T-skóre, aby šly srovnat.</p>
+    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:10px">Od tohoto data aplikace v grafu "Útok" použije místo metriky "Útok do pole (lehčí varianta)" metriku "Útok na cíl". Starší testování zůstanou zachovaná — v grafu se jen ukážou jako T-skóre, aby šly srovnat.</p>
     <div class="fg"><label>Datum přechodu</label><input type="date" id="atDate" value="${cur}"></div>
     <div class="ma">${hasVal?'<button class="btn btn-d" onclick="clearAttackTransition()">Zrušit přechod</button>':''}<button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="saveAttackTransition()">Uložit</button></div>`);
 }
@@ -4019,7 +4019,7 @@ function pdfGameCardsHtml(p,norms){
     cards.push(pdfCardHtml(m.label,'',series,{
       decimals:0,lowerBetter:false,color:'#1a4d8a',tNorm:norms[m.id]||null,isPct:true,
       noRefLines:isAttack,
-      note:isAttack?'bez referenčních čar — appka tu má dvě varianty testu (lehčí/těžší), % mezi nimi nejde přímo srovnat':'',
+      note:isAttack?'bez referenčních čar — aplikace tu má dvě varianty testu (lehčí/těžší), % mezi nimi nejde přímo srovnat':'',
       trailingNote:'tady zrovna nevede'
     }));
   });
@@ -4146,7 +4146,7 @@ function pdfZapasyHtml(p){
     ${recvPts.length>1?`<div class="pdf-card"><div class="pdf-card-lbl">Příjem — vývoj v čase (%)</div>${pdfLinePctSvg(recvPts)}<div class="pdf-card-note" style="display:flex;justify-content:space-between">${'<span>'+fmtDate(recvPts[0].date,true)+'</span><span>'+fmtDate(recvPts[recvPts.length-1].date,true)+'</span>'}</div></div>`:''}
   </div>`:'';
 
-  const seasonNote=seasonStart?`<p class="pdf-card-note" style="margin:-2px 0 8px">Jen aktuální sezóna (od ${fmtDate(seasonStart,true)}) — zápasy z minulé sezóny appka do těchto čísel nepočítá.</p>`:'';
+  const seasonNote=seasonStart?`<p class="pdf-card-note" style="margin:-2px 0 8px">Jen aktuální sezóna (od ${fmtDate(seasonStart,true)}) — zápasy z minulé sezóny aplikace do těchto čísel nepočítá.</p>`:'';
   return`<div class="pdf-sec pdf-sec-flow">
     <h2>Zápasy</h2>
     ${seasonNote}${statBoxes}${charts}
@@ -4871,7 +4871,7 @@ function wcBestMoment(w){
     <div class="wr-h1" style="font-size:1.6rem;letter-spacing:1px">${bm.fullName}</div>
     <div class="wr-h1" style="font-size:4rem;color:var(--acc);margin-top:4px">${bm.value}${bm.unit}</div>
     <div style="font-size:0.78rem;color:rgba(255,255,255,.5)">${bm.label}</div>
-    <div style="font-size:0.72rem;color:rgba(255,255,255,.35);max-width:240px;margin-top:6px;line-height:1.4">Nejvyšší hodnota napříč úplně vším, co appka tuto sezónu naměřila u celého týmu</div>
+    <div style="font-size:0.72rem;color:rgba(255,255,255,.35);max-width:240px;margin-top:6px;line-height:1.4">Nejvyšší hodnota napříč úplně vším, co aplikace tuto sezónu naměřila u celého týmu</div>
   </div>
   <div style="padding:0 32px 20px 32px;text-align:center;flex-shrink:0">
     <div style="font-size:0.82rem;color:rgba(255,255,255,.5)">Za námi další skvělá sezóna 🏐</div>
@@ -6637,7 +6637,7 @@ function openTournaments(){
   }).join('');
   // Kolo 59 (U1): vysvětlující věta jen v klasiku, ve vzhledu Trenéra je v Nápovědě.
   openModal(`<h2>🏟 Turnaje</h2>
-    ${isTrener()?'':'<p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Zápasy ze stejného dne appka sama navrhne jako turnaj. Vícedenní turnaj založ ručně a zápasy do něj přidej v jeho detailu.</p>'}
+    ${isTrener()?'':'<p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Zápasy ze stejného dne aplikace sama navrhne jako turnaj. Vícedenní turnaj založ ručně a zápasy do něj přidej v jeho detailu.</p>'}
     <div style="max-height:50vh;overflow-y:auto;margin-bottom:12px">${cards||'<div class="no-data">Zatím žádné turnaje</div>'}</div>
     <div class="fg"><label>Založit nový turnaj</label>
       <div style="display:flex;gap:6px">
@@ -7299,18 +7299,18 @@ function mhBuildTestQuestions(date){
   }
   const talent=mhFindTalent(date,norms);
   if(talent)qs.push({key:'talent',type:'single',
-    title:'U koho appka našla talent?',
+    title:'U koho aplikace našla talent?',
     sub:'Metrika, ve které je hráčka výrazně nad svůj vlastní obvyklý výkon (fyzické a herní se nemíchá).',
     pool});
   const needs=mhFindNeedsWork(date,norms);
   if(needs)qs.push({key:'needswork',type:'single',
-    title:'Na čem je podle appky prostor růst?',
+    title:'Na čem je podle aplikace prostor růst?',
     sub:'Metrika, ve které hráčka nejvíc zaostává za svým vlastním standardem.',
     pool});
   const lead=mhFindDisciplineChange(date);
   if(lead)qs.push({key:'leader',type:'single',
     title:`Nová jednička – ${lead.metric.label}?`,
-    sub:'Appka zaznamenala změnu vedení v téhle disciplíně.',
+    sub:'Aplikace zaznamenala změnu vedení v téhle disciplíně.',
     pool:getActiveP().map(p=>({id:p.id,label:playerLabel(p)}))});
   return qs;
 }
@@ -7534,165 +7534,165 @@ function mhRenderTurnajReveal(mh){
 const HELP_DATA=[
 {group:"Začínáme",blocks:[
 
-{title:"Co appka umí a jak s ní začít",icon:"🏐",qa:[
+{title:"Co aplikace umí a jak s ní začít",icon:"🏐",qa:[
 {q:`Co Bombito vlastně dělá?`,
- a:`Bombito je appka pro trenéra volejbalového týmu na sledování rozvoje hráček. Zapisuješ do ní fyzické testy (třeba jak vysoko hráčka doskočí), herní testy (třeba kolik přihrávek trefí na cíl) a výsledky ze zápasů (body, příjem). Appka z toho pak sama počítá grafy vývoje, porovnání hráček mezi sebou, jedno souhrnné číslo <b>Overall</b> pro každou hráčku a umí vygenerovat i PDF report třeba pro rodiče. Appka nic netrénuje ani neradí, co dělat na tréninku — je to čistě nástroj na zapisování a vyhodnocování čísel, které tréninku dodáváš ty.`},
-{q:`Kde appka uchovává moje data — jsou v bezpečí, když zavřu prohlížeč nebo vypnu telefon?`,
- a:`Appka si všechna data (hráčky, testy, zápasy, nastavení) ukládá přímo v paměti tvého prohlížeče na tvém telefonu nebo počítači — appka nikam nic neposílá na internet, žádný cizí server data nevidí. To znamená dvě věci: zavření appky nebo vypnutí telefonu datům nic neudělá, zůstanou tam. Ale zároveň appka nemá žádnou automatickou zálohu „v cloudu" — pokud si vymažeš data prohlížeče, appku odinstaluješ, nebo se ti rozbije telefon, data se ztratí BEZ MOŽNOSTI OBNOVY, pokud sis předtím neudělala vlastní zálohu (Export JSON). Appka tě na to sama pravidelně upozorňuje připomínkou zálohy.`,
+ a:`Bombito je aplikace pro trenéra volejbalového týmu na sledování rozvoje hráček. Zapisuješ do ní fyzické testy (třeba jak vysoko hráčka doskočí), herní testy (třeba kolik přihrávek trefí na cíl) a výsledky ze zápasů (body, příjem). Aplikace z toho pak sama počítá grafy vývoje, porovnání hráček mezi sebou, jedno souhrnné číslo <b>Overall</b> pro každou hráčku a umí vygenerovat i PDF report třeba pro rodiče. Aplikace nic netrénuje ani neradí, co dělat na tréninku — je to čistě nástroj na zapisování a vyhodnocování čísel, které tréninku dodáváš ty.`},
+{q:`Kde aplikace uchovává moje data — jsou v bezpečí, když zavřu prohlížeč nebo vypnu telefon?`,
+ a:`Aplikace si všechna data (hráčky, testy, zápasy, nastavení) ukládá přímo v paměti tvého prohlížeče na tvém telefonu nebo počítači — aplikace nikam nic neposílá na internet, žádný cizí server data nevidí. To znamená dvě věci: zavření aplikace nebo vypnutí telefonu datům nic neudělá, zůstanou tam. Ale zároveň aplikace nemá žádnou automatickou zálohu „v cloudu" — pokud si vymažeš data prohlížeče, aplikaci odinstaluješ, nebo se ti rozbije telefon, data se ztratí BEZ MOŽNOSTI OBNOVY, pokud sis předtím neudělala vlastní zálohu (Export JSON). Aplikace tě na to sama pravidelně upozorňuje připomínkou zálohy.`,
  kw:"localStorage paměť prohlížeče offline uložení dat kde jsou data bezpečnost"},
-{q:`Funguje appka i bez internetu?`,
- a:`Ano — appka je takzvaná PWA (progresivní webová appka) a jakmile ji jednou otevřeš, funguje pak úplně celá i bez připojení k internetu, klidně v tělocvičně bez signálu. Internet appka potřebuje jen při úplně prvním stažení a případně při aktualizaci na novou verzi.`,
+{q:`Funguje aplikace i bez internetu?`,
+ a:`Ano — aplikace je takzvaná PWA (progresivní webová aplikace) a jakmile ji jednou otevřeš, funguje pak úplně celá i bez připojení k internetu, klidně v tělocvičně bez signálu. Internet aplikace potřebuje jen při úplně prvním stažení a případně při aktualizaci na novou verzi.`,
  kw:"offline pwa bez signálu bez wifi"},
-{q:`Jak appku přidám na plochu telefonu?`,
- a:`V prohlížeči telefonu otevři appku a najdi v jeho menu volbu jako „Přidat na plochu" nebo „Nainstalovat appku" (na iPhonu je to v nabídce sdílení, na Androidu obvykle přímo v menu prohlížeče se třemi tečkami). Appka se pak zobrazí jako normální ikonka na ploše a otevírá se jako samostatná appka, bez adresního řádku prohlížeče. Ve vzhledu Trenéra je to jednodušší: když jde Bombito nainstalovat, ukáže se v hlavičce ikona se šipkou dolů (dokud na ni jednou neklepneš, jemně bliká). Klepnutím otevřeš nabídku instalace. Na iPhonu ikona ukáže, kde v Safari najdeš „Přidat na plochu“. Když už Bombito nainstalované máš, ikona se neukazuje.`,
+{q:`Jak aplikaci přidám na plochu telefonu?`,
+ a:`V prohlížeči telefonu otevři aplikaci a najdi v jeho menu volbu jako „Přidat na plochu" nebo „Nainstalovat aplikaci" (na iPhonu je to v nabídce sdílení, na Androidu obvykle přímo v menu prohlížeče se třemi tečkami). Aplikace se pak zobrazí jako normální ikonka na ploše a otevírá se jako samostatná aplikace, bez adresního řádku prohlížeče. Ve vzhledu Trenéra je to jednodušší: když jde Bombito nainstalovat, ukáže se v hlavičce ikona se šipkou dolů (dokud na ni jednou neklepneš, jemně bliká). Klepnutím otevřeš nabídku instalace. Na iPhonu ikona ukáže, kde v Safari najdeš „Přidat na plochu“. Když už Bombito nainstalované máš, ikona se neukazuje.`,
  kw:"instalace ikona plocha telefon pwa install"},
-{q:`Proč appka občas vyskočí s připomínkou zálohy?`,
- a:`Appka si hlídá, kdy jsi naposledy udělal Export JSON (zálohu dat), a pokud je to buď nikdy, nebo víc než 7 dní, ukáže dole bublinu s připomínkou a tlačítky „⬇ Exportovat" a „Připomenout později". Je to proto, že appka data drží jen u tebe v prohlížeči (viz otázka o bezpečí dat výš) — bez vlastní zálohy bys je při ztrátě telefonu nebo smazání dat prohlížeče měl nenávratně pryč. Klikneš-li na kterékoli z těch dvou tlačítek, appka připomínku na dalších 7 dní ztiší, i kdyby sis nakonec zálohu nestáhla. Appka se stejnou bublinou navíc připomene i hned po uzavření turnaje nebo sezóny, bez ohledu na těch 7 dní — je to chvíle, kdy zrovna přibylo hodně cenných dat.`,
+{q:`Proč aplikace občas vyskočí s připomínkou zálohy?`,
+ a:`Aplikace si hlídá, kdy jsi naposledy udělal Export JSON (zálohu dat), a pokud je to buď nikdy, nebo víc než 7 dní, ukáže dole bublinu s připomínkou a tlačítky „⬇ Exportovat" a „Připomenout později". Je to proto, že aplikace data drží jen u tebe v prohlížeči (viz otázka o bezpečí dat výš) — bez vlastní zálohy bys je při ztrátě telefonu nebo smazání dat prohlížeče měl nenávratně pryč. Klikneš-li na kterékoli z těch dvou tlačítek, aplikace připomínku na dalších 7 dní ztiší, i kdyby sis nakonec zálohu nestáhla. Aplikace se stejnou bublinou navíc připomene i hned po uzavření turnaje nebo sezóny, bez ohledu na těch 7 dní — je to chvíle, kdy zrovna přibylo hodně cenných dat.`,
  kw:"backup bublina banner export připomínka 7 dní turnaj sezóna"},
-{q:`Co se stane, když appku smažu z telefonu nebo vymažu data prohlížeče?`,
- a:`Všechna data (hráčky, testy, zápasy, nastavení) se nenávratně smažou spolu s appkou — appka je totiž ukládá jen lokálně u tebe (viz výš), ne nikam „do cloudu". Jediný způsob, jak se pak k datům vrátit, je mít předtím staženou zálohu přes Export JSON a tu pak načíst přes Import JSON do nově nainstalované appky.`,
- kw:"smazání appky odinstalace ztráta dat"},
+{q:`Co se stane, když aplikaci smažu z telefonu nebo vymažu data prohlížeče?`,
+ a:`Všechna data (hráčky, testy, zápasy, nastavení) se nenávratně smažou spolu s aplikací — aplikace je totiž ukládá jen lokálně u tebe (viz výš), ne nikam „do cloudu". Jediný způsob, jak se pak k datům vrátit, je mít předtím staženou zálohu přes Export JSON a tu pak načíst přes Import JSON do nově nainstalované aplikace.`,
+ kw:"smazání aplikace odinstalace ztráta dat"},
 ]},
 
-{title:"Pohyb v appce",icon:"🧭",qa:[
+{title:"Pohyb v aplikaci",icon:"🧭",qa:[
 {q:`Co znamená ikona ⋮ (tři tečky) nahoře?`,
- a:`Ikona ⋮ v hlavičce appky otevírá hlavní menu appky — najdeš tam úplně všechny akce, které appka umí a které nejsou vidět přímo na obrazovce: Přehled týmu, Porovnání, Minihry, zápasy a turnaje, přidání hráčky, sezónu a zálohy, nastavení, a úplně dole i tuhle Nápovědu. Když appka čeká na něco, o čem bys měl vědět (třeba neodehranou minihru), objeví se na ikoně ⋮ malá barevná tečka.`,
+ a:`Ikona ⋮ v hlavičce aplikace otevírá hlavní menu aplikace — najdeš tam úplně všechny akce, které aplikace umí a které nejsou vidět přímo na obrazovce: Přehled týmu, Porovnání, Minihry, zápasy a turnaje, přidání hráčky, sezónu a zálohy, nastavení, a úplně dole i tuhle Nápovědu. Když aplikace čeká na něco, o čem bys měl vědět (třeba neodehranou minihru), objeví se na ikoně ⋮ malá barevná tečka.`,
  kw:"tři tečky menu hlavní nabídka"},
 {q:`K čemu je ikona ☰ (postranní seznam hráček)?`,
- a:`Ikona ☰ (na užší obrazovce, třeba na mobilu) otevře nebo schová postranní seznam všech hráček týmu — z něj kliknutím otevřeš kartu konkrétní hráčky. Na širší obrazovce appka tenhle seznam nechá vidět pořád, takže ikonu ☰ ani nepotřebuješ.`,
+ a:`Ikona ☰ (na užší obrazovce, třeba na mobilu) otevře nebo schová postranní seznam všech hráček týmu — z něj kliknutím otevřeš kartu konkrétní hráčky. Na širší obrazovce aplikace tenhle seznam nechá vidět pořád, takže ikonu ☰ ani nepotřebuješ.`,
  kw:"sidebar postranní panel seznam hráček"},
 {q:`Co udělá tlačítko „🏠 Domů" / klik na nápis „Bombito"?`,
- a:`Obojí tě vrátí na domovskou obrazovku appky — mřížku karet všech aktivních hráček s jejich Overall skóre a průměrem týmu (viz blok „Domovská obrazovka"). Je to appčin „výchozí bod", na který se appka vrací i po každém novém otevření appky.`},
+ a:`Obojí tě vrátí na domovskou obrazovku aplikace — mřížku karet všech aktivních hráček s jejich Overall skóre a průměrem týmu (viz blok „Domovská obrazovka"). Je to „výchozí bod" aplikace, na který se aplikace vrací i po každém novém otevření aplikace.`},
 {q:`Jak fungují tlačítka Zpět/Dopředu?`,
- a:`Appka si pamatuje, kterými hlavními obrazovkami jsi prošel (hráčka → Domů → Přehled → Porovnání a tak dál) a tlačítka „← Zpět" / „Dopředu →" (dole na mobilu jako lišta, na počítači jako pilulky nahoře) tě mezi nimi vrací a posouvá — podobně jako tlačítka Zpět/Vpřed v internetovém prohlížeči. Přepínání mezi taby na kartě jedné hráčky (Fyzické/Herní/Zápas...) se do téhle historie nepočítá, jen velké přechody mezi celými obrazovkami.<br>Ve vzhledu Trenéra na telefonu spodní lišta není: zpátky tě vrátí systémové Zpět (gesto nebo tlačítko telefonu) nebo šipka Zpět v hlavičce, viz „Co dělá tlačítko Zpět na telefonu?“.`,
+ a:`Aplikace si pamatuje, kterými hlavními obrazovkami jsi prošel (hráčka → Domů → Přehled → Porovnání a tak dál) a tlačítka „← Zpět" / „Dopředu →" (dole na mobilu jako lišta, na počítači jako pilulky nahoře) tě mezi nimi vrací a posouvá — podobně jako tlačítka Zpět/Vpřed v internetovém prohlížeči. Přepínání mezi taby na kartě jedné hráčky (Fyzické/Herní/Zápas...) se do téhle historie nepočítá, jen velké přechody mezi celými obrazovkami.<br>Ve vzhledu Trenéra na telefonu spodní lišta není: zpátky tě vrátí systémové Zpět (gesto nebo tlačítko telefonu) nebo šipka Zpět v hlavičce, viz „Co dělá tlačítko Zpět na telefonu?“.`,
  kw:"navigace historie back forward"},
-{q:`Proč appka po každém otevření skočí na domovskou obrazovku, i když jsem byla naposledy u konkrétní hráčky?`,
- a:`Je to záměr — domovská obrazovka appce slouží jako přehledný „výchozí bod" s celým týmem najednou, ať appku neotevíráš pokaždé rovnou na tom, u koho jsi skončil minule. Ke konkrétní hráčce se odtud dostaneš jedním klikem v mřížce karet nebo přes postranní seznam (☰).`},
+{q:`Proč aplikace po každém otevření skočí na domovskou obrazovku, i když jsem byla naposledy u konkrétní hráčky?`,
+ a:`Je to záměr — domovská obrazovka aplikaci slouží jako přehledný „výchozí bod" s celým týmem najednou, ať aplikaci neotevíráš pokaždé rovnou na tom, u koho jsi skončil minule. Ke konkrétní hráčce se odtud dostaneš jedním klikem v mřížce karet nebo přes postranní seznam (☰).`},
 {q:`Co znamená ikona hodin nebo papíru u jména hráčky?`,
  a:`Připomínka, že hráčka potřebuje přetestovat. <b>Hodiny</b> znamenají, že poslední testování je staré — žluté po víc než 90 dnech, tedy čtvrt roce, červené po víc než 180 dnech, tedy půl roce. <b>Prázdný papír</b> (červený) znamená, že hráčka zatím nemá žádný test. Ikona je v seznamu hráček ☰, na kartách na Domů i v Přehledu týmu; po rozkliknutí hráčky je pod „Nar. … · N testování" totéž napsané slovy (kdy byl poslední test a před kolika dny). Ikona zmizí, jakmile zapíšeš nové testování — na kartě hráčky tlačítkem „+ Test", nebo pro celý tým přes ⋮ → „Skupinový test".`,
  kw:"tečka ikona hodiny papír červená žlutá oranžová upozornění přetestovat zastaralé staré testování bez testu"},
-{q:`Co je ten štítek „👥 Tým" / „🗃 Databáze" nahoře v appce?`,
- a:`Tohle je přepínač normy — jedno z nejdůležitějších, ale málo nápadných tlačítek v appce, protože ovlivňuje skoro všechna čísla, která appka ukazuje (T-skóre, Overall, barvy v grafech...). Appka totiž hráččiny výkony vždycky poměřuje vůči nějaké skupině ostatních — a tenhle přepínač určuje, jestli je to jen aktuální aktivní tým („👥 Tým"), nebo úplně všechny hráčky, co kdy appka měřila, včetně archivovaných z minulých sezón („🗃 Databáze"). Podrobně a s příklady, kdy který použít, appka vysvětluje v bloku „T-skóre a normy" — tam je na to samostatná otázka.`,
+{q:`Co je ten štítek „👥 Tým" / „🗃 Databáze" nahoře v aplikaci?`,
+ a:`Tohle je přepínač normy — jedno z nejdůležitějších, ale málo nápadných tlačítek v aplikaci, protože ovlivňuje skoro všechna čísla, která aplikace ukazuje (T-skóre, Overall, barvy v grafech...). Aplikace totiž hráččiny výkony vždycky poměřuje vůči nějaké skupině ostatních — a tenhle přepínač určuje, jestli je to jen aktuální aktivní tým („👥 Tým"), nebo úplně všechny hráčky, co kdy aplikace měřila, včetně archivovaných z minulých sezón („🗃 Databáze"). Podrobně a s příklady, kdy který použít, aplikace vysvětluje v bloku „T-skóre a normy" — tam je na to samostatná otázka.`,
  kw:"přepínač normscope scope norma tým databáze"},
 ]},
 
 {title:"Hráčky",icon:"👤",qa:[
 {q:`Jak přidám novou hráčku?`,
- a:`V menu ⋮ (nebo v postranním seznamu na widší obrazovce) klikni na „+ Přidat hráčku", zadej jméno a příjmení a rok narození a potvrď tlačítkem „Přidat". Hráčka se rovnou objeví jako aktivní a appka na ni přepne.`},
+ a:`V menu ⋮ (nebo v postranním seznamu na widší obrazovce) klikni na „+ Přidat hráčku", zadej jméno a příjmení a rok narození a potvrď tlačítkem „Přidat". Hráčka se rovnou objeví jako aktivní a aplikace na ni přepne.`},
 {q:`Co znamená „Archivovat" hráčku a kdy to udělat?`,
- a:`Archivace znamená, že hráčka zmizí z aktivního seznamu a přehledů (protože už netrénuje — odešla z týmu, přestoupila jinam...), ale VŠECHNA její naměřená data appka podrží dál v databázi, aby dál počítala do norem při přepnutí na „🗃 Databáze" (viz otázka o přepínači výš). Archivace se nedělá tlačítkem přímo u hráčky, ale je součástí uzavírání sezóny — v menu ⋮ → „📦 Sezóna" → „📦 Uzavřít sezónu a archivovat" zaškrtneš, které hráčky do další sezóny nepokračují, a ty appka při uzavření sezóny archivuje. Podrobně v bloku „Uzavření sezóny".`,
+ a:`Archivace znamená, že hráčka zmizí z aktivního seznamu a přehledů (protože už netrénuje — odešla z týmu, přestoupila jinam...), ale VŠECHNA její naměřená data aplikace podrží dál v databázi, aby dál počítala do norem při přepnutí na „🗃 Databáze" (viz otázka o přepínači výš). Archivace se nedělá tlačítkem přímo u hráčky, ale je součástí uzavírání sezóny — v menu ⋮ → „📦 Sezóna" → „📦 Uzavřít sezónu a archivovat" zaškrtneš, které hráčky do další sezóny nepokračují, a ty aplikace při uzavření sezóny archivuje. Podrobně v bloku „Uzavření sezóny".`,
  kw:"archivace vyřazení odchod z týmu"},
 {q:`Jak archivovanou hráčku vrátím zpátky (Obnovit)?`,
  a:`V menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón" najdeš seznam archivovaných hráček (buď pod sezónou, do které patřily, nebo v sekci „Ostatní archivované hráčky") a u každé je tlačítko „↩ Obnovit" — po kliknutí se hráčka vrátí zpátky do aktivního seznamu se všemi svými starými daty beze změny.<br>Dokud je hráčka v archivu, není na Domů ani v seznamu hráček, ale její data dál posilují T-skóre normy.`,
  kw:"archiv obnovit archivované hráčky norma T-skóre"},
 {q:`Jak hráčku úplně smažu — a dá se to vrátit?`,
- a:`Na kartě hráčky najdeš v jejím menu možnost smazání; appka se nejdřív zeptá na potvrzení, protože jde o TRVALÉ smazání — na rozdíl od archivace appka v tomhle případě hráčku i všechna její data (testy, zápasy, vše) úplně a nenávratně odstraní. Appka to neumí vrátit zpět — jediná záchrana je mít předtím staženou zálohu Export JSON a z ní hráčku ručně obnovit importem. Pokud si nejsi jistý, jestli hráčku ještě budeš chtít, použij radši Archivaci (viz výš) — ta data nemaže, jen schová.<br>Ve vzhledu Trenéra je smazání (stejně jako Upravit a Kopírovat hráčku) pod tlačítkem ⋮ vpravo v řádku tlačítek na kartě hráčky. Po smazání se tam navíc na pár sekund ukáže „Vrátit“.`,
+ a:`Na kartě hráčky najdeš v jejím menu možnost smazání; aplikace se nejdřív zeptá na potvrzení, protože jde o TRVALÉ smazání — na rozdíl od archivace aplikace v tomhle případě hráčku i všechna její data (testy, zápasy, vše) úplně a nenávratně odstraní. Aplikace to neumí vrátit zpět — jediná záchrana je mít předtím staženou zálohu Export JSON a z ní hráčku ručně obnovit importem. Pokud si nejsi jistý, jestli hráčku ještě budeš chtít, použij radši Archivaci (viz výš) — ta data nemaže, jen schová.<br>Ve vzhledu Trenéra je smazání (stejně jako Upravit a Kopírovat hráčku) pod tlačítkem ⋮ vpravo v řádku tlačítek na kartě hráčky. Po smazání se tam navíc na pár sekund ukáže „Vrátit“.`,
  kw:"smazání hráčky trvalé nevratné"},
 {q:`Co je ta barevná kolečková ikonka (avatar/iniciály) u jména?`,
- a:`Je to jednoduchý „avatar" hráčky — appka žádné fotky neumí nahrávat, takže si místo toho pro každou hráčku vygeneruje barevné kolečko s jejími iniciálami, aby se hráčky v seznamech a přehledech daly od sebe rychleji vizuálně rozeznat.`},
+ a:`Je to jednoduchý „avatar" hráčky — aplikace žádné fotky neumí nahrávat, takže si místo toho pro každou hráčku vygeneruje barevné kolečko s jejími iniciálami, aby se hráčky v seznamech a přehledech daly od sebe rychleji vizuálně rozeznat.`},
 {q:`Jak upravím jméno nebo rok narození hráčky?`,
  a:`Na kartě hráčky klikni na tlačítko „✎" (u avataru nahoře) — v okně jde upravit jméno, nepovinná přezdívka (ta se pak místo celého jména používá v grafech a v živém zápase, kde je na displeji míň místa) i rok narození, klidně všechno najednou. Funguje to i u hráčky, co už má zapsané testy — rok narození se totiž nikde v aplikaci nepočítá do žádného vzorce, jen se zobrazuje, takže úprava nijak neovlivní testovací data ani výpočty.`,
  kw:"přezdívka nickname přejmenování rok narození editace oprava"},
 {q:`Co dělá tlačítko „⎘" (kopírovat hráčku) na kartě hráčky?`,
- a:`Vytvoří úplně NOVOU hráčku se stejným jménem (jde přepsat), odznaky a milníky jako originál, ale úplně BEZ testovacích a zápasových dat — hodí se hlavně na přechod hráčky do starší kategorie (třeba z U14 do U16), kde chceš na papíře novou hráčku s čistou historií čísel, ale nechceš přijít o to, co si už vysloužila (odznaky, splněné milníky). Originální hráčka zůstává appce beze změny vedle své kopie — appka žádnou z nich sama nemaže ani nearchivuje.`,
+ a:`Vytvoří úplně NOVOU hráčku se stejným jménem (jde přepsat), odznaky a milníky jako originál, ale úplně BEZ testovacích a zápasových dat — hodí se hlavně na přechod hráčky do starší kategorie (třeba z U14 do U16), kde chceš na papíře novou hráčku s čistou historií čísel, ale nechceš přijít o to, co si už vysloužila (odznaky, splněné milníky). Originální hráčka zůstává aplikaci beze změny vedle své kopie — aplikace žádnou z nich sama nemaže ani nearchivuje.`,
  kw:"kopie přechod kategorie postup U14 U16"},
 ]},
 
 ]},
-{group:"Testování a co appčina čísla znamenají",blocks:[
+{group:"Testování a co čísla znamenají",blocks:[
 
 {title:"Testování — co to je a jak ho zapsat",icon:"📝",qa:[
-{q:`Co appka myslí slovem „testování"?`,
- a:`„Testování" je appčino označení pro jedno měření — den, kdy jsi hráčce (nebo celému týmu) naměřil fyzické a/nebo herní metriky (třeba výšku výskoku nebo úspěšnost přihrávky na cíl). Appka si testování ukládá jako „testovací relaci" s konkrétním datem — z řady takových relací v čase pak appka kreslí grafy vývoje.`},
+{q:`Co aplikace myslí slovem „testování"?`,
+ a:`„Testování" je v aplikaci označení pro jedno měření — den, kdy jsi hráčce (nebo celému týmu) naměřil fyzické a/nebo herní metriky (třeba výšku výskoku nebo úspěšnost přihrávky na cíl). Aplikace si testování ukládá jako „testovací relaci" s konkrétním datem — z řady takových relací v čase pak aplikace kreslí grafy vývoje.`},
 {q:`Jak zapíšu test jedné konkrétní hráčce?`,
- a:`Otevři kartu hráčky a klikni na tlačítko „+ Test" nahoře u jejího jména. Appka ti ukáže formulář se všemi aktivně zapnutými fyzickými i herními metrikami (viz Nastavení, pokud ti nějaká chybí nebo přebývá) — vyplníš, co jsi naměřil, datum (výchozí je dnešek, ale jde změnit), volitelně poznámku, a uložíš.`},
+ a:`Otevři kartu hráčky a klikni na tlačítko „+ Test" nahoře u jejího jména. Aplikace ti ukáže formulář se všemi aktivně zapnutými fyzickými i herními metrikami (viz Nastavení, pokud ti nějaká chybí nebo přebývá) — vyplníš, co jsi naměřil, datum (výchozí je dnešek, ale jde změnit), volitelně poznámku, a uložíš.`},
 {q:`Jak zapíšu „Skupinový test" (celý tým najednou)?`,
- a:`V menu ⋮ klikni na „⚡ Skupinový test" — appka ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a metrikami jako sloupci, kam vyplňuješ hodnoty přímo za sebou bez přepínání mezi kartami. Je to rychlejší na tělocvičně, ale má jedno omezení: počet pokusů u herních metrik appka bere jako jedno společné číslo pro celý tým najednou (nastavíš ho nahoře nad tabulkou), zatímco v testu jedné hráčky (+ Test) jde počet pokusů nastavit zvlášť pro každou metriku. Appka po uložení skupinového testu navíc rovnou připraví testovací Miniher (viz blok „Minihry").`,
+ a:`V menu ⋮ klikni na „⚡ Skupinový test" — aplikace ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a metrikami jako sloupci, kam vyplňuješ hodnoty přímo za sebou bez přepínání mezi kartami. Je to rychlejší na tělocvičně, ale má jedno omezení: počet pokusů u herních metrik aplikace bere jako jedno společné číslo pro celý tým najednou (nastavíš ho nahoře nad tabulkou), zatímco v testu jedné hráčky (+ Test) jde počet pokusů nastavit zvlášť pro každou metriku. Aplikace po uložení skupinového testu navíc rovnou připraví testovací Miniher (viz blok „Minihry").`,
  kw:"hromadný test celý tým najednou"},
 {q:`Musím vyplnit úplně všechny metriky, nebo jde nějaké přeskočit?`,
- a:`Jde přeskočit cokoli — appka ukládá jen políčka, která vyplníš, prázdná appka jednoduše přeskočí a při výpočtech (grafy, T-skóre, Overall) je ignoruje, místo aby je počítala jako nulu. Klidně tedy zapíšeš jen část metrik, když na zbytek nebyl čas.<br>U herních metrik se zapisuje počet úspěšných pokusů, ne procenta. Počet pokusů v testu měň, jen když se dnes dělal jiný počet než výchozí.`},
+ a:`Jde přeskočit cokoli — aplikace ukládá jen políčka, která vyplníš, prázdná aplikace jednoduše přeskočí a při výpočtech (grafy, T-skóre, Overall) je ignoruje, místo aby je počítala jako nulu. Klidně tedy zapíšeš jen část metrik, když na zbytek nebyl čas.<br>U herních metrik se zapisuje počet úspěšných pokusů, ne procenta. Počet pokusů v testu měň, jen když se dnes dělal jiný počet než výchozí.`},
 {q:`Jde datum testování nastavit i zpětně?`,
  a:`Ano — pole s datem je normální kalendářní výběr bez omezení na dnešek, takže jde zapsat i starší testování, na které jsi třeba zapomněl, nebo doplnit historii při přechodu z jiné evidence.`},
 {q:`Jak testování později opravím nebo smažu?`,
- a:`Smazat jde přímo — u konkrétního testování v historii na kartě hráčky je tlačítko „✕", appka se zeptá na potvrzení a testování zmizí i s daty. Opravit hodnotu appka nemá jako samostatnou akci „upravit" — funguje to přes stejné datum: znovu otevřeš „+ Test", zadáš STEJNÉ datum jako to, co chceš opravit, a appka celé původní testování k tomu dni potichu nahradí tím novým (ne sloučí — takže do opraveného zápisu je potřeba znovu vyplnit i to, co bylo správně už napoprvé).`,
+ a:`Smazat jde přímo — u konkrétního testování v historii na kartě hráčky je tlačítko „✕", aplikace se zeptá na potvrzení a testování zmizí i s daty. Opravit hodnotu aplikace nemá jako samostatnou akci „upravit" — funguje to přes stejné datum: znovu otevřeš „+ Test", zadáš STEJNÉ datum jako to, co chceš opravit, a aplikace celé původní testování k tomu dni potichu nahradí tím novým (ne sloučí — takže do opraveného zápisu je potřeba znovu vyplnit i to, co bylo správně už napoprvé).`,
  kw:"úprava editace smazání testu přepsání"},
 {q:`Jde testování pojmenovat vlastním názvem (třeba „soustředění")?`,
- a:`Appka nemá samostatné pole „název", ale má volitelnou „Poznámku k testování" — když do ní napíšeš třeba „Soustředění Nymburk", appka tenhle text použije i jako název události v Miniher (jinak by tam bylo obecné „Hromadné testování"). Funkčně to tedy jako název funguje, i když appka pole tak oficiálně nejmenuje.`,
+ a:`Aplikace nemá samostatné pole „název", ale má volitelnou „Poznámku k testování" — když do ní napíšeš třeba „Soustředění Nymburk", aplikace tenhle text použije i jako název události v Miniher (jinak by tam bylo obecné „Hromadné testování"). Funkčně to tedy jako název funguje, i když aplikace pole tak oficiálně nejmenuje.`,
  kw:"název testování poznámka pojmenování"},
 {q:`Jaký je rozdíl mezi „fyzickým" a „herním" testem?`,
- a:`Appka mezi nimi ve formuláři nijak zvlášť nerozlišuje — jeden formulář „+ Test" (nebo „Skupinový test") appka rovnou dělí na dvě sekce, „💪 Fyzické testy" a „🎯 Herní testy", a vyplníš z obojího, kolik chceš. Rozdíl je spíš v tom, CO měří: fyzické testy jsou obecné atletické veličiny (rychlost, výbušnost, síla), herní testy jsou přímo volejbalové dovednosti měřené jako úspěšnost z pokusů (třeba kolik přihrávek z 15 trefíš na cíl). Appka je pak i odděleně počítá do Overallu jako dva různé bloky (viz blok „Overall").`},
-{q:`Proč appka po uložení testu najednou napsala „Zkontroluj hodnoty"?`,
- a:`Appka takhle upozorní, když je zadaná fyzická hodnota hodně mimo obvyklé rozmezí (podle appčiny normy Tým/Databáze, viz blok „T-skóre a normy) — typicky to bývá překlep, třeba chybějící desetinná čárka nebo přebytečná nula. Appka nic neblokuje ani sama neopravuje, jen appka ukáže, o kterou hodnotu jde a jaký je běžný průměr, a necháš appku uložit i tak, pokud je hodnota ve skutečnosti správně (může jít i o opravdu výjimečný výkon).`,
+ a:`Aplikace mezi nimi ve formuláři nijak zvlášť nerozlišuje — jeden formulář „+ Test" (nebo „Skupinový test") aplikace rovnou dělí na dvě sekce, „💪 Fyzické testy" a „🎯 Herní testy", a vyplníš z obojího, kolik chceš. Rozdíl je spíš v tom, CO měří: fyzické testy jsou obecné atletické veličiny (rychlost, výbušnost, síla), herní testy jsou přímo volejbalové dovednosti měřené jako úspěšnost z pokusů (třeba kolik přihrávek z 15 trefíš na cíl). Aplikace je pak i odděleně počítá do Overallu jako dva různé bloky (viz blok „Overall").`},
+{q:`Proč aplikace po uložení testu najednou napsala „Zkontroluj hodnoty"?`,
+ a:`Aplikace takhle upozorní, když je zadaná fyzická hodnota hodně mimo obvyklé rozmezí (podle zvolené normy Tým/Databáze, viz blok „T-skóre a normy) — typicky to bývá překlep, třeba chybějící desetinná čárka nebo přebytečná nula. Aplikace nic neblokuje ani sama neopravuje, jen aplikace ukáže, o kterou hodnotu jde a jaký je běžný průměr, a necháš aplikaci uložit i tak, pokud je hodnota ve skutečnosti správně (může jít i o opravdu výjimečný výkon).`,
  kw:"podezřelá hodnota překlep varování outlier"},
-{q:`Proč appka odmítla uložit herní test s hláškou o počtu pokusů?`,
- a:`Appka nedovolí, aby bylo zadáno víc úspěšných pokusů než celkový počet pokusů (např. 12 úspěšných z 10 pokusů) — to není otázka neobvyklé hodnoty jako u fyzických testů výš, ale rovnou logická chyba, appka proto zápis vůbec neuloží a necháš čísla opravit.`,
+{q:`Proč aplikace odmítla uložit herní test s hláškou o počtu pokusů?`,
+ a:`Aplikace nedovolí, aby bylo zadáno víc úspěšných pokusů než celkový počet pokusů (např. 12 úspěšných z 10 pokusů) — to není otázka neobvyklé hodnoty jako u fyzických testů výš, ale rovnou logická chyba, aplikace proto zápis vůbec neuloží a necháš čísla opravit.`,
  kw:"pokusy úspěšné chyba validace herní test"},
 ]},
 
 {title:"Fyzické testy — jednotlivé metriky",icon:"💪",qa:[
 {q:`Co je K-test a jak se měří?`,
- a:`K-test je agility test (test hbitosti/obratnosti) — appka u něj měří čas v sekundách, přičemž platí NIŽŠÍ čas = LEPŠÍ výsledek (appka to sama zohledňuje ve výpočtu T-skóre, nemusíš nic přepočítávat).`},
+ a:`K-test je agility test (test hbitosti/obratnosti) — aplikace u něj měří čas v sekundách, přičemž platí NIŽŠÍ čas = LEPŠÍ výsledek (aplikace to sama zohledňuje ve výpočtu T-skóre, nemusíš nic přepočítávat).`},
 {q:`Co je 6m sprint?`,
- a:`Sprint na krátkou trať 6 metrů, appka měří čas v sekundách — stejně jako u K-testu platí nižší čas = lepší, appka to sama zohledňuje.`},
-{q:`Co appka myslí „Výška" a „Dosah s nataženou paží" — a proč appka u nich neukazuje T-skóre ani graf?`,
- a:`Jsou to jen syrové vstupní údaje v centimetrech — appka je od hráčky k hráčce nesrovnává (neukazuje u nich T-skóre) a nekreslí jim ani vývojový graf, protože jde o věci, které trénink prakticky neovlivní (výšku ani délku paže „natrénovat" nejde) — srovnávat na tom hráčky by bylo zavádějící a nespravedlivé. Appka je používá jen jako VSTUP pro dopočítání „Výskoku" (viz další otázka), což už je metrika, na které trénink skutečně jde vidět.`,
+ a:`Sprint na krátkou trať 6 metrů, aplikace měří čas v sekundách — stejně jako u K-testu platí nižší čas = lepší, aplikace to sama zohledňuje.`},
+{q:`Co aplikace myslí „Výška" a „Dosah s nataženou paží" — a proč aplikace u nich neukazuje T-skóre ani graf?`,
+ a:`Jsou to jen syrové vstupní údaje v centimetrech — aplikace je od hráčky k hráčce nesrovnává (neukazuje u nich T-skóre) a nekreslí jim ani vývojový graf, protože jde o věci, které trénink prakticky neovlivní (výšku ani délku paže „natrénovat" nejde) — srovnávat na tom hráčky by bylo zavádějící a nespravedlivé. Aplikace je používá jen jako VSTUP pro dopočítání „Výskoku" (viz další otázka), což už je metrika, na které trénink skutečně jde vidět.`,
  kw:"výška dosah paže netrénovatelné bez grafu"},
 {q:`Co je „Dosah z výskoku"?`,
- a:`Naměřená výška v centimetrech, kam hráčka dosáhne rukou při výskoku (na rozdíl od „Dosahu s nataženou paží", což je dosah ve stoje, bez odrazu). Appka i tohle bere jen jako syrový vstup bez vlastního T-skóre a grafu — jeho smysl je v tom, že appka z něj spolu s „Dosahem s nataženou paží" dopočítá „Výskok", viz další otázka.`},
-{q:`Co je „Výskok" a jak appka tohle číslo dopočítává?`,
- a:`„Výskok" appka sama dopočítá jako rozdíl: Dosah z výskoku minus Dosah s nataženou paží — výsledek je tedy čistě to, o kolik centimetrů hráčka rukou „přidá" díky odrazu, bez ohledu na to, jak je vysoká nebo jak dlouhou má paži. Na rozdíl od svých dvou syrových vstupů má Výskok už normální T-skóre i graf vývoje, protože tohle už je natrénovatelná věc, na které jde pokrok sledovat. Appka ho počítá automaticky, jakmile máš vyplněné oba vstupy — nikam ho nezapisuješ ručně.`,
+ a:`Naměřená výška v centimetrech, kam hráčka dosáhne rukou při výskoku (na rozdíl od „Dosahu s nataženou paží", což je dosah ve stoje, bez odrazu). Aplikace i tohle bere jen jako syrový vstup bez vlastního T-skóre a grafu — jeho smysl je v tom, že aplikace z něj spolu s „Dosahem s nataženou paží" dopočítá „Výskok", viz další otázka.`},
+{q:`Co je „Výskok" a jak aplikace tohle číslo dopočítává?`,
+ a:`„Výskok" aplikace sama dopočítá jako rozdíl: Dosah z výskoku minus Dosah s nataženou paží — výsledek je tedy čistě to, o kolik centimetrů hráčka rukou „přidá" díky odrazu, bez ohledu na to, jak je vysoká nebo jak dlouhou má paži. Na rozdíl od svých dvou syrových vstupů má Výskok už normální T-skóre i graf vývoje, protože tohle už je natrénovatelná věc, na které jde pokrok sledovat. Aplikace ho počítá automaticky, jakmile máš vyplněné oba vstupy — nikam ho nezapisuješ ručně.`,
  kw:"vyskok dopočet vzorec"},
 {q:`Co je „Hod medicinbalem"?`,
- a:`Test výbušné síly horní poloviny těla — appka měří vzdálenost hodu v metrech, vyšší = lepší.`},
+ a:`Test výbušné síly horní poloviny těla — aplikace měří vzdálenost hodu v metrech, vyšší = lepší.`},
 {q:`Co je „Bloky s úkrokem za čas"?`,
- a:`Appka tu měří počet zvládnutých bloků s úkrokem během daného časového limitu — vyšší počet = lepší výsledek.`},
+ a:`Aplikace tu měří počet zvládnutých bloků s úkrokem během daného časového limitu — vyšší počet = lepší výsledek.`},
 {q:`Co je „Wall toss test/30s"?`,
- a:`Appka tu měří počet chycených odrazů od zdi za 30 vteřin — vyšší počet = lepší výsledek.`},
+ a:`Aplikace tu měří počet chycených odrazů od zdi za 30 vteřin — vyšší počet = lepší výsledek.`},
 {q:`Co je „Sud→Výskok"?`,
- a:`Appka tu měří čas od kotoulu/sudu (přemetu stranou) k následnému výskoku, v sekundách — nižší čas = lepší, appka to sama zohledňuje.`},
-{q:`Proč appka u některé hráčky ukazuje míň fyzických karet než u jiné?`,
- a:`Appka ukazuje kartu jen pro metriky, které máš aktivně zapnuté v Nastavení A zároveň hráčce aspoň jednou naměřené — pokud tedy třeba u jedné hráčky ještě neproběhl „Sud→Výskok", appka jí prostě tuhle kartu (zatím) neukáže, dokud hodnotu nezapíšeš. Jakmile metriku alespoň jednou vyplníš, karta se objeví.`},
+ a:`Aplikace tu měří čas od kotoulu/sudu (přemetu stranou) k následnému výskoku, v sekundách — nižší čas = lepší, aplikace to sama zohledňuje.`},
+{q:`Proč aplikace u některé hráčky ukazuje míň fyzických karet než u jiné?`,
+ a:`Aplikace ukazuje kartu jen pro metriky, které máš aktivně zapnuté v Nastavení A zároveň hráčce aspoň jednou naměřené — pokud tedy třeba u jedné hráčky ještě neproběhl „Sud→Výskok", aplikace jí prostě tuhle kartu (zatím) neukáže, dokud hodnotu nezapíšeš. Jakmile metriku alespoň jednou vyplníš, karta se objeví.`},
 ]},
 
 {title:"Herní testy — jednotlivé metriky",icon:"🎯",qa:[
 {q:`Co je „Zdarma" (balony zadarmo)?`,
- a:`Herní test, kde appka zaznamenává úspěšnost z počtu pokusů (výchozně 15) — přesný obsah drilu (co přesně hráčka nacvičuje) záleží na tom, jak si ho tvůj tým nastavil; appka sama drily neučí, jen zapisuje výsledek jako počet úspěchů z pokusů a dopočítá z toho procenta a T-skóre.`,
+ a:`Herní test, kde aplikace zaznamenává úspěšnost z počtu pokusů (výchozně 15) — přesný obsah drilu (co přesně hráčka nacvičuje) záleží na tom, jak si ho tvůj tým nastavil; aplikace sama drily neučí, jen zapisuje výsledek jako počet úspěchů z pokusů a dopočítá z toho procenta a T-skóre.`,
  kw:"zdarma balony test procenta"},
 {q:`Co je „Těžké balony v poli"?`,
- a:`Herní test měřený stejným způsobem jako ostatní herní metriky — úspěšnost z počtu pokusů (výchozně 15), appka z toho dopočítá procenta a T-skóre.`},
+ a:`Herní test měřený stejným způsobem jako ostatní herní metriky — úspěšnost z počtu pokusů (výchozně 15), aplikace z toho dopočítá procenta a T-skóre.`},
 {q:`Co je „Servisy po fyz. zátěži"?`,
- a:`Herní test servisu prováděného po fyzické zátěži (aby se otestovala přesnost pod únavou) — appka i tady zaznamenává úspěšnost z počtu pokusů (výchozně 15).`},
+ a:`Herní test servisu prováděného po fyzické zátěži (aby se otestovala přesnost pod únavou) — aplikace i tady zaznamenává úspěšnost z počtu pokusů (výchozně 15).`},
 {q:`Co je „Přihrávka na cíl"?`,
- a:`Herní test přesnosti přihrávky na vyznačený cíl — úspěšnost z počtu pokusů (výchozně 15), appka dopočítá procenta a T-skóre stejně jako u ostatních herních metrik.`},
+ a:`Herní test přesnosti přihrávky na vyznačený cíl — úspěšnost z počtu pokusů (výchozně 15), aplikace dopočítá procenta a T-skóre stejně jako u ostatních herních metrik.`},
 {q:`Co je „Útok na cíl" a „Útok do pole" — jaký je mezi nimi rozdíl?`,
- a:`Obě jsou herní testy útoku měřené stejně (úspěšnost z pokusů), liší se jen obtížností: „Útok do pole (lehčí varianta)" je pro hráčky, co na útok teprve najíždí, „Útok na cíl" je náročnější varianta pro pokročilejší hráčky. Appka je bere jako DVĚ VARIANTY JEDNÉ A TÉ SAMÉ dovednosti, ne jako dvě oddělené metriky — víc v další otázce a v bloku „Overall".`,
+ a:`Obě jsou herní testy útoku měřené stejně (úspěšnost z pokusů), liší se jen obtížností: „Útok do pole (lehčí varianta)" je pro hráčky, co na útok teprve najíždí, „Útok na cíl" je náročnější varianta pro pokročilejší hráčky. Aplikace je bere jako DVĚ VARIANTY JEDNÉ A TÉ SAMÉ dovednosti, ne jako dvě oddělené metriky — víc v další otázce a v bloku „Overall".`,
  kw:"útok cíl pole varianta rozdíl"},
-{q:`Jak a kdy appka hráčku „přepne" na těžší variantu útoku?`,
- a:`Ručně, ne sama od sebe — na kartě hráčky v herním tabu najdeš u útoku tlačítko na označení přechodu na těžší variantu, kde appce řekneš datum přechodu. Appka od toho data začne hráčku v grafu a všude jinde počítat na „Útok na cíl" místo „Útok do pole", ale historii před přechodem si podrží beze změny — je vidět, kde přesně k přechodu došlo.`,
+{q:`Jak a kdy aplikace hráčku „přepne" na těžší variantu útoku?`,
+ a:`Ručně, ne sama od sebe — na kartě hráčky v herním tabu najdeš u útoku tlačítko na označení přechodu na těžší variantu, kde aplikaci řekneš datum přechodu. Aplikace od toho data začne hráčku v grafu a všude jinde počítat na „Útok na cíl" místo „Útok do pole", ale historii před přechodem si podrží beze změny — je vidět, kde přesně k přechodu došlo.`,
  kw:"přechod těžší varianta útok přepnutí"},
-{q:`Proč appka po přechodu na těžší variantu ukazuje jen jednu kartu „Útok" místo dvou?`,
- a:`Appka obě varianty útoku (do pole i na cíl) traktuje jako JEDNU logickou dovednost, co se v čase jen zpřísňuje — proto v grafu vývoje, v Přehledu týmu i na Pavoukovi appka ukazuje jednu spojenou křivku/osu „Útok" místo dvou oddělených, aby přechod na těžší variantu nevypadal jako by hráčka najednou v jedné metrice „zmizela" a v druhé se objevila odnikud. V grafu je místo přechodu vidět malá značka/změna barvy, na Pavoukovi appka navíc na ose Útok ukáže zlatou hvězdičku, když je hráčka zrovna na těžší variantě. Výjimka: v PDF exportu appka pořád ukazuje obě varianty zvlášť.`,
+{q:`Proč aplikace po přechodu na těžší variantu ukazuje jen jednu kartu „Útok" místo dvou?`,
+ a:`Aplikace obě varianty útoku (do pole i na cíl) traktuje jako JEDNU logickou dovednost, co se v čase jen zpřísňuje — proto v grafu vývoje, v Přehledu týmu i na Pavoukovi aplikace ukazuje jednu spojenou křivku/osu „Útok" místo dvou oddělených, aby přechod na těžší variantu nevypadal jako by hráčka najednou v jedné metrice „zmizela" a v druhé se objevila odnikud. V grafu je místo přechodu vidět malá značka/změna barvy, na Pavoukovi aplikace navíc na ose Útok ukáže zlatou hvězdičku, když je hráčka zrovna na těžší variantě. Výjimka: v PDF exportu aplikace pořád ukazuje obě varianty zvlášť.`,
  kw:"sloučený útok jedna křivka"},
 {q:`Co je „Nahrávka na cíl"?`,
- a:`Herní test přesnosti nahrávky na vyznačený cíl — appka i tady měří úspěšnost z počtu pokusů (výchozně 15).`},
-{q:`Z čeho appka počítá procenta u herních testů?`,
- a:`Appka bere prostě úspěšné pokusy děleno počtem všech pokusů, krát 100 — takže 12 úspěšných z 15 pokusů appka ukáže jako 80 %. Počet pokusů (výchozí většinou 15) jde v Nastavení pro každou herní metriku změnit, pokud trénuješ s jiným počtem.`},
+ a:`Herní test přesnosti nahrávky na vyznačený cíl — aplikace i tady měří úspěšnost z počtu pokusů (výchozně 15).`},
+{q:`Z čeho aplikace počítá procenta u herních testů?`,
+ a:`Aplikace bere prostě úspěšné pokusy děleno počtem všech pokusů, krát 100 — takže 12 úspěšných z 15 pokusů aplikace ukáže jako 80 %. Počet pokusů (výchozí většinou 15) jde v Nastavení pro každou herní metriku změnit, pokud trénuješ s jiným počtem.`},
 ]},
 
 {title:"T-skóre a normy",icon:"🧮",qa:[
 {q:`Co je T-skóre?`,
- a:`U skoro každé metriky appka kromě naměřeného čísla (třeba „32 cm" u výskoku) ukazuje ještě jedno — T-skóre. K čemu to je: appka potřebuje nějak porovnat hráčky i tam, kde se čísla vůbec nedají srovnat napřímo — centimetry u výskoku, sekundy u sprintu, procenta u přihrávky. T-skóre je způsob, jak z toho udělat jednu společnou stupnici. Appka spočítá průměr dané metriky napříč hráčkami (podle toho, co máš zapnuté v přepínači Tým/Databáze) a tenhle průměr appka nastaví na 50 bodů. Kdo je nad průměrem, má víc než 50, kdo pod průměrem, má míň — nemusíš znát vzorec, stačí vědět, že čím dál od 50, tím výraznější je rozdíl oproti ostatním.`,
- kw:"norma normy normu podle čeho appka počítá"},
+ a:`U skoro každé metriky aplikace kromě naměřeného čísla (třeba „32 cm" u výskoku) ukazuje ještě jedno — T-skóre. K čemu to je: aplikace potřebuje nějak porovnat hráčky i tam, kde se čísla vůbec nedají srovnat napřímo — centimetry u výskoku, sekundy u sprintu, procenta u přihrávky. T-skóre je způsob, jak z toho udělat jednu společnou stupnici. Aplikace spočítá průměr dané metriky napříč hráčkami (podle toho, co máš zapnuté v přepínači Tým/Databáze) a tenhle průměr aplikace nastaví na 50 bodů. Kdo je nad průměrem, má víc než 50, kdo pod průměrem, má míň — nemusíš znát vzorec, stačí vědět, že čím dál od 50, tím výraznější je rozdíl oproti ostatním.`,
+ kw:"norma normy normu podle čeho aplikace počítá"},
 {q:`Co znamená „Přepínač Tým/Databáze" a kdy který použít?`,
- a:`Je to štítek nahoře v appce („👥 Tým" / „🗃 Databáze") a zároveň tlačítko na kartě hráčky v tabu Pavouk — appka jím řídí, VŮČI KOMU appka počítá T-skóre a průměry. „👥 Tým" = appka porovnává jen mezi aktivními hráčkami, co teď trénují. „🗃 Databáze" = appka porovnává vůči úplně všem hráčkám, co kdy appka naměřila, včetně archivovaných z minulých sezón — širší a stabilnější základna, hodí se hlavně když je aktivní tým malý (pár hráček dá nespolehlivý průměr) nebo když chceš srovnávat napříč sezónami. Appka u „Tým" navíc ukáže varování, když je aktivních hráček míň než 5, protože tak malý vzorek dělá z T-skóre nespolehlivé číslo. Přepínač je globální — nastavíš ho jednou a appka podle něj přepočítá úplně všechna T-skóre a Overally v celé appce, nejen na jedné obrazovce.`,
+ a:`Je to štítek nahoře v aplikaci („👥 Tým" / „🗃 Databáze") a zároveň tlačítko na kartě hráčky v tabu Pavouk — aplikace jím řídí, VŮČI KOMU aplikace počítá T-skóre a průměry. „👥 Tým" = aplikace porovnává jen mezi aktivními hráčkami, co teď trénují. „🗃 Databáze" = aplikace porovnává vůči úplně všem hráčkám, co kdy aplikace naměřila, včetně archivovaných z minulých sezón — širší a stabilnější základna, hodí se hlavně když je aktivní tým malý (pár hráček dá nespolehlivý průměr) nebo když chceš srovnávat napříč sezónami. Aplikace u „Tým" navíc ukáže varování, když je aktivních hráček míň než 5, protože tak malý vzorek dělá z T-skóre nespolehlivé číslo. Přepínač je globální — nastavíš ho jednou a aplikace podle něj přepočítá úplně všechna T-skóre a Overally v celé aplikaci, nejen na jedné obrazovce.`,
  kw:"scope normscope norma normy tým databáze switch"},
 {q:`Co je „zamčená norma" a k čemu slouží?`,
- a:`V tabu Pavouk na kartě hráčky appka nabízí tlačítko „🔒 Uzamknout" — po kliknutí appka „vyfotí" aktuální průměry celého poolu (podle toho, jestli máš zvolený Tým nebo Databázi) a od teď je používá jako pevný, neměnný „sezónní standard" místo toho, aby normy počítala pořád dokola nanovo s každým novým testem. Hodí se to, když chceš mít jistotu, že se hráčce T-skóre nezmění jen proto, že si někdo jiný v týmu zrovna zlepšil (nebo zhoršil) výsledek — se zamčenou normou zůstává měřítko po celou sezónu stejné. Appka pak u normy místo dynamického čísla ukazuje „🔒 Uzamčeno [datum]" a přepínač Tým/Databáze dočasně zmizí (protože při zamčené normě nedává smysl). Zpátky na dynamický výpočet appka vrátí tlačítko „🔓 Odemknout".`,
+ a:`V tabu Pavouk na kartě hráčky aplikace nabízí tlačítko „🔒 Uzamknout" — po kliknutí aplikace „vyfotí" aktuální průměry celého poolu (podle toho, jestli máš zvolený Tým nebo Databázi) a od teď je používá jako pevný, neměnný „sezónní standard" místo toho, aby normy počítala pořád dokola nanovo s každým novým testem. Hodí se to, když chceš mít jistotu, že se hráčce T-skóre nezmění jen proto, že si někdo jiný v týmu zrovna zlepšil (nebo zhoršil) výsledek — se zamčenou normou zůstává měřítko po celou sezónu stejné. Aplikace pak u normy místo dynamického čísla ukazuje „🔒 Uzamčeno [datum]" a přepínač Tým/Databáze dočasně zmizí (protože při zamčené normě nedává smysl). Zpátky na dynamický výpočet aplikace vrátí tlačítko „🔓 Odemknout".`,
  kw:"lock normy zamknutí sezónní standard"},
-{q:`Proč se hráčce může T-skóre změnit, i když appka nezaznamenala žádný nový test zrovna jí?`,
- a:`Protože T-skóre není absolutní číslo, ale vždycky relativní k průměru ostatních (viz otázka „Co je T-skóre?"). Pokud appka nemá normu zamčenou (viz předchozí otázka) a JINÁ hráčka v poolu (tým nebo databáze, podle přepínače) přidá nový test, průměr celé skupiny se posune — a tím se automaticky posune i T-skóre všech ostatních, i té, co zrovna žádný nový test neměla. Chceš-li se tomuhle vyhnout, použij zamčenou normu.`},
+{q:`Proč se hráčce může T-skóre změnit, i když aplikace nezaznamenala žádný nový test zrovna jí?`,
+ a:`Protože T-skóre není absolutní číslo, ale vždycky relativní k průměru ostatních (viz otázka „Co je T-skóre?"). Pokud aplikace nemá normu zamčenou (viz předchozí otázka) a JINÁ hráčka v poolu (tým nebo databáze, podle přepínače) přidá nový test, průměr celé skupiny se posune — a tím se automaticky posune i T-skóre všech ostatních, i té, co zrovna žádný nový test neměla. Chceš-li se tomuhle vyhnout, použij zamčenou normu.`},
 {q:`Co přesně znamená, že je hráčka „nad průměrem" nebo „pod průměrem"?`,
- a:`Znamená to prostě T-skóre nad, nebo pod hodnotou 50 — 50 je z definice přesně průměr referenční skupiny (Tým nebo Databáze, podle přepínače) v danou chvíli. „Nad průměrem" tedy neznamená nic absolutního jako „dobrá hráčka" — jen že v dané metrice je momentálně lepší než průměr té konkrétní skupiny, se kterou appka zrovna počítá.`},
+ a:`Znamená to prostě T-skóre nad, nebo pod hodnotou 50 — 50 je z definice přesně průměr referenční skupiny (Tým nebo Databáze, podle přepínače) v danou chvíli. „Nad průměrem" tedy neznamená nic absolutního jako „dobrá hráčka" — jen že v dané metrice je momentálně lepší než průměr té konkrétní skupiny, se kterou aplikace zrovna počítá.`},
 {q:`Může jedné hráčce extrémně dobrá nebo extrémně špatná hodnota zkreslit T-skóre všech ostatních?`,
  a:`Bez ochrany by to šlo — u fyzických testů, dopočítaného výskoku a bodů ze zápasu aplikace normu (průměr a rozptyl, ze kterých T-skóre počítá) staví ze VŠECH hodnot v poolu, a jediná hodnota, co je nápadně (přes tři směrodatné odchylky — stejný práh aplikace používá i u kontroly podezřelých hodnot při zadávání testu) mimo zbytek, dokáže sama o sobě rozptyl výrazně nafouknout, a tím „stlačit" T-skóre všem ostatním hráčkám blíž k 50 — i těm, co s tou extrémní hodnotou nemají nic společného. Aplikace se proti tomu brání: při výpočtu normy takovou nápadně vybočující hodnotu z výpočtu PRŮMĚRU A ROZPTYLU vynechá — ale jen ze SDÍLENÉ normy, ne z hodnocení samotné hráčky. Ta, co tu extrémní hodnotu má, dostane svoje T-skóre pořád spočítané ze svého SKUTEČNÉHO čísla, beze změny — mění se jen to, čím aplikace poměřuje ostatní. Tahle ochrana se zapíná až od 8 hodnot v poolu výš — u menšího vzorku by aplikace nedokázala spolehlivě poznat, co je skutečná anomálie a co jen běžný rozptyl malého týmu.`,
  kw:"extrém odlehlá hodnota outlier zkreslení normy odolnost robustní"},
@@ -7702,60 +7702,60 @@ const HELP_DATA=[
 {q:`Proč má číslo Overall různé barvy?`,
  a:`Barva ukazuje pásmo průměrného T-skóre, ze kterého je Overall spočítaný (stejná pásma jako štítky T u metrik):<br>• <b>zlatá</b> = T 75 a víc (Overall zhruba 94+), mimořádné;<br>• <b>zelená</b> = T 60–74 (Overall zhruba 79–93), výborné;<br>• <b>běžná barva textu</b> = T 45–59 (Overall zhruba 65–78), průměr týmu nebo databáze;<br>• <b>oranžová</b> = T pod 45 (Overall zhruba pod 65), slabší než průměr.<br>Pásmo se počítá vůči zvolené normě (aktuální tým nebo celá databáze), takže po přepnutí normy se barva může změnit. Šedá pomlčka „–“ znamená, že Overall zatím nejde spočítat.`,
  kw:"barva overall zelená oranžová černá zlatá číslo pásmo průměr"},
-{q:`Co je „Overall" a proč appka ukazuje číslo mezi 40 a 99?`,
- a:`Overall je appčino JEDNO souhrnné číslo, které se snaží vyjádřit celkovou úroveň hráčky napříč fyzičkou, herními dovednostmi i výkonem v ostrých zápasech — inspirované stupnicí, jakou znáš třeba z fotbalových videoher. Appka ho staví na T-skóre (běžně stupnice 20–80, viz blok „T-skóre a normy"), jen ho pro Overall přeškáluje na „hráčštější" rozsah 40–99, aby se to čtenářům lépe četlo. Číslo samo o sobě nic „neabsolutního" neznamená — pořád je to relativní srovnání vůči zvolené referenční skupině (Tým/Databáze).`},
-{q:`Jak appka Overall počítá (Fyzické/Herní/Zápasy)?`,
- a:`Appka zvlášť spočítá průměrné T-skóre ve třech blocích — Fyzické testy (váha 25 %), Herní testy (váha 35 %) a Zápasy (váha 40 %) — a pak je zkombinuje do jednoho čísla podle těchhle vah. Váhy rostou s tím, jak blízko je daný typ dat opravdové hře v zápase (fyzický test je nejobecnější, zápas je realita) — méně váhy tedy nemusí znamenat menší důležitost bloku, jen menší váhu v TOMHLE konkrétním souhrnném čísle. Když hráčce nějaký blok v datech úplně chybí (třeba nemá žádný herní test), appka ho z výpočtu prostě VYNECHÁ a váhy zbylých bloků si mezi sebe úměrně rozdělí tak, aby dohromady pořád daly 100 % — takže chybějící blok appku nepenalizuje, jen se počítá jen z toho, co appka má.`,
+{q:`Co je „Overall" a proč aplikace ukazuje číslo mezi 40 a 99?`,
+ a:`Overall je JEDNO souhrnné číslo, které se snaží vyjádřit celkovou úroveň hráčky napříč fyzičkou, herními dovednostmi i výkonem v ostrých zápasech — inspirované stupnicí, jakou znáš třeba z fotbalových videoher. Aplikace ho staví na T-skóre (běžně stupnice 20–80, viz blok „T-skóre a normy"), jen ho pro Overall přeškáluje na „hráčštější" rozsah 40–99, aby se to čtenářům lépe četlo. Číslo samo o sobě nic „neabsolutního" neznamená — pořád je to relativní srovnání vůči zvolené referenční skupině (Tým/Databáze).`},
+{q:`Jak aplikace Overall počítá (Fyzické/Herní/Zápasy)?`,
+ a:`Aplikace zvlášť spočítá průměrné T-skóre ve třech blocích — Fyzické testy (váha 25 %), Herní testy (váha 35 %) a Zápasy (váha 40 %) — a pak je zkombinuje do jednoho čísla podle těchhle vah. Váhy rostou s tím, jak blízko je daný typ dat opravdové hře v zápase (fyzický test je nejobecnější, zápas je realita) — méně váhy tedy nemusí znamenat menší důležitost bloku, jen menší váhu v TOMHLE konkrétním souhrnném čísle. Když hráčce nějaký blok v datech úplně chybí (třeba nemá žádný herní test), aplikace ho z výpočtu prostě VYNECHÁ a váhy zbylých bloků si mezi sebe úměrně rozdělí tak, aby dohromady pořád daly 100 % — takže chybějící blok aplikaci nepenalizuje, jen se počítá jen z toho, co aplikace má.`,
  kw:"vzorec výpočet váhy fyzické herní zápasy"},
 {q:`Počítá aplikace do Overallu herní testy a příjem stejně, ať mají za sebou 3 pokusy, nebo 30?`,
  a:`Do tabulek, karty hráčky, žebříčků a pavouka aplikace VŽDY ukazuje přesně to syrové procento, které spočítala ze zapsaných čísel — tam se nic neupravuje. Ale jen do výpočtu OVERALLU aplikace navíc potichu zohledňuje, kolik pokusů (u herních testů) nebo přijatých míčů (u příjmu ze zápasu) za daným procentem stojí — málo pokusů dělá z procenta nespolehlivé číslo (70 % ze 3 pokusů může být náhoda), hodně pokusů naopak číslo dělá důvěryhodnějším (48 % z 26 pokusů je už solidní vzorek). Aplikace proto do Overallu (a jen do Overallu, nikam jinam) počítá s hodnotou mírně přitaženou k typickému týmovému průměru dané metriky — tím silněji, čím míň pokusů za procentem stojí. U hodně pokusů je tahle úprava skoro neznatelná. Aplikace tohle přitažené číslo nikde nezobrazuje samo o sobě — je to čistě interní mezikrok mezi syrovým procentem a výsledným Overallem.`,
  kw:"malý počet pokusů spolehlivost uhlazení herní test příjem overall shrinkage"},
 {q:`Co znamená hvězdička (*) u čísla Overall?`,
- a:`Značí, že appka má u téhle hráčky změřeno MÍŇ metrik, než kolik jich má nejlépe otestovaná hráčka v týmu — jinými slovy, že je její Overall postavený na neúplnějších datech než u ostatních, takže se dá brát trochu s rezervou. Na kartě hráčky appka tohle ukazuje jako zlatou hvězdičku ★ přímo u nápisu OVERALL, v Přehledu týmu a Porovnání pak jako menší horní index * u čísla — je to POŘÁD JEDNA A TÁ SAMÁ informace, appka ji jen na různých místech kreslí trochu jinak vizuálně. Najetím myší (nebo podržením prstu na mobilu) appka v tooltipu ukáže přesně, kolik metrik má hráčka naměřeno a kolik má nejtestovanější hráčka v týmu.`,
+ a:`Značí, že aplikace má u téhle hráčky změřeno MÍŇ metrik, než kolik jich má nejlépe otestovaná hráčka v týmu — jinými slovy, že je její Overall postavený na neúplnějších datech než u ostatních, takže se dá brát trochu s rezervou. Na kartě hráčky aplikace tohle ukazuje jako zlatou hvězdičku ★ přímo u nápisu OVERALL, v Přehledu týmu a Porovnání pak jako menší horní index * u čísla — je to POŘÁD JEDNA A TÁ SAMÁ informace, aplikace ji jen na různých místech kreslí trochu jinak vizuálně. Najetím myší (nebo podržením prstu na mobilu) aplikace v tooltipu ukáže přesně, kolik metrik má hráčka naměřeno a kolik má nejtestovanější hráčka v týmu.`,
  kw:"hvězdička star neúplná data horní index"},
-{q:`Co appka ukáže po kliknutí na číslo Overall (rozpad)?`,
- a:`Appka otevře modální okno s rozpadem na jednotlivé bloky — kolik bodů hráčka má ve Fyzickém, Herním a Zápasovém bloku zvlášť, i s jejich skutečnými (případně přepočtenými, když nějaký chybí) váhami. Vidíš tak přesně, který blok Overall táhne nahoru a který dolů, místo abys věřil jen jednomu souhrnnému číslu. Appka tohle rozkliknutí nabízí na kartě hráčky, v Přehledu týmu i v Porovnání.`},
+{q:`Co aplikace ukáže po kliknutí na číslo Overall (rozpad)?`,
+ a:`Aplikace otevře modální okno s rozpadem na jednotlivé bloky — kolik bodů hráčka má ve Fyzickém, Herním a Zápasovém bloku zvlášť, i s jejich skutečnými (případně přepočtenými, když nějaký chybí) váhami. Vidíš tak přesně, který blok Overall táhne nahoru a který dolů, místo abys věřil jen jednomu souhrnnému číslu. Aplikace tohle rozkliknutí nabízí na kartě hráčky, v Přehledu týmu i v Porovnání.`},
 {q:`Co znamenají odznaky ⚡ a 🧪 vedle jména hráčky?`,
- a:`Oba porovnávají, jak si hráčka vede v HERNÍCH TESTECH (izolovaný nácvik) oproti tomu, jak si vede ve SKUTEČNÝCH ZÁPASECH — appka je počítá jen když má aspoň 3 zápasy k dispozici. ⚡ = v zápasech je výrazně (o 10 a víc T-bodů) lepší, než by se čekalo podle jejích herních testů — umí to „přenést do ostrého zápasu". 🧪 = přesně naopak, v herních testech vypadá výrazně líp, než pak reálně předvede v zápase — možná potřebuje víc herní/soutěžní zátěže, aby dovednost přenesla i pod tlak. Bez dostatku zápasových dat appka žádný z odznaků neukáže.`,
+ a:`Oba porovnávají, jak si hráčka vede v HERNÍCH TESTECH (izolovaný nácvik) oproti tomu, jak si vede ve SKUTEČNÝCH ZÁPASECH — aplikace je počítá jen když má aspoň 3 zápasy k dispozici. ⚡ = v zápasech je výrazně (o 10 a víc T-bodů) lepší, než by se čekalo podle jejích herních testů — umí to „přenést do ostrého zápasu". 🧪 = přesně naopak, v herních testech vypadá výrazně líp, než pak reálně předvede v zápase — možná potřebuje víc herní/soutěžní zátěže, aby dovednost přenesla i pod tlak. Bez dostatku zápasových dat aplikace žádný z odznaků neukáže.`,
  kw:"blesk zkumavka odznak zápas test rozdíl"},
 {q:`Co se stane s výpočtem, když hráčka nemá data ve všech třech blocích?`,
- a:`Appka chybějící blok (nebo i dva) z výpočtu úplně vynechá a váhy zbylých bloků si úměrně rozdělí tak, aby dály dohromady 100 % — viz otázka „Jak appka Overall počítá". Pokud appka nemá vůbec ŽÁDNÝ blok (hráčka nemá žádná data), Overall appka neukáže vůbec (pomlčka místo čísla).`},
+ a:`Aplikace chybějící blok (nebo i dva) z výpočtu úplně vynechá a váhy zbylých bloků si úměrně rozdělí tak, aby dály dohromady 100 % — viz otázka „Jak aplikace Overall počítá". Pokud aplikace nemá vůbec ŽÁDNÝ blok (hráčka nemá žádná data), Overall aplikace neukáže vůbec (pomlčka místo čísla).`},
 ]},
 
 {title:"Jak číst grafy",icon:"📈",qa:[
 {q:`Co znamená plná barevná čára v grafu?`,
- a:`To jsou skutečně naměřené hodnoty hráčky v čase, propojené čárou, přesně tak, jak jsi je zapsal — appka do ní nic nevyhlazuje ani nepočítá.`},
+ a:`To jsou skutečně naměřené hodnoty hráčky v čase, propojené čárou, přesně tak, jak jsi je zapsal — aplikace do ní nic nevyhlazuje ani nepočítá.`},
 {q:`Co je ta čárkovaná čára (klouzavý průměr/trend)?`,
- a:`Appka vedle skutečných hodnot dokresluje i klouzavý průměr (appka bere posledních až 3 měření a zprůměruje je) — pomáhá to odlišit, jestli jde o SKUTEČNÝ TREND, nebo jen o jednorázový výkyv (dobrý nebo špatný den). Když se plná čára na jedno měření prudce vychýlí, ale čárkovaná zůstane klidná, je to spíš výkyv; když se hýbou obě spolu, je to trend.`,
+ a:`Aplikace vedle skutečných hodnot dokresluje i klouzavý průměr (aplikace bere posledních až 3 měření a zprůměruje je) — pomáhá to odlišit, jestli jde o SKUTEČNÝ TREND, nebo jen o jednorázový výkyv (dobrý nebo špatný den). Když se plná čára na jedno měření prudce vychýlí, ale čárkovaná zůstane klidná, je to spíš výkyv; když se hýbou obě spolu, je to trend.`,
  kw:"trend klouzavý průměr čárkovaná výkyv"},
 {q:`Co je šedé pásmo kolem čáry?`,
- a:`Appka takhle kreslí pásmo normálního kolísání — orientační rozsah, ve kterém se výsledky hráčky (nebo napříč týmem) běžně pohybují mezi jednotlivými testy. Šířka appce vychází z toho, jak moc typicky kolísají výsledky celého poolu hráček mezi dvěma testy — takže když hodnota zůstane uvnitř pásma, jde o normální kolísání; když z něj vystřelí ven, je to výraznější změna, o které stojí za to přemýšlet (v dobrém i špatném smyslu).`,
+ a:`Aplikace takhle kreslí pásmo normálního kolísání — orientační rozsah, ve kterém se výsledky hráčky (nebo napříč týmem) běžně pohybují mezi jednotlivými testy. Šířka aplikaci vychází z toho, jak moc typicky kolísají výsledky celého poolu hráček mezi dvěma testy — takže když hodnota zůstane uvnitř pásma, jde o normální kolísání; když z něj vystřelí ven, je to výraznější změna, o které stojí za to přemýšlet (v dobrém i špatném smyslu).`,
  kw:"pásmo kolísání rozptyl šedá plocha"},
-{q:`Proč appka u některých grafů žádné šedé pásmo ani trend neukazuje?`,
- a:`Protože appka je záměrně nekreslí u metrik, které appka nepovažuje za smysluplně srovnatelné/trénovatelné — třeba u syrové Výšky nebo Dosahu (viz blok „Fyzické testy"), kde appka rovnou nekreslí ani žádný graf ani T-skóre. U sloučeného grafu Útoku appka zas kreslí jen samotnou křivku bez pásma, protože jde o T-skórovou škálu, ne o přímé jednotky/procenta, na kterých appka pásmo počítá.`},
+{q:`Proč aplikace u některých grafů žádné šedé pásmo ani trend neukazuje?`,
+ a:`Protože aplikace je záměrně nekreslí u metrik, které aplikace nepovažuje za smysluplně srovnatelné/trénovatelné — třeba u syrové Výšky nebo Dosahu (viz blok „Fyzické testy"), kde aplikace rovnou nekreslí ani žádný graf ani T-skóre. U sloučeného grafu Útoku aplikace zas kreslí jen samotnou křivku bez pásma, protože jde o T-skórovou škálu, ne o přímé jednotky/procenta, na kterých aplikace pásmo počítá.`},
 {q:`Co znamenají dvě čárkované referenční čáry v PDF exportu?`,
- a:`V PDF appka do grafu metriky přidává dvě vodorovné čárkované čáry navíc — šedá je aktuálně NEJLEPŠÍ hodnota v týmu, zlatá je aktuálně NEJLEPŠÍ hodnota v CELÉ DATABÁZI (obě najednou, bez ohledu na to, jaký máš zrovna nastavený přepínač v appce) — je to tedy vždycky výkon nějaké KONKRÉTNÍ (jiné) hráčky, ne nějaký abstraktní průměr. Díky tomu i ten, kdo appku sám nikdy neotevře (třeba rodič), hned vidí, jak si hráčka stojí vůči špičce týmu i celé databáze. Pokud hráčka sama zrovna vede v obojím, appka na její kartě navíc přidá zlatý rámeček/trofej.`,
+ a:`V PDF aplikace do grafu metriky přidává dvě vodorovné čárkované čáry navíc — šedá je aktuálně NEJLEPŠÍ hodnota v týmu, zlatá je aktuálně NEJLEPŠÍ hodnota v CELÉ DATABÁZI (obě najednou, bez ohledu na to, jaký máš zrovna nastavený přepínač v aplikaci) — je to tedy vždycky výkon nějaké KONKRÉTNÍ (jiné) hráčky, ne nějaký abstraktní průměr. Díky tomu i ten, kdo aplikaci sám nikdy neotevře (třeba rodič), hned vidí, jak si hráčka stojí vůči špičce týmu i celé databáze. Pokud hráčka sama zrovna vede v obojím, aplikace na její kartě navíc přidá zlatý rámeček/trofej.`,
  kw:"pdf referenční čáry tým databáze"},
-{q:`Proč appka u jednoho měření ukazuje jen puntík místo čáry?`,
- a:`Čáru appka umí nakreslit až mezi DVĚMA a víc body — pokud má hráčka u dané metriky zatím jen jediné měření, appka logicky nemá co spojovat, a tak ukáže jen samotný bod. Jakmile přibude druhé měření, objeví se i čára mezi nimi.`},
+{q:`Proč aplikace u jednoho měření ukazuje jen puntík místo čáry?`,
+ a:`Čáru aplikace umí nakreslit až mezi DVĚMA a víc body — pokud má hráčka u dané metriky zatím jen jediné měření, aplikace logicky nemá co spojovat, a tak ukáže jen samotný bod. Jakmile přibude druhé měření, objeví se i čára mezi nimi.`},
 ]},
 
 {title:"Pavouk (radarový graf)",icon:"🕸",qa:[
-{q:`Co je „Pavouk" a co appka na něm ukazuje?`,
- a:`„Pavouk" je appčino hovorové označení pro radarový graf — appka na něm vykreslí víc metrik najednou jako paprsky vycházející ze středu, takže jedním pohledem vidíš celý „profil" hráčky (kde vyniká, kde má rezervy), místo abys procházel metriky jednu po druhé. Appka má dva samostatné pavouky vedle sebe — jeden pro fyzické testy, jeden pro herní.`},
+{q:`Co je „Pavouk" a co aplikace na něm ukazuje?`,
+ a:`„Pavouk" je hovorové označení pro radarový graf — aplikace na něm vykreslí víc metrik najednou jako paprsky vycházející ze středu, takže jedním pohledem vidíš celý „profil" hráčky (kde vyniká, kde má rezervy), místo abys procházel metriky jednu po druhé. Aplikace má dva samostatné pavouky vedle sebe — jeden pro fyzické testy, jeden pro herní.`},
 {q:`Co znamenají jednotlivé osy pavouka?`,
- a:`Každá osa je jedna metrika (T-skórovaná, viz blok „T-skóre a normy") — čím dál od středu je bod na dané ose, tím lepší je tam hráčka relativně vůči zvolené referenční skupině. Appka zobrazuje jen metriky, které mají smysl srovnávat (viz otázka o Výšce/Dosahu v bloku „Fyzické testy") — netrénovatelné syrové vstupy appka na Pavouka nedává.`},
+ a:`Každá osa je jedna metrika (T-skórovaná, viz blok „T-skóre a normy") — čím dál od středu je bod na dané ose, tím lepší je tam hráčka relativně vůči zvolené referenční skupině. Aplikace zobrazuje jen metriky, které mají smysl srovnávat (viz otázka o Výšce/Dosahu v bloku „Fyzické testy") — netrénovatelné syrové vstupy aplikace na Pavouka nedává.`},
 {q:`Co je tečkovaný prstenec „Průměr" na Pavoukovi?`,
- a:`Appka kreslí tenkou tečkovanou čáru, co díky přeškálování T-skóre tvoří na Pavoukovi kruh přesně uprostřed grafu — to je referenční „Průměr". Ukazuje, kde by na všech osách skončila hráčka přesně na úrovni průměru zvolené referenční skupiny. Díky tomu na první pohled poznáš, jestli je hráččin graf uvnitř kruhu (pod průměrem) nebo mimo něj (nad průměrem), a hlavně u kterých konkrétních věcí.`},
+ a:`Aplikace kreslí tenkou tečkovanou čáru, co díky přeškálování T-skóre tvoří na Pavoukovi kruh přesně uprostřed grafu — to je referenční „Průměr". Ukazuje, kde by na všech osách skončila hráčka přesně na úrovni průměru zvolené referenční skupiny. Díky tomu na první pohled poznáš, jestli je hráččin graf uvnitř kruhu (pod průměrem) nebo mimo něj (nad průměrem), a hlavně u kterých konkrétních věcí.`},
 {q:`Co znamená zlatá hvězdička na ose „Útok"?`,
- a:`Objeví se přesně tehdy, když je hráčka zrovna na těžší variantě útoku („Útok na cíl" místo „Útok do pole", viz blok „Herní testy") — appka tak jednou hvězdičkou na jedné sloučené ose Útok signalizuje, na jaké obtížnosti se číslo, které vidíš, ve skutečnosti měřilo.`},
+ a:`Objeví se přesně tehdy, když je hráčka zrovna na těžší variantě útoku („Útok na cíl" místo „Útok do pole", viz blok „Herní testy") — aplikace tak jednou hvězdičkou na jedné sloučené ose Útok signalizuje, na jaké obtížnosti se číslo, které vidíš, ve skutečnosti měřilo.`},
 {q:`Co znamenají barvy na Pavoukovi?`,
  a:`Zelená čára je aktuální testování, šedá to předchozí (když je zapnutý přepínač Předchozí). Zlatý bod na ose znamená T-skóre aspoň 75.`,
  kw:"barvy zelená šedá zlatý bod legenda pavouk T 75"},
 {q:`Co dělá přepínač „Předchozí" na Pavoukovi?`,
- a:`Když ho zapneš, appka do grafu vedle aktuálního profilu hráčky dokreslí i profil z jejího PŘEDCHOZÍHO testování — takže jedním pohledem porovnáš, jak se od minula posunula na všech osách najednou, ne jen v jedné metrice.`},
+ a:`Když ho zapneš, aplikace do grafu vedle aktuálního profilu hráčky dokreslí i profil z jejího PŘEDCHOZÍHO testování — takže jedním pohledem porovnáš, jak se od minula posunula na všech osách najednou, ne jen v jedné metrice.`},
 {q:`Co je graf „T-score vývoj v čase" pod pavoukem?`,
- a:`Samostatný graf (jiný než Pavouk) přímo pod ním, co ukazuje vývoj T-skóre jednotlivých metrik v čase jako běžné křivky — na rozdíl od Pavouka, který ukazuje jen JEDEN okamžik (aktuální, případně i předchozí), tenhle graf ukazuje CELOU HISTORII. Pozor, tohle je jediné místo v appce (spolu s PDF exportem), kde appka pořád ukazuje obě varianty útoku („Útok na cíl"/„Útok do pole") jako dvě oddělené křivky místo sloučené jedné.`},
+ a:`Samostatný graf (jiný než Pavouk) přímo pod ním, co ukazuje vývoj T-skóre jednotlivých metrik v čase jako běžné křivky — na rozdíl od Pavouka, který ukazuje jen JEDEN okamžik (aktuální, případně i předchozí), tenhle graf ukazuje CELOU HISTORII. Pozor, tohle je jediné místo v aplikaci (spolu s PDF exportem), kde aplikace pořád ukazuje obě varianty útoku („Útok na cíl"/„Útok do pole") jako dvě oddělené křivky místo sloučené jedné.`},
 ]},
 
 {title:"Milníky",icon:"🎖",qa:[
@@ -7769,10 +7769,10 @@ const HELP_DATA=[
  a:`Přímo na kartě hráčky v sekci Milníků nahoře aplikace ukazuje souhrn (kolik milníků je v jaké fázi) a u každého milníku zvlášť jeho aktuální fázi s datem. Klepnutím na souhrnný řádek se navíc rozbalí vysvětlení, co který emoji fáze znamená. V Přehledu týmu (📊) pak aplikace u každé hráčky zobrazuje totéž jako malou barevnou mřížku čtverečků — čím světlejší čtvereček, tím nižší fáze, tmavý/prázdný znamená ještě nezačato — a podržením na čtverečku aplikace ukáže, o který konkrétní milník jde.`,
  kw:"vysvětlení emoji fází legenda přehled týmu barevná mřížka"},
 {q:`Co jsou „Poznámky k hráčce" a čím se liší od Milníků?`,
- a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější. Ve vzhledu Trenéra je nejnovější poznámka žlutý lepík na kartě hráčky pod tlačítky a všechny poznámky jsou v Deníčku (viz Nápověda „Vzhled Trenéra“ → „Jak fungují lepíky s poznámkami k hráčce?“ a „Co je Deníček?“).`,
+ a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti aplikace, ANO/NE) sem aplikace nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Aplikace je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější. Ve vzhledu Trenéra je nejnovější poznámka žlutý lepík na kartě hráčky pod tlačítky a všechny poznámky jsou v Deníčku (viz Nápověda „Vzhled Trenéra“ → „Jak fungují lepíky s poznámkami k hráčce?“ a „Co je Deníček?“).`,
  kw:"poznámky hráčka deník zápisník postřehy"},
 {q:`Jak poznámku k hráčce přidám, upravím nebo smažu?`,
- a:`V sekci Milníků na kartě hráčky klikni na „+ Přidat poznámku" — appka nabídne datum (jde změnit) a textové pole. Existující poznámku appka nechá upravit tlačítkem „✎" u ní, nebo smazat tlačítkem „✕" (appka se zeptá na potvrzení). Počet poznámek appka nijak neomezuje.`},
+ a:`V sekci Milníků na kartě hráčky klikni na „+ Přidat poznámku" — aplikace nabídne datum (jde změnit) a textové pole. Existující poznámku aplikace nechá upravit tlačítkem „✎" u ní, nebo smazat tlačítkem „✕" (aplikace se zeptá na potvrzení). Počet poznámek aplikace nijak neomezuje.`},
 {q:`Jak napíšu poznámku ke konkrétnímu milníku hráčky?`,
  a:`Na tabu Milníky klepni na 💬 vpravo vedle názvu milníku. Poznámka patří jen téhle hráčce a jen tomuto milníku, třeba „nadhoz ještě uhýbá“ u Vrchního servisu. Ostatní hráčky ji neuvidí. Uložená poznámka se ukáže přímo pod názvem milníku a ikona se změní na 📝. Když text smažeš a uložíš, poznámka zmizí. Při kopírování hráčky se poznámky k milníkům nekopírují, stejně jako Poznámky k hráčce.`,
  kw:"poznámka milník hráčka komentář postřeh 💬 📝"},
@@ -7780,18 +7780,18 @@ const HELP_DATA=[
 
 {title:"Odznaky",icon:"🏅",qa:[
 {q:`Co jsou Odznaky a co znamenají jednotlivé ikonky?`,
- a:`Odznaky jsou appčin způsob, jak hráčce dát viditelné ocenění/nálepku za nějakou vlastnost nebo úspěch (třeba 🧱 Blokař, 🎯 Servis Girl, 💣 Bomberka, 🤿 Čapačka, 🔥 Hecířka) — na rozdíl od milníků appka odznaky NEPOČÍTÁ ani neodvozuje sama z naměřených dat, jsou to čistě tvoje vlastní ocenění podle toho, co u hráčky vidíš na tréninku. Appka má i speciální odznak 👑 Kapitánka se zvláštním „třpytivým" vzhledem, který ji odlišuje od ostatních. Přesný seznam a vzhled odznaků jde upravit v Nastavení.`},
+ a:`Odznaky jsou způsob, jak hráčce dát viditelné ocenění/nálepku za nějakou vlastnost nebo úspěch (třeba 🧱 Blokař, 🎯 Servis Girl, 💣 Bomberka, 🤿 Čapačka, 🔥 Hecířka) — na rozdíl od milníků aplikace odznaky NEPOČÍTÁ ani neodvozuje sama z naměřených dat, jsou to čistě tvoje vlastní ocenění podle toho, co u hráčky vidíš na tréninku. Aplikace má i speciální odznak 👑 Kapitánka se zvláštním „třpytivým" vzhledem, který ji odlišuje od ostatních. Přesný seznam a vzhled odznaků jde upravit v Nastavení.`},
 {q:`Proč mají odznaky ve vzhledu Trenéra jiné ikony než emoji?`,
  a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka (obrana v poli) = ruce chytající míč, Hecířka = megafon, Kapitánka = koruna, Přijímačka = šipky mířící do středu (přesnost). Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
  kw:"odznak ikona font awesome emoji trenér vzhled vybrat ikonu koruna megafon"},
 {q:`Jak funguje odznak Přijímačka?`,
  a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Rozhoduje <b>průměrná kvalita příjmu</b> v zápasech aktuální sezóny, stejná jako na kartě hráčky a v živém zápase: známka 1 = 100 %, 3 = 50 %, 5 = 0 %. Jednička tak váží dvakrát víc než trojka. Hráčka odznak má, dokud je její průměr aspoň na hranici, kterou nastavíš (výchozí 45 %). Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když průměr klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br><b>Hranice:</b> Nastavení → Odznaky → ✎ u Přijímačky, pole „Hranice – průměrná kvalita příjmu“, od 30 do 95 % po 5. Pod polem hned vidíš, které hráčky by odznak při zvolené hranici měly (počítají se jen ty s dost příjmy), průměr týmu a návrh „Nejlepší čtvrtina“: hranici, kterou splní zhruba čtvrtina nejlepších. Klepnutím na návrh ho nastavíš. Po uložení se odznaky hned přepočítají. Hranice se ukládá k odznaku, takže je i v záloze. Normy podle věku nebo pro kluky a holky tu nejsou, protože pro známky 1-3-5 žádné spolehlivé neexistují; hranice vychází z tvých vlastních dat.<br><b>Barva</b> ukazuje, o kolik je hráčka nad hranicí: zlatá = o 30 bodů a víc, zelená = o 15 až 29 bodů, jinak fialová (barva odznaku). Název, emoji, ikonu i výchozí barvu změníš ve stejném okně. Když odznak smažeš, už se sám nevrátí.`,
  kw:"přijímačka příjem automatický odznak 55 % procent zápas sám barva"},
-{q:`Jak appka odznak hráčce přidělí?`,
- a:`Appka to nedělá sama automaticky (jedinou výjimkou je Přijímačka, viz výš) — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
+{q:`Jak aplikace odznak hráčce přidělí?`,
+ a:`Aplikace to nedělá sama automaticky (jedinou výjimkou je Přijímačka, viz výš) — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", aplikace ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
  kw:"udělení odznaku manuálně přiřazení"},
-{q:`Kde všude appka odznaky u hráčky ukazuje?`,
- a:`Appka je ukazuje přímo na kartě hráčky pod jejím jménem a taky v Domovské obrazovce na její kartičce v mřížce — takže je vidíš i bez otevírání karty jednotlivě. Ve vzhledu Trenéra jsou odznaky jako emoji v kolečku hráčky (koláž dovedností) na Domů i na kartě; jejich názvy uvidíš po klepnutí na kolečko na kartě hráčky.`,
+{q:`Kde všude aplikace odznaky u hráčky ukazuje?`,
+ a:`Aplikace je ukazuje přímo na kartě hráčky pod jejím jménem a taky v Domovské obrazovce na její kartičce v mřížce — takže je vidíš i bez otevírání karty jednotlivě. Ve vzhledu Trenéra jsou odznaky jako emoji v kolečku hráčky (koláž dovedností) na Domů i na kartě; jejich názvy uvidíš po klepnutí na kolečko na kartě hráčky.`,
  kw:"odznaky kde koláž kolečko"},
 ]},
 
@@ -7800,20 +7800,20 @@ const HELP_DATA=[
 
 {title:"Živý zápas — zapisování bodů a příjmu",icon:"🏆",qa:[
 {q:`Jak založím nový zápas?`,
- a:`V menu ⋮ klikni na „🏆 Spustit zápas", zadej soupeře, datum, co chceš appkou sledovat (mode — viz další otázka) a volitelně poznámku. Appka po potvrzení „Zahájit zápas" rovnou otevře živou obrazovku pro zapisování.`},
+ a:`V menu ⋮ klikni na „🏆 Spustit zápas", zadej soupeře, datum, co chceš aplikací sledovat (mode — viz další otázka) a volitelně poznámku. Aplikace po potvrzení „Zahájit zápas" rovnou otevře živou obrazovku pro zapisování.`},
 {q:`Co znamená „mode" zápasu (body/příjem/obojí)?`,
- a:`Appka se tě při zakládání zápasu zeptá, co přesně chceš u zápasu sledovat — jen „⚡ Body", jen „📥 Příjem", nebo „📊 Obojí" najednou. Podle týhle volby appka pak na živé obrazovce ukazuje jen odpovídající zapisovací tlačítka, ať appku nezahlcuješ zapisováním něčeho, co zrovna nesleduješ.`},
+ a:`Aplikace se tě při zakládání zápasu zeptá, co přesně chceš u zápasu sledovat — jen „⚡ Body", jen „📥 Příjem", nebo „📊 Obojí" najednou. Podle týhle volby aplikace pak na živé obrazovce ukazuje jen odpovídající zapisovací tlačítka, ať aplikaci nezahlcuješ zapisováním něčeho, co zrovna nesleduješ.`},
 {q:`Jak zapisuju body v průběhu zápasu?`,
- a:`Appka na živé obrazovce u každé hráčky, co je zrovna na place, ukazuje tlačítka pro zápis bodu (+1) i chyby (−1) — klikneš na jméno konkrétní hráčky a odpovídající tlačítko, appka to rovnou přičte do průběžného skóre.`},
+ a:`Aplikace na živé obrazovce u každé hráčky, co je zrovna na place, ukazuje tlačítka pro zápis bodu (+1) i chyby (−1) — klikneš na jméno konkrétní hráčky a odpovídající tlačítko, aplikace to rovnou přičte do průběžného skóre.`},
 {q:`Jak zapisuju příjem v průběhu zápasu?`,
- a:`Podobně jako u bodů appka u zapnutého sledování příjmu ukazuje u hráček tlačítka na zápis kvality přijatého míče — appka si to průběžně ukládá do stejného zápasového záznamu jako body.`},
+ a:`Podobně jako u bodů aplikace u zapnutého sledování příjmu ukazuje u hráček tlačítka na zápis kvality přijatého míče — aplikace si to průběžně ukládá do stejného zápasového záznamu jako body.`},
 {q:`Jde omylem zapsaný bod nebo příjem vzít zpátky?`,
- a:`Appka na to má dvě úrovně opravy. Rychlá: tlačítko „Zpět" na živé obrazovce vrátí jen ÚPLNĚ POSLEDNÍ zapsanou akci. Důkladná: appka má i „📋 Zápisy" — kompletní seznam všech akcí v aktuálním setu s časem u každé — tam appka u KAŽDÉHO jednotlivého zápisu (ne jen posledního) nabízí tlačítko „✕" na jeho smazání, takže jde opravit i starší chybu, ne jen tu poslední.`,
+ a:`Aplikace na to má dvě úrovně opravy. Rychlá: tlačítko „Zpět" na živé obrazovce vrátí jen ÚPLNĚ POSLEDNÍ zapsanou akci. Důkladná: aplikace má i „📋 Zápisy" — kompletní seznam všech akcí v aktuálním setu s časem u každé — tam aplikace u KAŽDÉHO jednotlivého zápisu (ne jen posledního) nabízí tlačítko „✕" na jeho smazání, takže jde opravit i starší chybu, ne jen tu poslední.`,
  kw:"undo vrátit zpět oprava chyby"},
 {q:`Co se stane, když zápas dohraju (Dokončit zápas)?`,
- a:`Appka se zeptá na potvrzení („Tuto akci nelze vrátit"), pak zápas označí jako dokončený, automaticky ho zařadí do turnaje podle data (pokud appka pozná, že tam patří — viz blok „Turnaje"), uloží ho natrvalo do zápasové historie, připraví k němu zápasovou Minihru a nakonec ukáže krátké shrnutí zápasu. Appka pak i vyresetuje živou obrazovku, ať můžeš rovnou začít zapisovat další zápas.`},
+ a:`Aplikace se zeptá na potvrzení („Tuto akci nelze vrátit"), pak zápas označí jako dokončený, automaticky ho zařadí do turnaje podle data (pokud aplikace pozná, že tam patří — viz blok „Turnaje"), uloží ho natrvalo do zápasové historie, připraví k němu zápasovou Minihru a nakonec ukáže krátké shrnutí zápasu. Aplikace pak i vyresetuje živou obrazovku, ať můžeš rovnou začít zapisovat další zápas.`},
 {q:`Jde zápas smazat nebo upravit i zpětně?`,
- a:`Smazat jde — u zápasu v historii appka nabízí smazání s potvrzením, zápas i s daty appka pak trvale odstraní (a pokud tím turnaj zůstane úplně prázdný, appka ho tiše zruší i sám). Upravit už zapsaná čísla v HOTOVÉM zápase appka ale neumí — jakmile zápas jednou dokončíš, appka další úpravy jeho zápisů nenabízí. Drobnou chybu proto oprav ještě PŘED dokončením přes „📋 Zápisy" (viz výš); pokud si chybu všimneš až pozdě, jediná cesta je zápas smazat a zapsat znovu.`,
+ a:`Smazat jde — u zápasu v historii aplikace nabízí smazání s potvrzením, zápas i s daty aplikace pak trvale odstraní (a pokud tím turnaj zůstane úplně prázdný, aplikace ho tiše zruší i sám). Upravit už zapsaná čísla v HOTOVÉM zápase aplikace ale neumí — jakmile zápas jednou dokončíš, aplikace další úpravy jeho zápisů nenabízí. Drobnou chybu proto oprav ještě PŘED dokončením přes „📋 Zápisy" (viz výš); pokud si chybu všimneš až pozdě, jediná cesta je zápas smazat a zapsat znovu.`,
  kw:"editace úprava zápasu po dohrání"},
 {q:`Spustil jsem zápas omylem (nebo jen zkouším). Jak ho smažu?`,
  a:`Ve vzhledu Trenéra:<br>• <b>Rozehraný zápas</b>: v hlavičce živého zápasu klepni na koš (vpravo vedle LIVE) a potvrď „Zahodit“. Nic z něj se neuloží.<br>• <b>Dohraný zápas</b>: na záložce Zápasy klepni na koš u zápasu v Posledních zápasech, nebo v Záznamech zápasů na „Smazat“. Po smazání můžeš krátce klepnout na „Vrátit“. Když tím turnaji zbyde jen jeden zápas, turnaj se zruší.<br>V klasickém vzhledu jde smazat dohraný zápas v Záznamech zápasů a rozehraný zahodit tak, že v okně „Zápas probíhá“ zvolíš „Nový zápas (zahodit rozehraný)“.`,
@@ -7823,90 +7823,90 @@ const HELP_DATA=[
 {title:`Zápasová historie a tab „Zápas"`,icon:"📋",qa:[
 {q:`Kde najdu historii odehraných zápasů?`,
  a:`V menu ⋮ pod „Zápasy" najdeš „📚 Záznamy zápasů" — kompletní seznam všech dokončených zápasů celého týmu. Konkrétní hráčka navíc má svoje zápasy vidět i přímo na svojí kartě v tabu „📋 Zápas".`},
-{q:`Co appka ukazuje v tabu „📋 Zápas" na kartě hráčky?`,
- a:`Appka tu ukazuje historii zápasů, ve kterých má tahle konkrétní hráčka zaznamenaná nějaká data (body a/nebo příjem), včetně jejích čísel z každého zápasu a případného štítku turnaje, do kterého zápas patří.`},
+{q:`Co aplikace ukazuje v tabu „📋 Zápas" na kartě hráčky?`,
+ a:`Aplikace tu ukazuje historii zápasů, ve kterých má tahle konkrétní hráčka zaznamenaná nějaká data (body a/nebo příjem), včetně jejích čísel z každého zápasu a případného štítku turnaje, do kterého zápas patří.`},
 {q:`Co znamená štítek s názvem turnaje na kartě zápasu?`,
- a:`Značí, že appka tenhle zápas zařadila (automaticky podle data, nebo ručně) do konkrétního turnaje — kliknutím na štítek se dostaneš rovnou do detailu toho turnaje. Zápas bez štítku appka bere jako osamocený, do žádného turnaje nezařazený.`},
+ a:`Značí, že aplikace tenhle zápas zařadila (automaticky podle data, nebo ručně) do konkrétního turnaje — kliknutím na štítek se dostaneš rovnou do detailu toho turnaje. Zápas bez štítku aplikace bere jako osamocený, do žádného turnaje nezařazený.`},
 {q:`Co je na záložce Zápasy?`,
  a:`Ve vzhledu Trenéra je záložka <b>Zápasy</b> přehled zápasových statistik týmu za aktuální sezónu:<br>• Nahoře odkazy na <b>Záznamy zápasů</b> a <b>Turnaje</b>.<br>• Souhrn: kolik zápasů a turnajů se v sezóně odehrálo, body týmu dohromady a průměrná kvalita příjmu (1 = 100 %, 3 = 50 %, 5 = 0 %).<br>• Tabulka hráček: zápasy, ve kterých má hráčka nějaký záznam, body celkem a průměr bodů na zápas, kvalita příjmu ze všech jejích příjmů dohromady (stejně jako v Overallu a u odznaku Přijímačka) a počet příjmů. Klepnutím na záhlaví sloupce řadíš, klepnutím na jméno otevřeš kartu hráčky. Sloupec Forma ukazuje 🔥/❄️ z posledního turnaje sezóny (viz „Co znamená Forma hráčky“).<br>• Dole posledních pět zápasů (klepnutím otevřeš statistiky zápasu) a poslední turnaje.<br>Zápas spustíš oranžovým tlačítkem vpravo dole nebo v menu ⋮. Ikonou koše u zápasu ho smažeš (s „Vrátit“).`,
  kw:"záložka zápasy statistiky tým body příjem tabulka sezóna"},
 ]},
 
 {title:"Turnaje a forma hráček",icon:"🏟",qa:[
-{q:`Co je Turnaj a k čemu appce slouží?`,
- a:`Turnaj je appčin způsob, jak si seskupit víc zápasů odehraných v rámci jedné akce (typicky víc zápasů za jeden den) pod jeden společný záznam — appka z něj pak umí spočítat věci, které jednotlivý zápas sám o sobě neukáže, třeba kdo měl v celém turnaji nejvíc bodů, nebo kdo byl ve „Formě" (viz další otázky).`},
-{q:`Jak appka pozná, že dva zápasy patří do stejného turnaje?`,
- a:`Appka to zkusí poznat sama podle STEJNÉHO DATA — zápasy odehrané ve stejný den appka automaticky navrhne jako jeden turnaj. Návrh appky jde ale vždycky ručně opravit (viz další otázka), kdyby se to netrefilo.`},
+{q:`Co je Turnaj a k čemu aplikaci slouží?`,
+ a:`Turnaj je způsob, jak si seskupit víc zápasů odehraných v rámci jedné akce (typicky víc zápasů za jeden den) pod jeden společný záznam — aplikace z něj pak umí spočítat věci, které jednotlivý zápas sám o sobě neukáže, třeba kdo měl v celém turnaji nejvíc bodů, nebo kdo byl ve „Formě" (viz další otázky).`},
+{q:`Jak aplikace pozná, že dva zápasy patří do stejného turnaje?`,
+ a:`Aplikace to zkusí poznat sama podle STEJNÉHO DATA — zápasy odehrané ve stejný den aplikace automaticky navrhne jako jeden turnaj. Návrh aplikace jde ale vždycky ručně opravit (viz další otázka), kdyby se to netrefilo.`},
 {q:`Jak zápas z turnaje ručně vyjmu, nebo naopak přidám?`,
- a:`V menu ⋮ → „🏟 Turnaje" otevři detail konkrétního turnaje — tam appka nabízí úpravu, které zápasy do turnaje patří, takže je jde kdykoli ručně přidat nebo z turnaje zase vyřadit, i napříč různými daty.`},
+ a:`V menu ⋮ → „🏟 Turnaje" otevři detail konkrétního turnaje — tam aplikace nabízí úpravu, které zápasy do turnaje patří, takže je jde kdykoli ručně přidat nebo z turnaje zase vyřadit, i napříč různými daty.`},
 {q:`Jak založím turnaj dopředu, ještě před prvním zápasem?`,
  a:`Ve vzhledu Trenéra klepni na oranžové tlačítko vpravo dole a zapni přepínač <b>Turnaj</b>. Vybereš otevřený turnaj z posledních dnů, nebo založíš nový. Pak každý zápas spuštěný tímto tlačítkem (Spustit zápas) se zapíše do turnaje, dokud přepínač nevypneš. Turnaj jde založit i jako dřív v menu ⋮ → Turnaje, jen názvem bez zápasu.`},
 {q:`Jak založím turnaj přes víc dnů?`,
- a:`Přesně přes tu samou ruční úpravu turnaje (viz předchozí otázka) — appka totiž turnaj neváže na jedno konkrétní datum, jen na seznam zápasů, které do něj patří, takže tam klidně přidáš zápasy z různých dnů vícedenního turnaje.`},
+ a:`Přesně přes tu samou ruční úpravu turnaje (viz předchozí otázka) — aplikace totiž turnaj neváže na jedno konkrétní datum, jen na seznam zápasů, které do něj patří, takže tam klidně přidáš zápasy z různých dnů vícedenního turnaje.`},
 {q:`Co znamená „Forma" hráčky (🔥/❄️/➖)?`,
- a:`Forma appce říká, jestli hráčka v RÁMCI TOHOTO KONKRÉTNÍHO TURNAJE hrála výrazně LÍP nebo HŮŘ, než je JEJÍ VLASTNÍ obvyklý standard (ne standard týmu) — je to tedy čistě individuální srovnání hráčky se sebou samotnou, ne s ostatními. 🔥 = výrazně nad svým vlastním standardem, ❄️ = výrazně pod ním, ➖ = normální kolísání, nic pozoruhodného.`,
+ a:`Forma aplikaci říká, jestli hráčka v RÁMCI TOHOTO KONKRÉTNÍHO TURNAJE hrála výrazně LÍP nebo HŮŘ, než je JEJÍ VLASTNÍ obvyklý standard (ne standard týmu) — je to tedy čistě individuální srovnání hráčky se sebou samotnou, ne s ostatními. 🔥 = výrazně nad svým vlastním standardem, ❄️ = výrazně pod ním, ➖ = normální kolísání, nic pozoruhodného.`,
  kw:"forma hot cold výkyv turnaj"},
-{q:`Jak appka Formu počítá?`,
- a:`Appka porovná hráččin výkon v tomhle turnaji s jejím vlastním dlouhodobým průměrem MIMO tenhle turnaj, a to v kontextu toho, jak moc tahle konkrétní hráčka běžně kolísá mezi zápasy (stejný princip jako pásmo normálního kolísání u testů — viz blok „Jak číst grafy"). Teprve když je odchylka výraznější, než je pro ni typické, appka jí přidělí 🔥 nebo ❄️ — obyčejné kolísání v mezích jejího normálu appka nechá jako ➖.<br>Forma se ukáže v detailu turnaje (Forma hráček). Když na štítku podržíš prst (na počítači najedeš myší), uvidíš čísla: výkon v turnaji a vlastní průměr mimo něj.`,
+{q:`Jak aplikace Formu počítá?`,
+ a:`Aplikace porovná hráččin výkon v tomhle turnaji s jejím vlastním dlouhodobým průměrem MIMO tenhle turnaj, a to v kontextu toho, jak moc tahle konkrétní hráčka běžně kolísá mezi zápasy (stejný princip jako pásmo normálního kolísání u testů — viz blok „Jak číst grafy"). Teprve když je odchylka výraznější, než je pro ni typické, aplikace jí přidělí 🔥 nebo ❄️ — obyčejné kolísání v mezích jejího normálu aplikace nechá jako ➖.<br>Forma se ukáže v detailu turnaje (Forma hráček). Když na štítku podržíš prst (na počítači najedeš myší), uvidíš čísla: výkon v turnaji a vlastní průměr mimo něj.`,
  kw:"forma štítek čísla podržet detail turnaje"},
 {q:`Co znamená „🏁 Uzavřít turnaj" a proč to udělat?`,
- a:`Uzavření appce řekne, že je turnaj definitivně u konce a jeho zápasy a Forma se už nebudou dál měnit — appka se před tím vždycky zeptá na potvrzení. Zároveň uzavření spustí turnajovou Minihru (tipovačku pro tebe, viz blok „Minihry") — bez uzavření appka turnajovou Minihru vůbec nenabídne.`},
+ a:`Uzavření aplikaci řekne, že je turnaj definitivně u konce a jeho zápasy a Forma se už nebudou dál měnit — aplikace se před tím vždycky zeptá na potvrzení. Zároveň uzavření spustí turnajovou Minihru (tipovačku pro tebe, viz blok „Minihry") — bez uzavření aplikace turnajovou Minihru vůbec nenabídne.`},
 {q:`Jde uzavřený turnaj zase odemknout?`,
- a:`Ne — appka to nenabízí, uzavření turnaje je jednosměrná akce. Než turnaj uzavřeš, zkontroluj si tedy radši, že v něm máš všechny zápasy, které tam patří.`,
+ a:`Ne — aplikace to nenabízí, uzavření turnaje je jednosměrná akce. Než turnaj uzavřeš, zkontroluj si tedy radši, že v něm máš všechny zápasy, které tam patří.`,
  kw:"odemknutí zpět turnaj nevratné"},
 ]},
 
 {title:"Minihry",icon:"🎮",qa:[
 {q:`Co jsou Minihry?`,
- a:`Minihry appku na chvíli promění v tipovací hru pro tebe jako trenéra. Po hromadném testování, po zápase nebo po uzavření turnaje appka připraví krátkou minihru — nejdřív si tipneš (třeba kdo měl v zápase nejvíc bodů), appka pak ukáže skutečný výsledek, vždycky jako celé pořadí/kompletní obrázek, ne jen jestli ses trefila. Je to čistě bonus na pobavení a otestování vlastního odhadu, na fungování appky to nemá žádný vliv.`},
-{q:`Kdy appka minihru vytvoří?`,
- a:`Automaticky po třech typech událostí: po zapsání „Skupinového testu" (testovací minihra), po dokončení zápasu tlačítkem „Ukončit zápas" (zápasová minihra), a po „🏁 Uzavření turnaje" (turnajová minihra). Appka minihru nikdy nevytvoří sama od sebe bez některé z těchhle akcí.<br>Když zápas, turnaj nebo testování smažeš, zmizí i jeho minihra.`},
+ a:`Minihry aplikaci na chvíli promění v tipovací hru pro tebe jako trenéra. Po hromadném testování, po zápase nebo po uzavření turnaje aplikace připraví krátkou minihru — nejdřív si tipneš (třeba kdo měl v zápase nejvíc bodů), aplikace pak ukáže skutečný výsledek, vždycky jako celé pořadí/kompletní obrázek, ne jen jestli ses trefila. Je to čistě bonus na pobavení a otestování vlastního odhadu, na fungování aplikace to nemá žádný vliv.`},
+{q:`Kdy aplikace minihru vytvoří?`,
+ a:`Automaticky po třech typech událostí: po zapsání „Skupinového testu" (testovací minihra), po dokončení zápasu tlačítkem „Ukončit zápas" (zápasová minihra), a po „🏁 Uzavření turnaje" (turnajová minihra). Aplikace minihru nikdy nevytvoří sama od sebe bez některé z těchhle akcí.<br>Když zápas, turnaj nebo testování smažeš, zmizí i jeho minihra.`},
 {q:`Jak minihru najdu a spustím?`,
- a:`V menu ⋮ klikni na „🎮 Minihry" — appka ukáže seznam všech minihry, neodehrané nahoře, odehrané appka zešedí. Kliknutím na konkrétní minihru ji spustíš.`},
+ a:`V menu ⋮ klikni na „🎮 Minihry" — aplikace ukáže seznam všech minihry, neodehrané nahoře, odehrané aplikace zešedí. Kliknutím na konkrétní minihru ji spustíš.`},
 {q:`Co znamená barevná tečka u ikony ⋮?`,
- a:`Signalizuje, že čeká aspoň jedna neodehraná minihra — nemusíš tedy chodit do menu jen zkontrolovat, appka na to sama upozorní.`},
-{q:`Co appka ukáže po odehrání minihry?`,
- a:`Appka nejdřív appka ukáže tvoje tipy k potvrzení a pak rovnou celý skutečný výsledek jako kompletní obrázek (třeba kompletní pořadí, ne jen zda ses trefila do jednoho tipu) — tak, aby ses i z minihry vždycky dozvěděla něco navíc o reálném dění v týmu, ne jen svoje skóre v tipovačce.`},
-{q:`Musím minihru odehrát, aby appka fungovala dál normálně?`,
- a:`Ne, vůbec — Minihry jsou čistě volitelný bonus. Appka nijak nezablokuje žádnou jinou funkci kvůli neodehrané minihře, klidně jich může čekat rozehraných víc najednou, aniž by to appku v čemkoli omezilo.`},
+ a:`Signalizuje, že čeká aspoň jedna neodehraná minihra — nemusíš tedy chodit do menu jen zkontrolovat, aplikace na to sama upozorní.`},
+{q:`Co aplikace ukáže po odehrání minihry?`,
+ a:`Aplikace nejdřív aplikace ukáže tvoje tipy k potvrzení a pak rovnou celý skutečný výsledek jako kompletní obrázek (třeba kompletní pořadí, ne jen zda ses trefila do jednoho tipu) — tak, aby ses i z minihry vždycky dozvěděla něco navíc o reálném dění v týmu, ne jen svoje skóre v tipovačce.`},
+{q:`Musím minihru odehrát, aby aplikace fungovala dál normálně?`,
+ a:`Ne, vůbec — Minihry jsou čistě volitelný bonus. Aplikace nijak nezablokuje žádnou jinou funkci kvůli neodehrané minihře, klidně jich může čekat rozehraných víc najednou, aniž by to aplikaci v čemkoli omezilo.`},
 ]},
 
 ]},
 {group:"Přehledy",blocks:[
 
 {title:"Přehled týmu",icon:"📊",qa:[
-{q:`Co appka ukazuje v „Přehledu týmu"?`,
- a:`Appka tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“: kapsle se dvěma díly „Aktuální tým“ a „Celá databáze“ (vybraný je zvýrazněný) a vedle počet hráček v normě. Klepnutím na druhý díl normu přepneš.`},
+{q:`Co aplikace ukazuje v „Přehledu týmu"?`,
+ a:`Aplikace tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“: kapsle se dvěma díly „Aktuální tým“ a „Celá databáze“ (vybraný je zvýrazněný) a vedle počet hráček v normě. Klepnutím na druhý díl normu přepneš.`},
 {q:`Jak podle sloupce seřadím hráčky (třeba podle Overallu)?`,
- a:`Klikni přímo na název sloupce v záhlaví tabulky — appka podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně).`},
+ a:`Klikni přímo na název sloupce v záhlaví tabulky — aplikace podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně).`},
 {q:`Co znamená hvězdička/horní index u čísla v tabulce?`,
- a:`Je to úplně stejná informace jako na kartě hráčky (viz blok „Overall") — jen appka ji tady kreslí jako malý horní index * místo velké hvězdičky, protože v tabulce je míň místa. Značí, že appka měla u téhle hráčky k dispozici míň naměřených metrik než u nejtestovanější hráčky v týmu.`},
+ a:`Je to úplně stejná informace jako na kartě hráčky (viz blok „Overall") — jen aplikace ji tady kreslí jako malý horní index * místo velké hvězdičky, protože v tabulce je míň místa. Značí, že aplikace měla u téhle hráčky k dispozici míň naměřených metrik než u nejtestovanější hráčky v týmu.`},
 {q:`Co znamenají ikonky 🎯/▫️ vedle sloupce „Útok %"?`,
- a:`Appka jimi značí, na jaké VARIANTĚ útoku appka zrovna to konkrétní číslo počítala — 🎯 = těžší varianta („Útok na cíl"), ▫️ = lehčí varianta („Útok do pole"). Souvisí to se sloučenou metrikou Útok z bloku „Herní testy" — appka tu jen navíc ukazuje, na jaké obtížnosti hráčka zrovna je.`},
+ a:`Aplikace jimi značí, na jaké VARIANTĚ útoku aplikace zrovna to konkrétní číslo počítala — 🎯 = těžší varianta („Útok na cíl"), ▫️ = lehčí varianta („Útok do pole"). Souvisí to se sloučenou metrikou Útok z bloku „Herní testy" — aplikace tu jen navíc ukazuje, na jaké obtížnosti hráčka zrovna je.`},
 {q:`Co znamená ikona hodin nebo papíru u jména hráčky v Přehledu?`,
  a:`Stejné upozornění jako v seznamu hráček: hodiny = poslední testování je starší než 90 dní (žluté) nebo 180 dní (červené), prázdný papír = hráčka zatím nemá žádný test. Je to tiché připomenutí „tuhle bys měl zase otestovat", ne chyba. Zmizí po zapsání nového testování (+ Test nebo ⋮ → Skupinový test).`,
  kw:"stará data tečka ikona hodiny papír upozornění zastaralé testování přetestovat"},
 ]},
 
 {title:"Porovnání",icon:"⚖",qa:[
-{q:`Co appka umí v „Porovnání"?`,
- a:`Appka vedle sebe postaví víc hráček najednou v pavoučích i sloupcových grafech, takže vidíš jejich profily přímo v kontrastu, místo abys je porovnával z paměti mezi jednotlivými kartami.`},
+{q:`Co aplikace umí v „Porovnání"?`,
+ a:`Aplikace vedle sebe postaví víc hráček najednou v pavoučích i sloupcových grafech, takže vidíš jejich profily přímo v kontrastu, místo abys je porovnával z paměti mezi jednotlivými kartami.`},
 {q:`Jak vyberu, které hráčky chci porovnat?`,
- a:`V obrazovce Porovnání appka nabízí seznam všech aktivních hráček k zaškrtnutí — zaškrtneš, koho chceš vidět, appka grafy hned překreslí podle aktuálního výběru.`},
+ a:`V obrazovce Porovnání aplikace nabízí seznam všech aktivních hráček k zaškrtnutí — zaškrtneš, koho chceš vidět, aplikace grafy hned překreslí podle aktuálního výběru.`},
 {q:`Kolik hráček jde porovnat najednou?`,
- a:`Appka žádný horní limit nemá — dřív appka počet omezovala na 6, ale appka tohle omezení zrušila, takže dnes jde porovnat klidně celý tým najednou (appka pro rozlišení barev v grafu má připravenou paletu 16 odstínů).`},
+ a:`Aplikace žádný horní limit nemá — dřív aplikace počet omezovala na 6, ale aplikace tohle omezení zrušila, takže dnes jde porovnat klidně celý tým najednou (aplikace pro rozlišení barev v grafu má připravenou paletu 16 odstínů).`},
 ]},
 
 {title:"Domovská obrazovka",icon:"🏠",qa:[
-{q:`Co appka ukazuje po otevření?`,
- a:`Appka ukáže mřížku karet všech aktivních hráček (iniciály, jméno, Overall skóre, odznaky) a nahoře k tomu průměr celého týmu — je to appčin „výchozí bod" po každém otevření appky, viz taky blok „Pohyb v appce". Ve vzhledu Trenéra má každá karta místo iniciál koláž dovedností: prstenec milníků, uprostřed to, v čem hráčka vyniká, a kolem další silné stránky a odznaky. Proto pod číslem chybí samostatný řádek s odznaky. Co který symbol znamená, najdeš v Nápovědě „Vzhled Trenéra“ → „Co znamená kolečko u hráčky“.`,
+{q:`Co aplikace ukazuje po otevření?`,
+ a:`Aplikace ukáže mřížku karet všech aktivních hráček (iniciály, jméno, Overall skóre, odznaky) a nahoře k tomu průměr celého týmu — je to „výchozí bod" aplikace po každém otevření aplikace, viz taky blok „Pohyb v aplikaci". Ve vzhledu Trenéra má každá karta místo iniciál koláž dovedností: prstenec milníků, uprostřed to, v čem hráčka vyniká, a kolem další silné stránky a odznaky. Proto pod číslem chybí samostatný řádek s odznaky. Co který symbol znamená, najdeš v Nápovědě „Vzhled Trenéra“ → „Co znamená kolečko u hráčky“.`,
  kw:"domů mřížka karty iniciály koláž kolečko odznaky"},
 {q:`Co znamená „Průměr týmu" nahoře?`,
- a:`Appka tu zprůměruje Overall všech aktivních hráček, co ho appka aspoň nějaký dokáže spočítat (hráčky bez žádných dat appka do průměru nezahrnuje) — jedno rychlé číslo o stavu celého týmu, aniž bys musel sčítat/porovnávat jednotlivé karty ručně.`},
+ a:`Aplikace tu zprůměruje Overall všech aktivních hráček, co ho aplikace aspoň nějaký dokáže spočítat (hráčky bez žádných dat aplikace do průměru nezahrnuje) — jedno rychlé číslo o stavu celého týmu, aniž bys musel sčítat/porovnávat jednotlivé karty ručně.`},
 {q:`Co znamená karta s pomlčkou „–" místo čísla?`,
- a:`Appka tam pomlčku ukáže u hráčky, které zatím vůbec nejde spočítat Overall — nemá totiž ještě žádná data ani v jednom ze tří bloků (Fyzické/Herní/Zápasy). Jakmile appka zaznamená první data, pomlčka se změní na skutečné číslo.`},
+ a:`Aplikace tam pomlčku ukáže u hráčky, které zatím vůbec nejde spočítat Overall — nemá totiž ještě žádná data ani v jednom ze tří bloků (Fyzické/Herní/Zápasy). Jakmile aplikace zaznamená první data, pomlčka se změní na skutečné číslo.`},
 {q:`Jak se z domovské obrazovky dostanu na konkrétní hráčku?`,
- a:`Stačí kliknout přímo na její kartičku v mřížce — appka rovnou otevře její kartu. Karta hráčky se vždycky otevře od začátku, tedy nahoře, ať ji otevřeš z Domů, ze seznamu ☰, z Přehledu týmu nebo tlačítkem Zpět. Když u téže hráčky jen přepneš tab (Fyzické, Herní, Pavouk…), zůstaneš tam, kde jsi byl.`,
+ a:`Stačí kliknout přímo na její kartičku v mřížce — aplikace rovnou otevře její kartu. Karta hráčky se vždycky otevře od začátku, tedy nahoře, ať ji otevřeš z Domů, ze seznamu ☰, z Přehledu týmu nebo tlačítkem Zpět. Když u téže hráčky jen přepneš tab (Fyzické, Herní, Pavouk…), zůstaneš tam, kde jsi byl.`,
  kw:"otevřít hráčku karta nahoře začátek posun scroll"},
 ]},
 
@@ -7915,57 +7915,57 @@ const HELP_DATA=[
 
 {title:"Uzavření sezóny a Sezónní shrnutí (Wrapped)",icon:"📦",qa:[
 {q:`Co znamená „Uzavřít sezónu" a proč to udělat?`,
- a:`Je to appčin způsob, jak na konci sezóny (třeba v létě) uklidit — vybereš, které hráčky do další sezóny nepokračují (odešly, přestoupily...), appka je archivuje (viz blok „Hráčky") a zbytek zůstává jako aktivní tým do další sezóny. Zároveň appka tímhle krokem appce zapíše, KDY přesně nová sezóna začala — což appka pak používá třeba k tomu, aby do aktuálního Overallu a norem nezapočítávala zápasy z minulé sezóny (viz otázka o zápasech níž).`},
+ a:`Je to způsob, jak na konci sezóny (třeba v létě) uklidit — vybereš, které hráčky do další sezóny nepokračují (odešly, přestoupily...), aplikace je archivuje (viz blok „Hráčky") a zbytek zůstává jako aktivní tým do další sezóny. Zároveň aplikace tímhle krokem aplikaci zapíše, KDY přesně nová sezóna začala — což aplikace pak používá třeba k tomu, aby do aktuálního Overallu a norem nezapočítávala zápasy z minulé sezóny (viz otázka o zápasech níž).`},
 {q:`Co se stane s daty hráček po uzavření sezóny?`,
- a:`Archivovaným hráčkám appka žádná data neničí — jen zmizí z aktivního seznamu a přehledů, ale všechna jejich čísla appka podrží dál v databázi (jde je i kdykoli „↩ Obnovit", viz blok „Hráčky"). Aktivní hráčky, co pokračují dál, appka nechá úplně beze změny.`},
+ a:`Archivovaným hráčkám aplikace žádná data neničí — jen zmizí z aktivního seznamu a přehledů, ale všechna jejich čísla aplikace podrží dál v databázi (jde je i kdykoli „↩ Obnovit", viz blok „Hráčky"). Aktivní hráčky, co pokračují dál, aplikace nechá úplně beze změny.`},
 {q:`Co je „Sezónní shrnutí" (Wrapped)?`,
- a:`Appka po uzavření sezóny nabídne efektní přehled celé uplynulé sezóny ve stylu ročního shrnutí ze streamovacích appek (odtud i přezdívka „Wrapped") — appka tam prolistuje pár obrazovek se zajímavostmi jako růst týmu, osobní rekordy, nejvýraznější zlepšení a podobně.`},
+ a:`Aplikace po uzavření sezóny nabídne efektní přehled celé uplynulé sezóny ve stylu ročního shrnutí ze streamovacích appek (odtud i přezdívka „Wrapped") — aplikace tam prolistuje pár obrazovek se zajímavostmi jako růst týmu, osobní rekordy, nejvýraznější zlepšení a podobně.`},
 {q:`Jak se ke starému Sezónnímu shrnutí vrátím později?`,
- a:`V menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón" appka u každé uzavřené sezóny nabízí tlačítko „📊 Shrnutí" — kliknutím appka Wrapped znovu přehraje, i kdyby od uzavření uplynula dlouhá doba.`},
+ a:`V menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón" aplikace u každé uzavřené sezóny nabízí tlačítko „📊 Shrnutí" — kliknutím aplikace Wrapped znovu přehraje, i kdyby od uzavření uplynula dlouhá doba.`},
 {q:`Co je „Archiv sezón"?`,
- a:`Appčin přehled všech dosavadních uzavřených sezón i hráček, co appka do nich archivovala — najdeš ho v menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón". Odtud appka nabízí i „↩ Obnovit" jednotlivé hráčky a „📊 Shrnutí" pro znovupřehrání Wrapped, viz výš.`},
+ a:`Přehled všech dosavadních uzavřených sezón i hráček, co aplikace do nich archivovala — najdeš ho v menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón". Odtud aplikace nabízí i „↩ Obnovit" jednotlivé hráčky a „📊 Shrnutí" pro znovupřehrání Wrapped, viz výš.`},
 {q:`Co se stane, když omylem uzavřu sezónu se špatnou sestavou hráček?`,
- a:`Appka se u malého výběru (2 a míň hráček k archivaci) sama dodatečně zeptá na kontrolu, ať se tahle chyba nestane snadno omylem. Pokud se přesto stane, není to bez záchrany — archivované appka vždycky jde jednotlivě „↩ Obnovit" zpátky do aktivního seznamu (viz blok „Hráčky"), takže i špatně uzavřenou sezónu jde ručně dodatečně opravit.`},
+ a:`Aplikace se u malého výběru (2 a míň hráček k archivaci) sama dodatečně zeptá na kontrolu, ať se tahle chyba nestane snadno omylem. Pokud se přesto stane, není to bez záchrany — archivované aplikace vždycky jde jednotlivě „↩ Obnovit" zpátky do aktivního seznamu (viz blok „Hráčky"), takže i špatně uzavřenou sezónu jde ručně dodatečně opravit.`},
 ]},
 
 {title:"PDF export",icon:"📄",qa:[
 {q:`Jak vygeneruju PDF report hráčky?`,
- a:`Na kartě hráčky klikni na tlačítko „📄 PDF" — appka připraví report a otevře standardní tiskové okno prohlížeče (viz další otázka).`},
-{q:`Co všechno appka do PDF zahrne?`,
- a:`Kompletní kartu hráčky pro tisk — grafy vývoje jednotlivých metrik (s referenčními čárkovanými čarami za aktuálně nejlepší výkon v týmu a v celé databázi, a zlatým rámečkem/trofejí, pokud hráčka zrovna vede v obojím), přehled odznaků, milníků a zápasovou sekci. Appka do PDF dává i informaci, podle jaké normy (Tým/Databáze, případně zamčená) čísla počítala, ať je report čitelný i bez appky samotné.`},
+ a:`Na kartě hráčky klikni na tlačítko „📄 PDF" — aplikace připraví report a otevře standardní tiskové okno prohlížeče (viz další otázka).`},
+{q:`Co všechno aplikace do PDF zahrne?`,
+ a:`Kompletní kartu hráčky pro tisk — grafy vývoje jednotlivých metrik (s referenčními čárkovanými čarami za aktuálně nejlepší výkon v týmu a v celé databázi, a zlatým rámečkem/trofejí, pokud hráčka zrovna vede v obojím), přehled odznaků, milníků a zápasovou sekci. Aplikace do PDF dává i informaci, podle jaké normy (Tým/Databáze, případně zamčená) čísla počítala, ať je report čitelný i bez aplikace samotné.`},
 {q:`Jak PDF vytisknu nebo uložím do telefonu?`,
- a:`Appka na PDF nepoužívá žádnou vlastní appku ani stahování — otevře úplně obyčejné tiskové okno prohlížeče (to samé, co uvidíš u tisku jakékoli webové stránky). V něm buď vybereš skutečnou tiskárnu, NEBO — pokud chceš PDF soubor místo papíru — zvolíš jako „tiskárnu" možnost „Uložit jako PDF" (na telefonu i počítači to prohlížeče běžně nabízí).`,
+ a:`Aplikace na PDF nepoužívá žádnou vlastní aplikaci ani stahování — otevře úplně obyčejné tiskové okno prohlížeče (to samé, co uvidíš u tisku jakékoli webové stránky). V něm buď vybereš skutečnou tiskárnu, NEBO — pokud chceš PDF soubor místo papíru — zvolíš jako „tiskárnu" možnost „Uložit jako PDF" (na telefonu i počítači to prohlížeče běžně nabízí).`,
  kw:"tisk uložení souboru print"},
-{q:`Proč appka u někoho v PDF ukazuje jen puntík místo čáry?`,
- a:`Stejný důvod jako v běžných grafech appky (viz blok „Jak číst grafy") — čáru jde nakreslit až mezi dvěma a víc měřeními, takže při jediném zatím naměřeném bodu appka logicky ukáže jen ten samotný bod.`},
+{q:`Proč aplikace u někoho v PDF ukazuje jen puntík místo čáry?`,
+ a:`Stejný důvod jako v běžných grafech aplikace (viz blok „Jak číst grafy") — čáru jde nakreslit až mezi dvěma a víc měřeními, takže při jediném zatím naměřeném bodu aplikace logicky ukáže jen ten samotný bod.`},
 ]},
 
 {title:"Zálohy a data",icon:"💾",qa:[
 {q:`Co je „Export JSON" a k čemu slouží?`,
- a:`Je to appčina záloha ÚPLNĚ VŠECH dat (hráčky, testy, zápasy, turnaje, nastavení...) do jednoho souboru, který appka umí kdykoli zase načíst zpátky (Import JSON). Na mobilu appka rovnou nabídne systémové sdílení (uložit do souborů, poslat sobě mailem...), na počítači appka soubor prostě stáhne. Je to jediná appčina záchranná síť pro data, viz blok „Co appka umí a jak s ní začít".`},
-{q:`Jak appku obnovím ze zálohy (Import JSON)?`,
- a:`V menu ⋮ → „💾 Data a zálohy" → „⬆ Importovat data (JSON)" vyber záložní soubor. Appka se před samotným importem VŽDYCKY zeptá na potvrzení, protože import KOMPLETNĚ PŘEPÍŠE všechna aktuální data appky tím, co je v souboru — appka si ale automaticky ještě před přepsáním uloží i tvůj PŮVODNÍ stav pro jistotu (viz další otázka). V potvrzení appka rovnou ukáže i „poslední data" (nejnovější datum, co appka v datech najde) zvlášť pro appku teď a zvlášť pro soubor, a pokud soubor vypadá STARŠÍ než to, co appka má právě teď, appka na to zvlášť červeně upozorní — ať omylem nepřepíšeš novější data starší zálohou (typicky při střídání appky mezi telefonem a počítačem).`,
+ a:`Je to záloha ÚPLNĚ VŠECH dat (hráčky, testy, zápasy, turnaje, nastavení...) do jednoho souboru, který aplikace umí kdykoli zase načíst zpátky (Import JSON). Na mobilu aplikace rovnou nabídne systémové sdílení (uložit do souborů, poslat sobě mailem...), na počítači aplikace soubor prostě stáhne. Je to jediná záchranná síť pro data, viz blok „Co aplikace umí a jak s ní začít".`},
+{q:`Jak aplikaci obnovím ze zálohy (Import JSON)?`,
+ a:`V menu ⋮ → „💾 Data a zálohy" → „⬆ Importovat data (JSON)" vyber záložní soubor. Aplikace se před samotným importem VŽDYCKY zeptá na potvrzení, protože import KOMPLETNĚ PŘEPÍŠE všechna aktuální data aplikace tím, co je v souboru — aplikace si ale automaticky ještě před přepsáním uloží i tvůj PŮVODNÍ stav pro jistotu (viz další otázka). V potvrzení aplikace rovnou ukáže i „poslední data" (nejnovější datum, co aplikace v datech najde) zvlášť pro aplikaci teď a zvlášť pro soubor, a pokud soubor vypadá STARŠÍ než to, co aplikace má právě teď, aplikace na to zvlášť červeně upozorní — ať omylem nepřepíšeš novější data starší zálohou (typicky při střídání aplikace mezi telefonem a počítačem).`,
  kw:"časový kontext datum starší novější telefon počítač"},
 {q:`Co je „Vrátit stav před posledním importem"?`,
- a:`Appka si při každém importu automaticky (bez ptaní) uloží stav appky TĚSNĚ PŘED přepsáním — tímhle tlačítkem se k němu jde vrátit, kdybys importoval omylem špatný soubor. Funguje to ale jen JEDNOU dozadu (appka drží jen ten úplně poslední stav před importem, ne celou historii) a jen do dalšího importu, který tenhle bezpečnostní záznam zase přepíše.`,
+ a:`Aplikace si při každém importu automaticky (bez ptaní) uloží stav aplikace TĚSNĚ PŘED přepsáním — tímhle tlačítkem se k němu jde vrátit, kdybys importoval omylem špatný soubor. Funguje to ale jen JEDNOU dozadu (aplikace drží jen ten úplně poslední stav před importem, ne celou historii) a jen do dalšího importu, který tenhle bezpečnostní záznam zase přepíše.`,
  kw:"undo import vrácení jedna úroveň"},
 {q:`Co udělá „Resetovat paměť" — jde to vrátit zpátky?`,
- a:`Tohle nenávratně smaže ÚPLNĚ VŠECHNA data appky — appka tě dvakrát varuje (jednou obecně, jednou s nabídkou stáhnout si zálohu jako úplně poslední záchranu, než ke smazání vůbec dojde) a bez zálohy to appka vrátit neumí. Používej to jen když chceš appku opravdu začít úplně od nuly.`,
+ a:`Tohle nenávratně smaže ÚPLNĚ VŠECHNA data aplikace — aplikace tě dvakrát varuje (jednou obecně, jednou s nabídkou stáhnout si zálohu jako úplně poslední záchranu, než ke smazání vůbec dojde) a bez zálohy to aplikace vrátit neumí. Používej to jen když chceš aplikaci opravdu začít úplně od nuly.`,
  kw:"smazání všeho nevratné vymazání"},
-{q:`Jak často bych měla appku zálohovat?`,
- a:`Appka sama doporučuje aspoň jednou za 7 dní — a sama tě na to i upozorní připomínkou, pokud tenhle interval přesáhneš (viz blok „Co appka umí a jak s ní začít"). Nejbezpečnější je zálohovat vždycky po větší dávce nových dat, třeba hned po hromadném testování nebo po turnaji.`},
+{q:`Jak často bych měla aplikaci zálohovat?`,
+ a:`Aplikace sama doporučuje aspoň jednou za 7 dní — a sama tě na to i upozorní připomínkou, pokud tenhle interval přesáhneš (viz blok „Co aplikace umí a jak s ní začít"). Nejbezpečnější je zálohovat vždycky po větší dávce nových dat, třeba hned po hromadném testování nebo po turnaji.`},
 ]},
 
 {title:"Nastavení",icon:"⚙",qa:[
-{q:`Co jde v appce nastavit?`,
- a:`V menu ⋮ → „⚙ Nastavení" appka nabízí čtyři sekce: „💪 Fyzické metriky", „🎯 Herní metriky", „🎖 Milníky" a „🏅 Odznaky" — v každé jde přidávat, upravovat a zapínat/vypínat jednotlivé položky, co appka měří a nabízí.`},
+{q:`Co jde v aplikaci nastavit?`,
+ a:`V menu ⋮ → „⚙ Nastavení" aplikace nabízí čtyři sekce: „💪 Fyzické metriky", „🎯 Herní metriky", „🎖 Milníky" a „🏅 Odznaky" — v každé jde přidávat, upravovat a zapínat/vypínat jednotlivé položky, co aplikace měří a nabízí.`},
 {q:`Jak vypnu nebo zapnu konkrétní fyzickou nebo herní metriku?`,
- a:`V příslušné sekci Nastavení appka u každé metriky ukazuje malý přepínač — kliknutím ji zapneš/vypneš. Appka vypnuté metriky sbalí do „Vypnuté metriky" na konci seznamu, ať ti aktivní nepřehlušují.`},
+ a:`V příslušné sekci Nastavení aplikace u každé metriky ukazuje malý přepínač — kliknutím ji zapneš/vypneš. Aplikace vypnuté metriky sbalí do „Vypnuté metriky" na konci seznamu, ať ti aktivní nepřehlušují.`},
 {q:`Co se stane s už naměřenými daty, když metriku vypnu?`,
- a:`Appka nic neztratí ani nesmaže — vypnutí jen appce řekne, ať tuhle metriku dál nenabízí ve formulářích a grafech. Stará naměřená data appka podrží beze změny a znovu je celá uvidíš, jakmile metriku znovu zapneš.`,
+ a:`Aplikace nic neztratí ani nesmaže — vypnutí jen aplikaci řekne, ať tuhle metriku dál nenabízí ve formulářích a grafech. Stará naměřená data aplikace podrží beze změny a znovu je celá uvidíš, jakmile metriku znovu zapneš.`,
  kw:"data po vypnutí metriky zachovány"},
 {q:`Jak přidám nový milník nebo odznak?`,
- a:`V příslušné sekci Nastavení („🎖 Milníky" nebo „🏅 Odznaky") appka nabízí formulář na přidání nové položky — u milníku stačí název, u odznaku appka navíc nabízí emoji ikonku a barvu rámečku (i volitelně „speciální" třpytivý vzhled jako má 👑 Kapitánka).`},
+ a:`V příslušné sekci Nastavení („🎖 Milníky" nebo „🏅 Odznaky") aplikace nabízí formulář na přidání nové položky — u milníku stačí název, u odznaku aplikace navíc nabízí emoji ikonku a barvu rámečku (i volitelně „speciální" třpytivý vzhled jako má 👑 Kapitánka).`},
 ]},
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
@@ -8056,7 +8056,7 @@ function helpSearch(query){
   countEl.textContent=hits.length?`Nalezeno: ${hits.length}`:"Nic nenalezeno — zkus jiné slovo";
   box.innerHTML=hits.length
     ?hits.map(h=>helpQaHtml(h.qa,`${h.blockIcon} ${h.blockTitle}`)).join("")
-    :`<div class="no-data">Appka hledá napříč všemi otázkami i odpověďmi ve všech blocích — zkus třeba jiné slovo nebo jen jeho část.</div>`;
+    :`<div class="no-data">Aplikace hledá napříč všemi otázkami i odpověďmi ve všech blocích — zkus třeba jiné slovo nebo jen jeho část.</div>`;
 }
 function openHelp(){
   openModal(`<h2>❓ Nápověda</h2>
