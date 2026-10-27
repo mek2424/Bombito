@@ -2084,33 +2084,35 @@ function openBadges(){
   }).join("");
   openModal(`<h2>🏅 Odznaky</h2><p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${p.name}</p><div class="btg">${btns}</div><div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
-// Kolo 60: automatické odznaky. Přijímačka = průměrný příjem v zápasech aktuální sezóny
-// víc než PRIJIMACKA_PCT % (sdružené příjmy z posledních OVERALL_MATCH_CAP zápasů, stejně jako
-// v Overallu). Proti náhodě aspoň PRIJIMACKA_MIN_ZAPASY zápasů s příjmem a PRIJIMACKA_MIN_N příjmů.
+// Kolo 60: automatické odznaky. Kolo 61 (Mek 27. 10.): Přijímačka = podíl DOBRÝCH příjmů
+// (známka 1 nebo 3) v zápasech aktuální sezóny aspoň na hranici z Nastavení (b.hranice, výchozí
+// PRIJIMACKA_PCT). Sdružené příjmy z posledních OVERALL_MATCH_CAP zápasů jako v Overallu. Pozor:
+// karta a živý zápas ukazují kvalitu (recvPct), ne podíl dobrých. Proti náhodě pevně aspoň
+// PRIJIMACKA_MIN_ZAPASY zápasů s příjmem a PRIJIMACKA_MIN_N příjmů.
 // Odznak se přidá i odebere sám (při každém překreslení), ručně se zapnout nedá.
 const PRIJIMACKA_PCT=55,PRIJIMACKA_MIN_N=8,PRIJIMACKA_MIN_ZAPASY=OVERALL_GAP_MIN_MATCHES;
 function prijemSezona(p){
   const ms=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'prijem')!=null).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
-  const pool=playerReceptionPool(p,ms);
-  return pool?{pct:pool.avg,n:pool.n,zapasy:ms.length}:null;
+  let dobre=0,n=0;
+  ms.forEach(m=>m.sets.forEach(s=>s.actions.forEach(a=>{
+    if(a.pid===p.id&&a.type==='prijem'){n++;if(a.value<=3)dobre++;}
+  })));
+  return n?{pct:Math.round(dobre/n*100),n,zapasy:ms.length}:null;
 }
+function prijimackaHranice(b){return b&&b.hranice>=30&&b.hranice<=95?b.hranice:PRIJIMACKA_PCT;}
+function prijemDost(r){return !!r&&r.zapasy>=PRIJIMACKA_MIN_ZAPASY&&r.n>=PRIJIMACKA_MIN_N;}
 function autoBadgeOk(p,b){
   if(b.auto!=='prijem')return false;
   const r=prijemSezona(p);
-  return !!r&&r.zapasy>=PRIJIMACKA_MIN_ZAPASY&&r.n>=PRIJIMACKA_MIN_N&&r.pct>PRIJIMACKA_PCT;
+  return prijemDost(r)&&r.pct>=prijimackaHranice(b);
 }
-// Barva Přijímačky podle T-skóre příjmu (Mek 27. 10.): stejná pásma jako štítky T a Overall —
-// T 75+ zlatá, T 60–74 zelená, jinak barva odznaku z nastavení. T se počítá jako v Overallu
-// (sdružené příjmy, uhlazení shrinkPct, aktivní norma).
-function prijemT(p,norms){
-  const r=prijemSezona(p);if(!r)return null;
-  norms=norms||activeNorms();
-  return tRaw(shrinkPct(r.pct,r.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM),norms.prijem_zapas);
-}
-function badgeView(b,p,norms){
+// Barva Přijímačky podle odstupu od hranice (kolo 61, místo T-skóre): o 30 bodů a víc nad
+// hranicí zlatá, o 15 a víc zelená, jinak barva odznaku z nastavení.
+function badgeView(b,p){
   if(!b||b.auto!=='prijem'||!p)return b;
-  const t=prijemT(p,norms);if(t==null)return b;
-  const c=t>=75?CACC:t>=60?CGREEN:null;
+  const r=prijemSezona(p);if(!prijemDost(r))return b;
+  const d=r.pct-prijimackaHranice(b);
+  const c=d>=30?CACC:d>=15?CGREEN:null;
   return c?{...b,color:c}:b;
 }
 function syncAutoBadges(){
@@ -2460,6 +2462,7 @@ function editBadge(i){
   openModal(`<h2>✎ Odznak</h2>
     <div class="fr"><div class="fg"><label>${isTrener()?'Emoji pro klasický vzhled':'Emoji'}</label><input id="ei2" value="${b.icon}" maxlength="4"></div><div class="fg"><label>Název</label><input id="eb" value="${b.label}"></div></div>
     ${faPickHtml('efa',b.fa||'')}
+    ${b.auto==='prijem'?prijimackaPoleHtml(b):''}
     <div class="fg"><label>Barva rámečku</label><div class="swatch-row">${BADGE_COLORS.map(c=>`<div class="swatch ${c===curColor?"sel":""}" style="background:${c}" onclick="selSwatch(this,'editBadgeColor','${c}')"></div>`).join("")}</div><input type="hidden" id="editBadgeColor" value="${curColor}"></div>
     <div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem"><input type="checkbox" id="esp" style="width:auto" ${b.special?"checked":""}> Speciální (zlatý shimmer)</label></div>
     <div class="ma"><button class="btn btn-o" onclick="openBadgeEd()">← Zpět</button><button class="btn btn-p" onclick="saveBadge(${i})">Uložit</button></div>`);
@@ -2477,7 +2480,28 @@ function pickFa(el,inputId){
   if(on){el.classList.add('sel');el.setAttribute('aria-pressed','true');}
   document.getElementById(inputId).value=on?el.dataset.fa:'';
 }
-function saveBadge(i){const b=S.config.badges[i];const fa=document.getElementById("efa");if(fa)b.fa=fa.value||'';b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;save();toast("Uloženo ✓");openBadgeEd();renderPL();}
+// Kolo 61: hranice Přijímačky (30–95 % po 5) a náhled z vlastních dat: kdo by odznak měl,
+// průměr týmu (hráčky s dost příjmy) a návrh „nejlepší čtvrtina“ (hranice, kterou splní horní
+// čtvrtina). Kategorie podle věku/pohlaví schválně ne: pro škálu 1-3-5 nejsou spolehlivé normy.
+function prijimackaPoleHtml(b){
+  const h=prijimackaHranice(b);
+  const opts=[];for(let v=30;v<=95;v+=5)opts.push(`<option value="${v}"${v===h?' selected':''}>${v} %</option>`);
+  return`<div class="fg"><label>Hranice – dobré příjmy (1 nebo 3)</label><select id="eprh" onchange="prijimackaNahled()">${opts.join('')}</select><div id="prhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${prijimackaNahledHtml(h)}</div></div>`;
+}
+function prijimackaNahledHtml(h){
+  const rs=S.players.filter(p=>!p.archived).map(p=>({p,r:prijemSezona(p)})).filter(x=>prijemDost(x.r)).sort((a,b)=>b.r.pct-a.r.pct);
+  if(!rs.length)return'Zatím žádná hráčka nemá dost příjmů.';
+  const maji=rs.filter(x=>x.r.pct>=h);
+  const prumer=Math.round(mean(rs.map(x=>x.r.pct)));
+  const k=Math.max(1,Math.round(rs.length/4));
+  const ctvrt=Math.min(95,Math.max(30,Math.floor(rs[k-1].r.pct/5)*5));
+  return`<div>Odznak by měly (${maji.length} z ${rs.length}): ${maji.length?maji.map(x=>`${x.p.name} ${x.r.pct} %`).join(', '):'nikdo'}</div>
+    <div>Průměr týmu: ${prumer} %</div>
+    <div>Nejlepší čtvrtina: <button type="button" class="btn btn-o sm" onclick="prijimackaNastav(${ctvrt})">${ctvrt} %</button></div>`;
+}
+function prijimackaNahled(){const el=document.getElementById('prhNahled'),sel=document.getElementById('eprh');if(el&&sel)el.innerHTML=prijimackaNahledHtml(parseInt(sel.value));}
+function prijimackaNastav(v){const sel=document.getElementById('eprh');if(sel){sel.value=String(v);prijimackaNahled();}}
+function saveBadge(i){const b=S.config.badges[i];const fa=document.getElementById("efa");if(fa)b.fa=fa.value||'';const prh=document.getElementById("eprh");if(prh&&b.auto==='prijem'){b.hranice=parseInt(prh.value)||PRIJIMACKA_PCT;}b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;save();toast("Uloženo ✓");openBadgeEd();if(prh)render();else renderPL();}
 function addPhys(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.physical.push({id:"m_"+Date.now(),label,unit:document.getElementById("nu")?.value.trim()||"",lowerBetter:document.getElementById("nlb")?.checked||false,spider:document.getElementById("nsp")?.checked!==false,showGraph:document.getElementById("nsg")?.checked!==false,active:true});save();toast("Přidáno ✓");openPhysEd();}
 function addGame(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.game.push({id:"m_"+Date.now(),label,defaultMax:parseInt(document.getElementById("nmax")?.value)||15,active:true});save();toast("Přidáno ✓");openGameEd();}
 function addMil(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.milestones.push({id:"m_"+Date.now(),label,active:true});save();toast("Přidáno ✓");openMilEd();}
@@ -7257,7 +7281,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka (obrana v poli) = ruce chytající míč, Hecířka = megafon, Kapitánka = koruna, Přijímačka = šipky mířící do středu (přesnost). Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
  kw:"odznak ikona font awesome emoji trenér vzhled vybrat ikonu koruna megafon"},
 {q:`Jak funguje odznak Přijímačka?`,
- a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Hráčka ho má, dokud má v zápasech aktuální sezóny průměrný příjem víc než 55 %. Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když průměr klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br>Barva odznaku ukazuje T-skóre příjmu vůči zvolené normě: zlatá = T 75 a víc, zelená = T 60–74, jinak fialová. Název, emoji, ikonu i výchozí barvu změníš v Nastavení → Odznaky. Když odznak smažeš, už se sám nevrátí.`,
+ a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Rozhoduje <b>podíl dobrých příjmů</b>: kolik procent příjmů v zápasech aktuální sezóny dostalo známku 1 nebo 3. Hráčka odznak má, dokud je tento podíl aspoň na hranici, kterou nastavíš (výchozí 55 %). Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když podíl klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br>Pozor, karta hráčky a živý zápas ukazují u příjmu <b>kvalitu</b> (1 = 100 %, 3 = 50 %, 5 = 0 %), ne podíl dobrých příjmů, proto se čísla liší.<br><b>Hranice:</b> Nastavení → Odznaky → ✎ u Přijímačky, pole „Hranice – dobré příjmy (1 nebo 3)“, od 30 do 95 % po 5. Pod polem hned vidíš, které hráčky by odznak při zvolené hranici měly (počítají se jen ty s dost příjmy), průměr týmu a návrh „Nejlepší čtvrtina“: hranici, kterou splní zhruba čtvrtina nejlepších. Klepnutím na návrh ho nastavíš. Po uložení se odznaky hned přepočítají. Hranice se ukládá k odznaku, takže je i v záloze. Normy podle věku nebo pro kluky a holky tu nejsou, protože pro známky 1-3-5 žádné spolehlivé neexistují; hranice vychází z tvých vlastních dat.<br><b>Barva</b> ukazuje, o kolik je hráčka nad hranicí: zlatá = o 30 bodů a víc, zelená = o 15 až 29 bodů, jinak fialová (barva odznaku). Název, emoji, ikonu i výchozí barvu změníš ve stejném okně. Když odznak smažeš, už se sám nevrátí.`,
  kw:"přijímačka příjem automatický odznak 55 % procent zápas sám barva"},
 {q:`Jak appka odznak hráčce přidělí?`,
  a:`Appka to nedělá sama automaticky (jedinou výjimkou je Přijímačka, viz výš) — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
