@@ -733,6 +733,8 @@ html.skin-trener .pdh>.kol{grid-column:1;grid-row:1/4;align-self:center;justify-
 html.skin-trener .home-card .kol{margin:4px 0 2px}
 html.skin-trener .m-ic{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border-radius:50%;background:var(--paper);color:var(--ink-soft);font-size:11px}
 html.skin-trener .m-ic.on{background:var(--court);color:var(--on-court)}
+html.skin-trener i.m-hi{display:block;margin-bottom:3px;font-size:11px}
+html.skin-trener i.m-hl{margin-right:6px}
 html.skin-trener .m-t{display:inline-block;flex-shrink:0;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--ok-bg);color:var(--ok-ink)}
 html.skin-trener .kol-hd{display:flex;align-items:center;gap:16px;margin:4px 0 12px}
 html.skin-trener .kol-hd h2{margin:0}
@@ -2084,20 +2086,18 @@ function openBadges(){
   }).join("");
   openModal(`<h2>🏅 Odznaky</h2><p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${p.name}</p><div class="btg">${btns}</div><div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
-// Kolo 60: automatické odznaky. Kolo 61 (Mek 27. 10.): Přijímačka = podíl DOBRÝCH příjmů
-// (známka 1 nebo 3) v zápasech aktuální sezóny aspoň na hranici z Nastavení (b.hranice, výchozí
-// PRIJIMACKA_PCT). Sdružené příjmy z posledních OVERALL_MATCH_CAP zápasů jako v Overallu. Pozor:
-// karta a živý zápas ukazují kvalitu (recvPct), ne podíl dobrých. Proti náhodě pevně aspoň
+// Kolo 60: automatické odznaky. Přijímačka = průměrná kvalita příjmu (recvPct: 1 = 100 %,
+// 3 = 50 %, 5 = 0 %) v zápasech aktuální sezóny aspoň na hranici z Nastavení (b.hranice, kolo 61,
+// výchozí PRIJIMACKA_PCT). Kolo 62 (Mek 27. 10.): zpět z podílu dobrých příjmů (1 nebo 3) na
+// kvalitu — jednička má vážit víc než trojka (Anna 6× 1/3 ze 10, ale kvalita jen 35 %).
+// Sdružené příjmy z posledních OVERALL_MATCH_CAP zápasů jako v Overallu. Proti náhodě pevně aspoň
 // PRIJIMACKA_MIN_ZAPASY zápasů s příjmem a PRIJIMACKA_MIN_N příjmů.
 // Odznak se přidá i odebere sám (při každém překreslení), ručně se zapnout nedá.
-const PRIJIMACKA_PCT=55,PRIJIMACKA_MIN_N=8,PRIJIMACKA_MIN_ZAPASY=OVERALL_GAP_MIN_MATCHES;
+const PRIJIMACKA_PCT=45,PRIJIMACKA_MIN_N=8,PRIJIMACKA_MIN_ZAPASY=OVERALL_GAP_MIN_MATCHES;
 function prijemSezona(p){
   const ms=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'prijem')!=null).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
-  let dobre=0,n=0;
-  ms.forEach(m=>m.sets.forEach(s=>s.actions.forEach(a=>{
-    if(a.pid===p.id&&a.type==='prijem'){n++;if(a.value<=3)dobre++;}
-  })));
-  return n?{pct:Math.round(dobre/n*100),n,zapasy:ms.length}:null;
+  const pool=playerReceptionPool(p,ms);
+  return pool?{pct:pool.avg,n:pool.n,zapasy:ms.length}:null;
 }
 function prijimackaHranice(b){return b&&b.hranice>=30&&b.hranice<=95?b.hranice:PRIJIMACKA_PCT;}
 function prijemDost(r){return !!r&&r.zapasy>=PRIJIMACKA_MIN_ZAPASY&&r.n>=PRIJIMACKA_MIN_N;}
@@ -2486,7 +2486,7 @@ function pickFa(el,inputId){
 function prijimackaPoleHtml(b){
   const h=prijimackaHranice(b);
   const opts=[];for(let v=30;v<=95;v+=5)opts.push(`<option value="${v}"${v===h?' selected':''}>${v} %</option>`);
-  return`<div class="fg"><label>Hranice – dobré příjmy (1 nebo 3)</label><select id="eprh" onchange="prijimackaNahled()">${opts.join('')}</select><div id="prhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${prijimackaNahledHtml(h)}</div></div>`;
+  return`<div class="fg"><label>Hranice – průměrná kvalita příjmu</label><select id="eprh" onchange="prijimackaNahled()">${opts.join('')}</select><div id="prhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${prijimackaNahledHtml(h)}</div></div>`;
 }
 function prijimackaNahledHtml(h){
   const rs=S.players.filter(p=>!p.archived).map(p=>({p,r:prijemSezona(p)})).filter(x=>prijemDost(x.r)).sort((a,b)=>b.r.pct-a.r.pct);
@@ -3074,7 +3074,7 @@ function spiderData(sess,norms,p){
   if(!sess)return null;
   const vys=calcVys(sess)||0;
   const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
-  const pL=[...physM.map(m=>m.label),"Výskok"];
+  const pL=[...physM.map(m=>m.label),"Výskok"],pI=[...physM.map(m=>m.id),"vyskok"];
   const pD=[...physM.map(m=>tScore(sess.physical?.[m.id],norms[m.id])),tScore(vys,norms["vyskok"])];
   // Kolo 21 — Útok jako jedna sloučená osa "Útok" (nahrazuje Kolo 20 řešení,
   // co jednu z os podle hráčky úplně schovávalo). Obě definice (utok_cil i
@@ -3097,7 +3097,8 @@ function spiderData(sess,norms,p){
     return tScore(gamePct(gameScore(sess.game,mid)),norms[mid]);
   });
   const atkIdx=gm.findIndex(m=>m.id==="utok_merged");
-  return{pL,pD,gL,gD,atkIdx,atkVariant};
+  const gI=gm.map(m=>m.id==="utok_merged"?"utok_cil":m.id);
+  return{pL,pD,gL,gD,atkIdx,atkVariant,pI,gI};
 }
 function mkRadar(id,labels,cur,prev,atk){
   const cv=document.getElementById(id);if(!cv)return;
@@ -3390,8 +3391,8 @@ function renderCmp(){
   const phAct=S.config.physical.filter(m=>m.active!==false&&m.id!=="dosah_vyskoku"&&m.id!=="dosah");
   const gaAct=S.config.game.filter(m=>m.active!==false);
   const milAct=S.config.milestones.filter(m=>m.active!==false);
-  const phChs=phAct.map(m=>`<div class="card"><h3>${m.label} (${m.unit})</h3><div class="cw"><canvas id="c_ph_${m.id}"></canvas></div></div>`).join("");
-  const gaChs=gaAct.map(m=>`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
+  const phChs=phAct.map(m=>`<div class="card"><h3>${metricHeadIco(m.id)}${m.label} (${m.unit})</h3><div class="cw"><canvas id="c_ph_${m.id}"></canvas></div></div>`).join("");
+  const gaChs=gaAct.map(m=>`<div class="card"><h3>${metricHeadIco(m.id)}${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
   const milTbl=milAct.length?`<div class="card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse">
     <tr><th style="text-align:left;padding-bottom:8px;font-size:0.6rem;letter-spacing:1px;color:var(--gm)">MILNÍK</th>${sel.map((p,i)=>`<th style="text-align:center;padding-bottom:8px;font-size:0.71rem;color:${COLORS[i%COLORS.length]}">${playerLabel(p)}</th>`).join("")}</tr>
     ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid var(--x-row)">${m.label}</td>${sel.map(p=>{const cur=milStage(p,m.id);return `<td style="text-align:center;border-bottom:1px solid var(--x-row);padding:6px 4px">${cur?`<span style="color:var(--gl)">${MIL_STAGES[cur-1].emoji}</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id].date)}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`;}).join("")}</tr>`).join("")}
@@ -3402,13 +3403,13 @@ function renderCmp(){
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${legend}</div>
     <div class="g2"><div class="card"><h3>💪 Fyzický pavouk (T-score)</h3><div class="rw"><canvas id="cRPh"></canvas></div></div><div class="card"><h3>🎯 Herní pavouk (T-score)</h3><div class="rw"><canvas id="cRGa"></canvas></div></div></div>
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">💪 Fyzické metriky</h3>
-    <div class="g2">${phChs}<div class="card"><h3>Výskok (cm)</h3><div class="cw"><canvas id="c_vys"></canvas></div></div></div>
+    <div class="g2">${phChs}<div class="card"><h3>${metricHeadIco('vyskok')}Výskok (cm)</h3><div class="cw"><canvas id="c_vys"></canvas></div></div></div>
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🎯 Herní metriky</h3><div class="g2">${gaChs}</div>
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🎖 Milníky</h3>${milTbl}
     <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🏐 Zápasové statistiky</h3>
     <div class="g2">
-      <div class="card"><h3>Celkové body</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_body"></canvas></div></div>
-      <div class="card"><h3>Průměrný příjem (%)</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_recv"></canvas></div></div>
+      <div class="card"><h3>${metricHeadIco('body_zapas')}Celkové body</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_body"></canvas></div></div>
+      <div class="card"><h3>${metricHeadIco('prijem_zapas')}Průměrný příjem (%)</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_recv"></canvas></div></div>
     </div>`;
   scheduleDraw(()=>drawCmp(sel,norms));
 }
@@ -3463,7 +3464,8 @@ function drawCmp(sel,norms){
     // "Průměr" (Kolo 18) — stejný princip jako mkRadar(), viz komentář tam. Přidává
     // se až nakonec (kreslí se navrch přes hráčky), barva CLEG.
     ds.push({label:"Průměr",data:f[lk].map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
-    CH[id]=new Chart(cv,{type:"radar",data:{labels:f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>(isGame&&anyStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
+    const lblColor=i=>(isGame&&anyStar&&i===atkIdx)?CACC:CLEG,tr=isTrener();
+    CH[id]=new Chart(cv,{type:"radar",data:{labels:tr?f[lk].map(l=>RADAR_ICO_GAP+l):f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>lblColor(ctx.index),font:{size:10}},ticks:{display:false}}}},plugins:tr?[radarIcoPlugin(f[isGame?"gI":"pI"],lblColor)]:[]});
   }
   cmpRadar("cRPh","pL","pD");cmpRadar("cRGa","gL","gD");
 
@@ -4616,6 +4618,28 @@ const METRIC_FA={k_test:'shuffle',sprint_6m:'bolt',hod_med:'dumbbell',bloky_20s:
   balony_zadarmo:'volleyball',tezke_balony:'person-running',servisy_zatezy:'rocket',prihravka_cil:'crosshairs',
   utok_cil:'bullseye',utok_pole:'burst',nahravka_cil:'hand-pointer',body_zapas:'star',prijem_zapas:'shield-halved'};
 function metricFa(id){return METRIC_FA[id]||'circle-dot';}
+// Kolo 62 (D1): ikona metriky v záhlaví sloupců Přehledu (m-hi, nad názvem) a v nadpisech
+// karet Porovnání a tabu Zápas (m-hl, před názvem). Třída i-fa = v klasiku display:none.
+function metricHeadIco(id,cls){return`<i class="i-fa fa-solid fa-${metricFa(id)} ${cls||'m-hl'}" aria-hidden="true"></i>`;}
+// Popisky pavouků jsou v canvasu: ve vzhledu Trenéra dostanou zepředu mezeru (RADAR_ICO_GAP)
+// a plugin do ní nakreslí ikonu písmem Font Awesome. Znak ikony se zjistí z CSS (::before).
+const RADAR_ICO_GAP='   ',_faChars={};
+function faChar(name){
+  if(_faChars[name]!=null)return _faChars[name];
+  const el=document.createElement('i');el.className='fa-solid fa-'+name;el.style.cssText='position:absolute;visibility:hidden';
+  document.body.appendChild(el);const c=getComputedStyle(el,'::before').content;el.remove();
+  return _faChars[name]=(c&&c!=='none'&&c!=='normal')?c.replace(/^["']|["']$/g,''):'';
+}
+function radarIcoPlugin(ids,colorFn){
+  return{id:'radarIco',afterDraw(chart){
+    const sc=chart.scales.r,items=sc&&sc._pointLabelItems;if(!items)return;
+    const font='900 10px "Font Awesome 6 Free"';
+    if(!document.fonts.check(font)){document.fonts.load(font).then(()=>{if(chart.ctx)chart.draw();});return;}
+    const ctx=chart.ctx;ctx.save();ctx.font=font;ctx.textAlign='center';ctx.textBaseline='middle';
+    items.forEach((it,i)=>{const ch=faChar(metricFa(ids[i]));if(!ch)return;ctx.fillStyle=colorFn(i);ctx.fillText(ch,it.left+6,(it.top+it.bottom)/2);});
+    ctx.restore();
+  }};
+}
 // „Vyniká“ = T-skóre aspoň 60 (hranice pásma „výborná“, tBadgeCls). Kandidáti jsou stejné
 // metriky a stejný výpočet jako v Overallu (poslední testování + zápasy aktuální sezóny,
 // uhlazení shrinkPct u procent), aby koláž a Overall nikdy netvrdily každý něco jiného.
@@ -4874,7 +4898,7 @@ function renderOverview(){
       lowerBetter:false},
     ...phA.map(m=>({
       id:'ph_'+m.id,
-      label:m.label.split(' ')[0]+'<br><small>'+m.unit+'</small>',
+      label:metricHeadIco(m.id,'m-hi')+m.label.split(' ')[0]+'<br><small>'+m.unit+'</small>',
       get:p=>{
         if(m.id==='dosah'){const s=lS(p);return calcVys(s);}
         return lS(p)?.physical?.[m.id]??null;
@@ -4892,20 +4916,20 @@ function renderOverview(){
       sortVal:p=>{const v=m.id==='dosah'?calcVys(lS(p)):lS(p)?.physical?.[m.id];return v??-Infinity;},
       lowerBetter:m.lowerBetter,
     })),
-    {id:'ph_vyskok',label:'Výskok<br><small>cm</small>',
+    {id:'ph_vyskok',label:metricHeadIco('vyskok','m-hi')+'Výskok<br><small>cm</small>',
       get:p=>calcVys(lS(p)),
       display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const t=tRaw(v,norms['vyskok']);const r=rankIn(active,pp=>calcVys(lS(pp)),false)(p);return `${v}<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>calcVys(lS(p))??-Infinity,lowerBetter:false},
     ...gaA.filter(m=>m.id!=='utok_cil'&&m.id!=='utok_pole').map(m=>({
       id:'ga_'+m.id,
-      label:gameAbbr(m)+'<br><small>%</small>',
+      label:metricHeadIco(m.id,'m-hi')+gameAbbr(m)+'<br><small>%</small>',
       get:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs);},
       display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const pct=Math.round(v*100);const t=tRaw(v,norms[m.id]);const r=rankIn(active,pp=>{const gs=gameScore(lS(pp)?.game,m.id);return gamePct(gs);},false)(p);return `${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs)??-Infinity;},lowerBetter:false})),
     // Útok na cíl / Útok do pole: sloučeno do jednoho sloupce (activeAttackMetricId) —
     // každá hráčka se ukazuje na variantě, na které zrovna je, s ikonkou podle stupně.
     ...(gaA.some(m=>m.id==='utok_cil'||m.id==='utok_pole')?[{
-      id:'ga_utok',label:'Útok<br><small>%</small>',
+      id:'ga_utok',label:metricHeadIco('utok_cil','m-hi')+'Útok<br><small>%</small>',
       get:p=>{const mid=activeAttackMetricId(p);const gs=gameScore(lS(p)?.game,mid);return gamePct(gs);},
       display:(p,v)=>{
         if(v==null)return'<span style="color:var(--gm)">–</span>';
@@ -5621,12 +5645,12 @@ function buildZapasTab(){
 
   const summaryCards=`<div class="g2" style="margin-bottom:14px">
     <div class="card" style="text-align:center">
-      <h3>Celkové body</h3>
+      <h3>${metricHeadIco('body_zapas')}Celkové body</h3>
       <div class="mv ${totalBody>0?'':totalBody<0?'':''}" style="font-size:2rem;color:${totalBody>0?'var(--gl)':totalBody<0?'var(--red)':'var(--gm)'}">${totalBody>0?'+':''}${totalBody}</div>
       <div style="font-size:0.75rem;color:var(--gm);margin-top:4px">${pMatches.length} zápasů · ${allActions.filter(a=>a.type==='body').length} akcí</div>
     </div>
     ${recvAvg?`<div class="card" style="text-align:center">
-      <h3>Průměr příjem</h3>
+      <h3>${metricHeadIco('prijem_zapas')}Průměr příjem</h3>
       <div class="mv" style="font-size:2rem;color:${recvAvg<=2?'var(--gl)':recvAvg<=3.5?'var(--acc)':'var(--red)'}">${recvAvg}<span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;font-weight:400;margin-left:6px">${recvPct(parseFloat(recvAvg))}%</span></div>
       <div style="font-size:0.75rem;color:var(--gm);margin-top:4px">${recvVals.length} hodnocení</div>
     </div>`:'<div class="card"><h3>Příjem</h3><p class="no-data">Žádná data</p></div>'}
@@ -7281,7 +7305,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka (obrana v poli) = ruce chytající míč, Hecířka = megafon, Kapitánka = koruna, Přijímačka = šipky mířící do středu (přesnost). Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
  kw:"odznak ikona font awesome emoji trenér vzhled vybrat ikonu koruna megafon"},
 {q:`Jak funguje odznak Přijímačka?`,
- a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Rozhoduje <b>podíl dobrých příjmů</b>: kolik procent příjmů v zápasech aktuální sezóny dostalo známku 1 nebo 3. Hráčka odznak má, dokud je tento podíl aspoň na hranici, kterou nastavíš (výchozí 55 %). Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když podíl klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br>Pozor, karta hráčky a živý zápas ukazují u příjmu <b>kvalitu</b> (1 = 100 %, 3 = 50 %, 5 = 0 %), ne podíl dobrých příjmů, proto se čísla liší.<br><b>Hranice:</b> Nastavení → Odznaky → ✎ u Přijímačky, pole „Hranice – dobré příjmy (1 nebo 3)“, od 30 do 95 % po 5. Pod polem hned vidíš, které hráčky by odznak při zvolené hranici měly (počítají se jen ty s dost příjmy), průměr týmu a návrh „Nejlepší čtvrtina“: hranici, kterou splní zhruba čtvrtina nejlepších. Klepnutím na návrh ho nastavíš. Po uložení se odznaky hned přepočítají. Hranice se ukládá k odznaku, takže je i v záloze. Normy podle věku nebo pro kluky a holky tu nejsou, protože pro známky 1-3-5 žádné spolehlivé neexistují; hranice vychází z tvých vlastních dat.<br><b>Barva</b> ukazuje, o kolik je hráčka nad hranicí: zlatá = o 30 bodů a víc, zelená = o 15 až 29 bodů, jinak fialová (barva odznaku). Název, emoji, ikonu i výchozí barvu změníš ve stejném okně. Když odznak smažeš, už se sám nevrátí.`,
+ a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Rozhoduje <b>průměrná kvalita příjmu</b> v zápasech aktuální sezóny, stejná jako na kartě hráčky a v živém zápase: známka 1 = 100 %, 3 = 50 %, 5 = 0 %. Jednička tak váží dvakrát víc než trojka. Hráčka odznak má, dokud je její průměr aspoň na hranici, kterou nastavíš (výchozí 45 %). Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když průměr klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br><b>Hranice:</b> Nastavení → Odznaky → ✎ u Přijímačky, pole „Hranice – průměrná kvalita příjmu“, od 30 do 95 % po 5. Pod polem hned vidíš, které hráčky by odznak při zvolené hranici měly (počítají se jen ty s dost příjmy), průměr týmu a návrh „Nejlepší čtvrtina“: hranici, kterou splní zhruba čtvrtina nejlepších. Klepnutím na návrh ho nastavíš. Po uložení se odznaky hned přepočítají. Hranice se ukládá k odznaku, takže je i v záloze. Normy podle věku nebo pro kluky a holky tu nejsou, protože pro známky 1-3-5 žádné spolehlivé neexistují; hranice vychází z tvých vlastních dat.<br><b>Barva</b> ukazuje, o kolik je hráčka nad hranicí: zlatá = o 30 bodů a víc, zelená = o 15 až 29 bodů, jinak fialová (barva odznaku). Název, emoji, ikonu i výchozí barvu změníš ve stejném okně. Když odznak smažeš, už se sám nevrátí.`,
  kw:"přijímačka příjem automatický odznak 55 % procent zápas sám barva"},
 {q:`Jak appka odznak hráčce přidělí?`,
  a:`Appka to nedělá sama automaticky (jedinou výjimkou je Přijímačka, viz výš) — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
@@ -7475,7 +7499,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.`,
  kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér"},
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
- a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
+ a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
  kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
 {q:`Co je kulaté tlačítko se šipkou nahoru?`,
  a:`Ve vzhledu Trenéra se vpravo dole objeví, když v dlouhé obrazovce (Přehled týmu, karta hráčky, Nápověda) sjedeš kus dolů. Klepnutím se vrátíš na začátek. Nahoře samo zmizí.`,
