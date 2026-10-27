@@ -886,6 +886,26 @@ html.skin-trener .sk-row-btn:last-child{border-bottom:0}
 html.skin-trener .sk-row-btn>i{width:18px;text-align:center;color:var(--ink-soft)}
 html.skin-trener .sk-row-btn .chev{margin-left:auto;color:var(--ink-faint-ink);font-size:12px}
 html.skin-trener .sk-row-btn.mn-start,html.skin-trener .sk-row-btn.mn-start>i{color:var(--court-ink)}
+html.skin-trener .sk-row-btn.sk-danger,html.skin-trener .sk-row-btn.sk-danger>i{color:var(--danger-ink)}
+/* Kolo 59 (U2): nad Přehledem týmu jen přepínač normy, vysvětlivky jsou v Nápovědě. */
+html.skin-trener .sk-norm{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 14px;padding:8px 12px;min-height:40px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink-soft);font:500 13px 'DM Sans',sans-serif;cursor:pointer}
+html.skin-trener .sk-norm b{color:var(--ink);font-weight:700}
+html.skin-trener .sk-norm span{color:var(--ink-faint-ink)}
+html.skin-trener .sk-norm i{color:var(--court-ink)}
+html.skin-trener .sk-norm:hover{border-color:var(--court)}
+/* Kolo 59 (C2): dotyková odezva jako v Trenérovi, tlačítko se při stisku ztmaví ve své barvě. */
+html.skin-trener button:active,html.skin-trener .btn:active,html.skin-trener .sk-row-btn:active{filter:brightness(.9)}
+html.skin-trener{-webkit-tap-highlight-color:transparent}
+/* Kolo 59 (C3): tlačítko Nahoru (jako v Trenérovi). */
+.sk-nahoru{display:none}
+html.skin-trener .sk-nahoru{display:flex;position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:510;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);box-shadow:var(--shadow);align-items:center;justify-content:center;font-size:16px;cursor:pointer;opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+html.skin-trener .sk-nahoru.show{opacity:1;transform:none;pointer-events:auto}
+html.skin-trener .sk-nahoru:hover{background:var(--paper)}
+@media(max-width:768px){html.skin-trener .sk-nahoru{bottom:calc(74px + env(safe-area-inset-bottom,0px))}}
+/* Kolo 59 (C1): omezení animací, když o to systém požádá (jako v Trenérovi). */
+@media (prefers-reduced-motion: reduce){
+  html.skin-trener *,html.skin-trener *::before,html.skin-trener *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
 .sk-modal-head{display:flex;align-items:center;justify-content:space-between}
 .sk-modal-head h2{margin-bottom:0!important}
 .sk-close{width:36px;height:36px;border:0;border-radius:7px;background:transparent;color:var(--ink-soft);display:grid;place-items:center;padding:0;cursor:pointer;font-size:18px}
@@ -2214,7 +2234,15 @@ function openMatchesHub(){
 }
 // Kolo 31: nová podobrazovka menu — dřív žily oba řádky schované v Nastavení,
 // teď jsou přímo v ⋮ menu pod "Sezóna a data" (viz schválený mock-up).
+// Kolo 59 (U1/U3): ve vzhledu Trenéra stejný řádkový rozcestník jako Nastavení a Zápasy,
+// bez vysvětlující věty (patří do Nápovědy). Klasik beze změny.
+function skHubRow(fn,fa,txt,cls){return`<button class="sk-row-btn${cls?' '+cls:''}" onclick="${fn}"><i class="fa-solid fa-${fa}" aria-hidden="true"></i>${txt}<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i></button>`;}
+function skHubHead(t){return`<div class="sk-modal-head"><h2>${t}</h2><button class="sk-close" onclick="closeModal()" aria-label="Zavřít" title="Zavřít"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button></div>`;}
 function openSeasonHub(){
+  if(isTrener()){
+    openModal(`${skHubHead('Sezóna')}<div class="sk-rows" style="margin-top:14px">${skHubRow('openArchiveWizard()','box-archive','Uzavřít sezónu a archivovat')}${skHubRow('openArchiveView()','folder-open','Archiv sezón')}</div>`);
+    return;
+  }
   openModal(`<h2>📦 Sezóna</h2>
     <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Uzavření sezóny a přístup k archivu.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -2226,6 +2254,10 @@ function openSeasonHub(){
 // Kolo 31: nová podobrazovka menu — sjednocuje export/import (dřív duplicitně
 // v menu i v Nastavení) s bezpečnostními akcemi z Nastavení (vrátit/reset).
 function openDataHub(){
+  if(isTrener()){
+    openModal(`${skHubHead('Data a zálohy')}<div class="sk-rows" style="margin-top:14px">${skHubRow('exportData();closeModal()','download','Exportovat data (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Importovat data (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
+    return;
+  }
   openModal(`<h2>💾 Data a zálohy</h2>
     <p style="font-size:0.77rem;color:var(--gm);margin-bottom:10px">Export, import a bezpečnostní akce nad daty appky.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
@@ -4828,7 +4860,7 @@ function renderOverview(){
 
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
-    <p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>
+    ${isTrener()?`<button type="button" class="sk-norm" onclick="toggleNormScope()" title="Přepnout normu"><i class="fa-solid fa-users" aria-hidden="true"></i>Norma<b>${S.normScope==="current"?"Aktuální tým":"Celá databáze"}</b><span>${normPlayers().length} hráček</span><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button>`:`<p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>`}
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
 
@@ -5994,14 +6026,15 @@ function openTournaments(){
     const opps=[...new Set(ms.map(m=>m.opponent))].join(', ');
     return`<div class="match-card" onclick="closeModal();openTournamentDetail('${t.id}')">
       <div class="match-card-head">
-        <span class="match-card-opp">🏟 ${t.name}</span>
+        <span class="match-card-opp">${isTrener()?'<i class="fa-solid fa-trophy" aria-hidden="true"></i> ':'🏟 '}${t.name}</span>
         <span class="match-card-date">${tournamentDateRange(t.id)}</span>
       </div>
       <div style="font-size:0.8rem;color:var(--gm)">${ms.length} ${ms.length===1?'zápas':ms.length<5?'zápasy':'zápasů'}${opps?` · vs ${opps}`:''}</div>
     </div>`;
   }).join('');
+  // Kolo 59 (U1): vysvětlující věta jen v klasiku, ve vzhledu Trenéra je v Nápovědě.
   openModal(`<h2>🏟 Turnaje</h2>
-    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Zápasy ze stejného dne appka sama navrhne jako turnaj. Vícedenní turnaj založ ručně a zápasy do něj přidej v jeho detailu.</p>
+    ${isTrener()?'':'<p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Zápasy ze stejného dne appka sama navrhne jako turnaj. Vícedenní turnaj založ ručně a zápasy do něj přidej v jeho detailu.</p>'}
     <div style="max-height:50vh;overflow-y:auto;margin-bottom:12px">${cards||'<div class="no-data">Zatím žádné turnaje</div>'}</div>
     <div class="fg"><label>Založit nový turnaj</label>
       <div style="display:flex;gap:6px">
@@ -7051,6 +7084,9 @@ const HELP_DATA=[
 ]},
 
 {title:"Overall — souhrnné skóre hráčky",icon:"🔢",qa:[
+{q:`Proč má číslo Overall různé barvy?`,
+ a:`Barva ukazuje pásmo průměrného T-skóre, ze kterého je Overall spočítaný (stejná pásma jako štítky T u metrik):<br>• <b>zlatá</b> = T 75 a víc (Overall zhruba 94+), mimořádné;<br>• <b>zelená</b> = T 60–74 (Overall zhruba 79–93), výborné;<br>• <b>běžná barva textu</b> = T 45–59 (Overall zhruba 65–78), průměr týmu nebo databáze;<br>• <b>oranžová</b> = T pod 45 (Overall zhruba pod 65), slabší než průměr.<br>Pásmo se počítá vůči zvolené normě (aktuální tým nebo celá databáze), takže po přepnutí normy se barva může změnit. Šedá pomlčka „–“ znamená, že Overall zatím nejde spočítat.`,
+ kw:"barva overall zelená oranžová černá zlatá číslo pásmo průměr"},
 {q:`Co je „Overall" a proč appka ukazuje číslo mezi 40 a 99?`,
  a:`Overall je appčino JEDNO souhrnné číslo, které se snaží vyjádřit celkovou úroveň hráčky napříč fyzičkou, herními dovednostmi i výkonem v ostrých zápasech — inspirované stupnicí, jakou znáš třeba z fotbalových videoher. Appka ho staví na T-skóre (běžně stupnice 20–80, viz blok „T-skóre a normy"), jen ho pro Overall přeškáluje na „hráčštější" rozsah 40–99, aby se to čtenářům lépe četlo. Číslo samo o sobě nic „neabsolutního" neznamená — pořád je to relativní srovnání vůči zvolené referenční skupině (Tým/Databáze).`},
 {q:`Jak appka Overall počítá (Fyzické/Herní/Zápasy)?`,
@@ -7210,7 +7246,7 @@ const HELP_DATA=[
 
 {title:"Přehled týmu",icon:"📊",qa:[
 {q:`Co appka ukazuje v „Přehledu týmu"?`,
- a:`Appka tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné.`},
+ a:`Appka tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“ (aktuální tým / celá databáze, s počtem hráček v normě) a klepnutím na něj normu přepneš.`},
 {q:`Jak podle sloupce seřadím hráčky (třeba podle Overallu)?`,
  a:`Klikni přímo na název sloupce v záhlaví tabulky — appka podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně).`},
 {q:`Co znamená hvězdička/horní index u čísla v tabulce?`,
@@ -7324,6 +7360,12 @@ const HELP_DATA=[
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
  a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
  kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
+{q:`Co je kulaté tlačítko se šipkou nahoru?`,
+ a:`Ve vzhledu Trenéra se vpravo dole objeví, když v dlouhé obrazovce (Přehled týmu, karta hráčky, Nápověda) sjedeš kus dolů. Klepnutím se vrátíš na začátek. Nahoře samo zmizí.`,
+ kw:"nahoru šipka tlačítko začátek scroll posun"},
+{q:`Proč se ve vzhledu Trenéra nic nehýbe?`,
+ a:`Když máš v telefonu nebo počítači zapnuté omezení pohybu (v nastavení přístupnosti, třeba „Omezit pohyb“ nebo „Odstranit animace“), Bombito ve vzhledu Trenéra vypne přechody a animace, stejně jako Trenér. Funguje všechno stejně, jen bez pohybu. Stisknuté tlačítko se jen krátce ztmaví.`,
+ kw:"animace pohyb omezit přístupnost nevolnost migréna přechody"},
 {q:`Proč PDF a sezónní shrnutí vypadají v obou vzhledech stejně?`,
  a:`Záměrně. PDF report je dělaný pro tisk a pro rodiče a sezónní shrnutí (Wrapped) má vlastní „story" design — obojí proto zůstává stejné, ať máš zapnutý jakýkoli vzhled.`,
  kw:"pdf wrapped shrnutí vzhled stejné tisk report"},
@@ -7566,6 +7608,23 @@ function skinIcons(root){
   }).observe(document.body,{childList:true,subtree:true});
 })();
 
+// Kolo 59 (C3): tlačítko Nahoru jako v Trenérovi — jen ve vzhledu Trenéra, objeví se po
+// odscrollování o víc než 400 px v hlavní ploše (<main>) nebo v otevřeném okně (třeba Nápověda).
+(function(){
+  const b=document.createElement('button');
+  b.type='button';b.className='sk-nahoru';b.setAttribute('aria-label','Nahoru');b.title='Nahoru';
+  b.innerHTML='<i class="fa-solid fa-arrow-up" aria-hidden="true"></i>';
+  let cil=null;
+  const videt=()=>{
+    const modal=document.getElementById('modal').style.display!=='none';
+    const ok=cil&&isTrener()&&cil.isConnected&&cil.offsetParent!==null&&(modal===cil.classList.contains('md'))&&cil.scrollTop>400;
+    b.classList.toggle('show',!!ok);
+  };
+  document.addEventListener('scroll',e=>{const t=e.target;if(t&&t.nodeType===1&&(t.tagName==='MAIN'||t.classList.contains('md')))cil=t;videt();},true);
+  b.addEventListener('click',()=>{if(cil)cil.scrollTo({top:0,behavior:'smooth'});});
+  document.body.appendChild(b);
+  new MutationObserver(()=>{cil=document.getElementById('modal').style.display!=='none'?document.querySelector('#modal .md'):document.querySelector('main');videt();}).observe(document.getElementById('modal'),{attributes:true,attributeFilter:['style']});
+})();
 load();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);
 
 </script>
