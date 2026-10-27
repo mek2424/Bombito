@@ -942,6 +942,13 @@ html.skin-trener .sk-fab.open .sk-fab-menu{display:flex}
 html.skin-trener .sk-fab-item{display:flex;flex-direction:row-reverse;align-items:center;gap:10px;background:none;border:none;padding:0;cursor:pointer;color:var(--ink);font:inherit}
 html.skin-trener .sk-fab-lbl{background:var(--card);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap}
 html.skin-trener .sk-fab-ico{width:42px;height:42px;border-radius:50%;background:var(--chalk);color:var(--on-chalk);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:var(--shadow);flex-shrink:0}
+html.skin-trener .sk-fab-sw{display:inline-block;vertical-align:-4px;width:30px;height:18px;border-radius:999px;background:var(--line);position:relative;margin-right:8px;transition:background .15s ease}
+html.skin-trener .sk-fab-sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s ease}
+html.skin-trener .sk-fab-item.on .sk-fab-sw{background:var(--court)}
+html.skin-trener .sk-fab-item.on .sk-fab-sw::after{transform:translateX(12px)}
+html.skin-trener .sk-fab-item.off .sk-fab-ico{background:var(--card);color:var(--ink-faint-ink);border:1px solid var(--line)}
+html.skin-trener .sk-fab-badge{display:none;position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-radius:50%;background:var(--gold-bg);color:var(--gold-ink);border:2px solid var(--card);font-size:10px;align-items:center;justify-content:center;pointer-events:none}
+html.skin-trener .sk-fab.tur:not(.open) .sk-fab-badge{display:flex}
 html.skin-trener .sk-fab-scrim{display:block;position:fixed;inset:0;z-index:149;background:rgba(27,36,48,.3);opacity:0;pointer-events:none;transition:opacity .18s ease}
 html.skin-trener .sk-fab-scrim.show{opacity:1;pointer-events:auto}
 html.skin-trener .sk-nahoru{right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px))}
@@ -1295,7 +1302,7 @@ let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badg
 const CH={};
 let _modalSnap=null;
 
-function save(){localStorage.setItem("bombito_v4",JSON.stringify(S));}
+function save(){localStorage.setItem("bombito_v4",JSON.stringify(S));if(window.skFabSync)skFabSync();}
 function load(){
   const raw=localStorage.getItem("bombito_v4")||localStorage.getItem("bombito_v3")||localStorage.getItem("bombito_v2");
   if(raw){try{S=JSON.parse(raw);}catch(e){}}
@@ -1390,7 +1397,7 @@ function load(){
   // se to nespustí znovu při dalších načteních ani nepřepíše ruční úpravy.
   {
     const byDate={};
-    S.matches.filter(m=>m.finished!==false&&!m._autosave&&!m.tournamentId).forEach(m=>{
+    S.matches.filter(m=>m.finished!==false&&!m._autosave&&!m.tournamentId&&!m.samostatny).forEach(m=>{
       (byDate[m.date]=byDate[m.date]||[]).push(m);
     });
     Object.values(byDate).filter(g=>g.length>1).forEach(group=>{
@@ -5170,7 +5177,7 @@ function loadLM(){ const r=localStorage.getItem(lmKey()); if(r){try{LM=JSON.pars
 
 function newSet(num){ return {num, actions:[], closed:false}; }
 
-function openLiveMatch(){
+function openLiveMatch(src){
   // Check for interrupted match
   loadLM();
   if(LM && !LM.finished){
@@ -5178,28 +5185,53 @@ function openLiveMatch(){
       <p style="color:var(--gm);margin-bottom:16px">Máš rozehraný zápas <b>vs ${LM.opponent}</b> (${fmtDate(LM.date)}). Chceš pokračovat nebo začít nový?</p>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-p" onclick="closeModal();openLiveScreen()">▶ Pokračovat v zápase</button>
-        <button class="btn btn-d" onclick="closeModal();startNewMatch()">+ Nový zápas (zahodit rozehraný)</button>
+        <button class="btn btn-d" onclick="closeModal();startNewMatch('${src||''}')">+ Nový zápas (zahodit rozehraný)</button>
       </div>
       <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zavřít</button></div>`);
     return;
   }
-  startNewMatch();
+  startNewMatch(src);
 }
 
-// Kolo 63: `tur` = zakládaný turnaj („Spustit turnaj“ z plovoucího tlačítka): okno má navíc název
-// turnaje a zápas se do něj rovnou zařadí. Bez `tur` nabídne (jen ve vzhledu Trenéra) zařazení do
-// otevřeného turnaje, který se hraje dnes (otevrenyTurnajDnes). Klasik beze změny.
-function otevrenyTurnajDnes(){
-  const d=today();
-  return (S.tournaments||[]).find(t=>!t.closed&&(t.date===d||tournamentMatches(t.id).some(m=>m.date===d)))||null;
+// Kolo 63 (Mek 27. 10.): přepínač Turnaj v plovoucím tlačítku (jen vzhled Trenéra). Zapnutý
+// (S.turnajAktivni = id otevřeného turnaje) → okno Nový zápas má zaškrtnuté „Zařadit do turnaje“.
+// Vypnutý a zápas spuštěný z tlačítka (src 'fab') → zápas je samostatný (m.samostatny), takže ho
+// autoAssignTournament ani párování při načtení podle data nespojí; do turnaje jde přidat ručně.
+// Odškrtnuté „Zařadit do turnaje“ znamená taky samostatný. Menu ⋮ funguje jako dřív. Klasik beze změny.
+function aktivniTurnaj(){
+  const id=S.turnajAktivni;if(!id)return null;
+  return (S.tournaments||[]).find(t=>t.id===id&&!t.closed)||null;
 }
-function startNewTournament(){startNewMatch({nazev:'Turnaj '+fmtDate(today())});}
-function startNewMatch(tur){
-  const ot=!tur&&isTrener()?otevrenyTurnajDnes():null;
-  const turHtml=tur?`<div class="fg"><label>Název turnaje</label><input id="lmTourName" type="text" value="${tur.nazev}"></div>`
-    :ot?`<div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.85rem"><input type="checkbox" id="lmTour" value="${ot.id}" checked style="width:auto"> Zařadit do turnaje ${ot.name}</label></div>`:'';
-  openModal(`<h2>🏆 ${tur?'Nový turnaj':'Nový zápas'}</h2>${turHtml}
-    <div class="fg"><label>${tur?'Soupeř v prvním zápase':'Soupeř'}</label><input id="lmOpp" type="text" placeholder="Název soupeře"></div>
+function turnajPosledniDen(t){const ms=tournamentMatches(t.id);return ms.length?ms[ms.length-1].date:(t.date||'');}
+function zapnoutTurnajOkno(){
+  const od=new Date(today());od.setDate(od.getDate()-3);const odS=od.toISOString().slice(0,10);
+  const ned=(S.tournaments||[]).filter(t=>!t.closed&&turnajPosledniDen(t)>=odS).sort((a,b)=>turnajPosledniDen(b).localeCompare(turnajPosledniDen(a))).slice(0,5);
+  const list=ned.map(t=>`<button class="btn btn-o" style="width:100%;margin-bottom:6px;justify-content:flex-start" onclick="zapnoutTurnaj('${t.id}')"><i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name} · ${tournamentMatches(t.id).length} zápasů</button>`).join('');
+  openModal(`${skHubHead('Zapnout turnaj')}
+    ${list?`<div class="fg"><label>Pokračovat v turnaji</label>${list}</div>`:''}
+    <div class="fg"><label>Nový turnaj</label><input id="turNazev" type="text" value="Turnaj ${fmtDate(today())}"></div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="zapnoutTurnaj()">Založit a zapnout</button></div>`);
+}
+function zapnoutTurnaj(id){
+  if(!id){
+    const t={id:'t_'+Date.now(),name:(document.getElementById('turNazev')?.value||'').trim()||'Turnaj '+fmtDate(today()),date:today()};
+    S.tournaments=S.tournaments||[];S.tournaments.push(t);id=t.id;
+  }
+  S.turnajAktivni=id;save();closeModal();
+  toast('Zápasy se zapíšou do turnaje '+aktivniTurnaj().name);
+}
+// Vypnutí: turnaj bez jediného zápasu (založený jen přepínačem) se tiše smaže, ať nestraší v Turnajích.
+function vypnoutTurnaj(){
+  const t=aktivniTurnaj();S.turnajAktivni=null;
+  if(t&&!(S.matches||[]).some(m=>m.tournamentId===t.id)&&!(LM&&LM.tournamentId===t.id))S.tournaments=S.tournaments.filter(x=>x.id!==t.id);
+  save();toast('Turnaj vypnutý, další zápas bude samostatný');
+}
+function startNewMatch(src){
+  const at=isTrener()?aktivniTurnaj():null;
+  const turHtml=at?`<div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.85rem"><input type="checkbox" id="lmTour" value="${at.id}" checked style="width:auto"> Zařadit do turnaje ${at.name}</label></div>`
+    :src==='fab'&&isTrener()?'<input type="hidden" id="lmSamostatny" value="1">':'';
+  openModal(`<h2>🏆 Nový zápas</h2>${turHtml}
+    <div class="fg"><label>Soupeř</label><input id="lmOpp" type="text" placeholder="Název soupeře"></div>
     <div class="fg"><label>Datum</label><input id="lmDate" type="date" value="${today()}"></div>
     <div class="fg"><label>Sledovat</label>
       <div style="display:flex;gap:8px;margin-top:4px">
@@ -5213,17 +5245,27 @@ function startNewMatch(tur){
   setTimeout(()=>document.getElementById('lmOpp')?.focus(),80);
 }
 
+// Kolo 63 (Mek 27. 10.): se zapnutým turnajem hlídá datum. Když je zápas jiný den, než se turnaj
+// naposledy hrál, zeptá se: stejný turnaj (vícedenní), nebo samostatný zápas.
+let LM_CEKA=null;
 function createMatch(){
-  const opp=document.getElementById('lmOpp').value.trim()||'Neznámý soupeř';
-  const date=document.getElementById('lmDate').value;
-  const mode=document.querySelector('input[name="lmMode"]:checked')?.value||'oboji';
-  const note=document.getElementById('lmNote').value.trim()||undefined;
-  LM={id:'m_'+Date.now(),date,opponent:opp,note,mode,sets:[newSet(1)],activeSet:0,finished:false};
-  const tn=document.getElementById('lmTourName'),tc=document.getElementById('lmTour');
-  if(tn){
-    const t={id:'t_'+Date.now(),name:tn.value.trim()||'Turnaj '+fmtDate(date),date};
-    S.tournaments=S.tournaments||[];S.tournaments.push(t);save();LM.tournamentId=t.id;
-  }else if(tc&&tc.checked)LM.tournamentId=tc.value;
+  const tc=document.getElementById('lmTour');
+  const v={opp:document.getElementById('lmOpp').value.trim()||'Neznámý soupeř',date:document.getElementById('lmDate').value,
+    mode:document.querySelector('input[name="lmMode"]:checked')?.value||'oboji',note:document.getElementById('lmNote').value.trim()||undefined,
+    tid:tc&&tc.checked?tc.value:null,sam:!!((tc&&!tc.checked)||document.getElementById('lmSamostatny'))};
+  const t=v.tid&&(S.tournaments||[]).find(x=>x.id===v.tid),last=t&&turnajPosledniDen(t);
+  if(last&&last!==v.date){
+    LM_CEKA=v;
+    openModal(`<div class="sk-confirm"><h2>Je to stejný turnaj?</h2><p>${t.name} se naposledy hrál ${fmtDate(last)}, tenhle zápas je ${fmtDate(v.date)}.</p><div class="sk-row"><button class="btn btn-o" onclick="zalozZapas(Object.assign(LM_CEKA,{tid:null,sam:true}))">Samostatný zápas</button><button class="btn btn-p" onclick="zalozZapas(LM_CEKA)">Ano, stejný turnaj</button></div></div>`);
+    return;
+  }
+  zalozZapas(v);
+}
+function zalozZapas(v){
+  LM_CEKA=null;
+  LM={id:'m_'+Date.now(),date:v.date,opponent:v.opp,note:v.note,mode:v.mode,sets:[newSet(1)],activeSet:0,finished:false};
+  if(v.tid)LM.tournamentId=v.tid;
+  else if(v.sam)LM.samostatny=true;
   saveLM();
   closeModal();
   openLiveScreen();
@@ -6042,6 +6084,7 @@ function tournamentDateRange(tid){
 // založí ho, pokud ještě neexistuje.
 function autoAssignTournament(match){
   if(match.tournamentId)return; // appka/uživatel už přiřadila dřív
+  if(match.samostatny)return; // Kolo 63: spuštěno s vypnutým přepínačem Turnaj = schválně samostatný
   const sameDate=realMatches().filter(m=>m.id!==match.id&&m.date===match.date);
   if(!sameDate.length)return;
   let tid=sameDate.find(m=>m.tournamentId)?.tournamentId;
@@ -7391,7 +7434,7 @@ const HELP_DATA=[
 {q:`Jak zápas z turnaje ručně vyjmu, nebo naopak přidám?`,
  a:`V menu ⋮ → „🏟 Turnaje" otevři detail konkrétního turnaje — tam appka nabízí úpravu, které zápasy do turnaje patří, takže je jde kdykoli ručně přidat nebo z turnaje zase vyřadit, i napříč různými daty.`},
 {q:`Jak založím turnaj dopředu, ještě před prvním zápasem?`,
- a:`Ve vzhledu Trenéra klepni na oranžové tlačítko vpravo dole a vyber <b>Spustit turnaj</b>. Zadáš název turnaje a soupeře prvního zápasu a zápas hned začne, už zařazený do turnaje. Když pak týž den spustíš další zápas, okno Nový zápas nabídne zaškrtnuté „Zařadit do turnaje…“. Turnaj jde založit i v menu ⋮ → Turnaje, jen názvem bez zápasu.`},
+ a:`Ve vzhledu Trenéra klepni na oranžové tlačítko vpravo dole a zapni přepínač <b>Turnaj</b>. Vybereš otevřený turnaj z posledních dnů, nebo založíš nový. Pak každý zápas spuštěný tímto tlačítkem (Spustit zápas) se zapíše do turnaje, dokud přepínač nevypneš. Turnaj jde založit i jako dřív v menu ⋮ → Turnaje, jen názvem bez zápasu.`},
 {q:`Jak založím turnaj přes víc dnů?`,
  a:`Přesně přes tu samou ruční úpravu turnaje (viz předchozí otázka) — appka totiž turnaj neváže na jedno konkrétní datum, jen na seznam zápasů, které do něj patří, takže tam klidně přidáš zápasy z různých dnů vícedenního turnaje.`},
 {q:`Co znamená „Forma" hráčky (🔥/❄️/➖)?`,
@@ -7541,7 +7584,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
  kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
 {q:`Co je oranžové kulaté tlačítko s plusem vpravo dole?`,
- a:`Rychlé spuštění zápasu, jen ve vzhledu Trenéra. Klepnutím se vysune nabídka:<br>• <b>Spustit zápas</b> = stejné jako Spustit zápas v nabídce ⋮. Když máš rozehraný zápas, nabídne pokračování. Když se dnes hraje otevřený turnaj, okno Nový zápas nabídne zaškrtnuté „Zařadit do turnaje…“.<br>• <b>Spustit turnaj</b> = zadáš název turnaje (předvyplní se „Turnaj“ a dnešní datum) a soupeře, turnaj se založí a hned začne první zápas, už zařazený do turnaje. Další zápasy toho dne spouštěj přes Spustit zápas, zařadí se do stejného turnaje.<br>Nabídku zavřeš křížkem nebo klepnutím vedle.`},
+ a:`Rychlé spuštění zápasu, jen ve vzhledu Trenéra. Klepnutím se vysune nabídka:<br>• <b>Spustit zápas</b> = stejné jako Spustit zápas v nabídce ⋮. Když máš rozehraný zápas, nabídne pokračování.<br>• <b>Přepínač Turnaj</b> nad ním říká, kam se zápas zapíše. Zapnutý (zelený, s názvem turnaje) = každý zápas spuštěný tlačítkem se zapíše do tohoto turnaje; v okně Nový zápas je zaškrtnuté „Zařadit do turnaje…“ a jde ho pro jeden zápas odškrtnout. Když je zápas jiný den, než se turnaj naposledy hrál, Bombito se zeptá, jestli je to opravdu stejný turnaj (třeba vícedenní), nebo samostatný zápas. Vypnutý („Turnaj vypnutý“) = zápas bude samostatný a Bombito ho samo k jiným zápasům téhož dne nespojí; do turnaje ho můžeš přidat později ručně v Turnajích.<br>Při zapnutí vybereš otevřený turnaj z posledních dnů, nebo založíš nový (stačí název). Dokud je turnaj zapnutý, má oranžové tlačítko malý zlatý pohár. Po uzavření nebo zrušení turnaje se přepínač sám vypne. Turnaj, do kterého se nic nezapsalo, se při vypnutí smaže.<br>Zápasy spuštěné přes nabídku ⋮ fungují jako dřív: zápasy ze stejného dne Bombito spojí do turnaje samo. Nabídku zavřeš křížkem nebo klepnutím vedle.`},
 {q:`Co je kulaté tlačítko se šipkou nahoru?`,
  a:`Ve vzhledu Trenéra se vpravo dole (nad oranžovým tlačítkem Zápas) objeví, když v dlouhé obrazovce (Přehled týmu, karta hráčky, Nápověda) sjedeš kus dolů. Klepnutím se vrátíš na začátek. Nahoře samo zmizí.`,
  kw:"nahoru šipka tlačítko začátek scroll posun"},
@@ -7838,17 +7881,25 @@ window.addEventListener('appinstalled',()=>{window.__bombitoInstall=null;window.
 (function(){
   const scrim=document.createElement('div');scrim.className='sk-fab-scrim';
   const w=document.createElement('div');w.className='sk-fab';w.id='skFab';
-  w.innerHTML=`<div class="sk-fab-menu" id="skFabMenu">
-    <button type="button" class="sk-fab-item" data-a="zapas"><span class="sk-fab-ico"><i class="fa-solid fa-play" aria-hidden="true"></i></span><span class="sk-fab-lbl">Spustit zápas</span></button>
-    <button type="button" class="sk-fab-item" data-a="turnaj"><span class="sk-fab-ico"><i class="fa-solid fa-trophy" aria-hidden="true"></i></span><span class="sk-fab-lbl">Spustit turnaj</span></button>
-  </div><button type="button" class="sk-fab-btn" aria-label="Zápas" title="Zápas" aria-expanded="false" aria-controls="skFabMenu"><i class="fa-solid fa-plus" aria-hidden="true"></i></button>`;
-  const btn=w.querySelector('.sk-fab-btn');
-  const nastav=o=>{w.classList.toggle('open',o);scrim.classList.toggle('show',o);btn.setAttribute('aria-expanded',String(o));};
+  w.innerHTML=`<div class="sk-fab-menu" id="skFabMenu"></div><button type="button" class="sk-fab-btn" aria-label="Zápas" title="Zápas" aria-expanded="false" aria-controls="skFabMenu"><i class="fa-solid fa-plus" aria-hidden="true"></i></button><span class="sk-fab-badge" aria-hidden="true"><i class="fa-solid fa-trophy"></i></span>`;
+  const btn=w.querySelector('.sk-fab-btn'),menu=w.querySelector('.sk-fab-menu');
+  const kresli=()=>{
+    const t=aktivniTurnaj();
+    menu.innerHTML=`<button type="button" class="sk-fab-item ${t?'on':'off'}" data-a="turnaj" role="switch" aria-checked="${!!t}"><span class="sk-fab-ico"><i class="fa-solid fa-trophy" aria-hidden="true"></i></span><span class="sk-fab-lbl"><span class="sk-fab-sw" aria-hidden="true"></span>${t?t.name:'Turnaj vypnutý'}</span></button>
+    <button type="button" class="sk-fab-item" data-a="zapas"><span class="sk-fab-ico"><i class="fa-solid fa-play" aria-hidden="true"></i></span><span class="sk-fab-lbl">Spustit zápas</span></button>`;
+  };
+  const nastav=o=>{if(o)kresli();w.classList.toggle('open',o);scrim.classList.toggle('show',o);btn.setAttribute('aria-expanded',String(o));};
   window.skFabZavri=()=>nastav(false);window.skFabOtevreno=()=>w.classList.contains('open');
+  window.skFabSync=()=>{const t=aktivniTurnaj();w.classList.toggle('tur',!!t);btn.setAttribute('aria-label',t?'Zápas – turnaj '+t.name:'Zápas');if(w.classList.contains('open'))kresli();};
   btn.addEventListener('click',()=>nastav(!w.classList.contains('open')));
   scrim.addEventListener('click',()=>nastav(false));
-  w.querySelectorAll('.sk-fab-item').forEach(b=>b.addEventListener('click',()=>{nastav(false);if(b.dataset.a==='zapas')openLiveMatch();else startNewTournament();}));
-  document.body.appendChild(scrim);document.body.appendChild(w);
+  menu.addEventListener('click',e=>{
+    const b=e.target.closest('.sk-fab-item');if(!b)return;
+    if(b.dataset.a==='zapas'){nastav(false);openLiveMatch('fab');}
+    else if(aktivniTurnaj())vypnoutTurnaj();
+    else{nastav(false);zapnoutTurnajOkno();}
+  });
+  document.body.appendChild(scrim);document.body.appendChild(w);skFabSync();
 })();
 load();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
 
