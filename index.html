@@ -209,6 +209,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .mil-summary[open] summary{color:#c8d0c8}
 .mil-leg{background:#0a140a;border-radius:8px;padding:9px 11px;display:flex;flex-direction:column;gap:5px;margin-top:9px;color:#c8d0c8}
 .ml2{flex:1;font-size:0.84rem}
+.mi-note{font-size:0.74rem;color:var(--gm);white-space:pre-wrap;margin-top:2px;line-height:1.35}
 .md2{font-size:0.7rem;color:var(--gm);flex-shrink:0}
 .gi{display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid #141e14}
 .gi:last-child{border-bottom:none}
@@ -731,6 +732,7 @@ html.skin-trener .kol-bar{width:14px;height:6px;border-radius:3px;flex-shrink:0}
 html.skin-trener .kol-st{font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
 html.skin-trener .kol-none{font-size:13px;color:var(--ink-faint-ink);padding:8px 0}
 html.skin-trener .kol-sec .brow{display:flex;margin-top:8px}
+html.skin-trener .mi-note{font-size:12.5px;color:var(--ink-soft)}
 html.skin-trener .pdi .da{grid-column:1/-1;grid-row:4;margin-top:12px;gap:6px;flex-wrap:nowrap;align-items:center}
 html.skin-trener .ba{border-radius:999px;font-size:12px;padding:3px 10px;border-width:0}
 html.skin-trener .da .btn{height:38px;padding:0 11px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
@@ -2105,6 +2107,21 @@ function openNote(type,id){
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zavřít</button><button class="btn btn-p" onclick="saveNote('${type}','${id}')">Uložit</button></div>`);
   setTimeout(()=>document.getElementById("noteTA")?.focus(),80);
 }
+function openMilNote(id){
+  const p=gP(),m=S.config.milestones.find(x=>x.id===id);if(!p||!m)return;
+  const cur=p.milNotes?.[id]||"";
+  openModal(`<h2>📝 Poznámka k milníku</h2><p style="font-weight:600;margin-bottom:4px">${m.label}</p><p style="font-size:0.77rem;color:var(--gm);margin-bottom:11px">${p.name}</p>
+    <div class="fg"><textarea id="noteTA" placeholder="Např.: nadhoz ještě uhýbá, ruka jde moc brzo…">${cur}</textarea></div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zavřít</button><button class="btn btn-p" onclick="saveMilNote('${id}')">Uložit</button></div>`);
+  setTimeout(()=>document.getElementById("noteTA")?.focus(),80);
+}
+function saveMilNote(id){
+  const p=gP();if(!p)return;
+  const text=document.getElementById("noteTA").value.trim();
+  if(!p.milNotes)p.milNotes={};
+  if(text)p.milNotes[id]=text;else delete p.milNotes[id];
+  save();closeModal();toast(text?"Poznámka uložena ✓":"Poznámka smazána");renderDetail();
+}
 function saveNote(type,id){const item=S.config[type]?.find(x=>x.id===id);if(!item)return;item.note=document.getElementById("noteTA").value;save();closeModal();toast("Poznámka uložena ✓");renderDetail();}
 function trEl(c,pv,lb){if(c==null||pv==null)return"";const diff=c-pv;const cls=diff===0?"ts":((lb?diff<0:diff>0)?"tu":"td");return`<span class="tr ${cls}">${diff>0?"+":""}${diff.toFixed(1)}</span>`;}
 function trElPct(c,pv){if(c==null||pv==null)return"";const diff=c-pv;const cls=diff===0?"ts":(diff>0?"tu":"td");const pct=(diff*100).toFixed(0);return`<span class="tr ${cls}">${diff>0?"+":""}${pct}%</span>`;}
@@ -2930,8 +2947,10 @@ function buildMil(){
   const c0=act.length-c1-c2-c3;
   const rows=[...act,...inact].map(m=>{
     const isA=m.active!==false,cur=isA?milStage(p,m.id):0,dt=p.milestones?.[m.id]?.date||"";
-    const ntitle=m.note?'Poznámka: '+m.note.slice(0,40):'Přidat poznámku';
-    const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'milestones\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
+    // Kolo 56 (Mek 27. 10.): poznámka k milníku patří konkrétní hráčce (p.milNotes), ne celému týmu.
+    const pn=p.milNotes?.[m.id]||'';
+    const ntitle=pn?'Poznámka: '+pn.slice(0,40):'Přidat poznámku';
+    const nb='<button class="note-btn '+(pn?'has-note':'')+'" onclick="openMilNote(\''+m.id+'\')" title="'+ntitle+'">'+(pn?'📝':'💬')+'</button>';
     const stagesHtml=MIL_STAGES.map(s=>{
       const cls=s.n<=cur?"mst done":s.n===cur+1?"mst next":"mst locked";
       const click=(isA&&s.n===cur+1)?' onclick="advanceMil(\''+m.id+'\')"':'';
@@ -2940,7 +2959,7 @@ function buildMil(){
     const statusHtml=cur>0?`${MIL_STAGES[cur-1].emoji} od ${fmtDate(dt)}`:'<span style="color:var(--x-faint)">zatím nezačato</span>';
     const backBtn=(isA&&cur>0)?'<button class="mil-back" onclick="revertMil(\''+m.id+'\')" title="Vrátit o fázi zpět">↩</button>':'';
     return`<div class="mi ${isA?"":"inactive"}">
-      <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}</div>${nb}</div>
+      <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}${pn?`<div class="mi-note">${pn}</div>`:""}</div>${nb}</div>
       <div class="mi-bot"><div class="mstages">${stagesHtml}</div><div class="md2">${statusHtml}</div>${backBtn}</div>
     </div>`;
   }).join("");
@@ -6897,6 +6916,9 @@ const HELP_DATA=[
  kw:"poznámky hráčka deník zápisník postřehy"},
 {q:`Jak poznámku k hráčce přidám, upravím nebo smažu?`,
  a:`V sekci Milníků na kartě hráčky klikni na „+ Přidat poznámku" — appka nabídne datum (jde změnit) a textové pole. Existující poznámku appka nechá upravit tlačítkem „✎" u ní, nebo smazat tlačítkem „✕" (appka se zeptá na potvrzení). Počet poznámek appka nijak neomezuje.`},
+{q:`Jak napíšu poznámku ke konkrétnímu milníku hráčky?`,
+ a:`Na tabu Milníky klepni na 💬 vpravo vedle názvu milníku. Poznámka patří jen téhle hráčce a jen tomuto milníku, třeba „nadhoz ještě uhýbá“ u Vrchního servisu. Ostatní hráčky ji neuvidí. Uložená poznámka se ukáže přímo pod názvem milníku a ikona se změní na 📝. Když text smažeš a uložíš, poznámka zmizí. Při kopírování hráčky se poznámky k milníkům nekopírují, stejně jako Poznámky k hráčce.`,
+ kw:"poznámka milník hráčka komentář postřeh 💬 📝"},
 ]},
 
 {title:"Odznaky",icon:"🏅",qa:[
