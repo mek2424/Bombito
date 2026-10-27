@@ -957,6 +957,11 @@ html.skin-trener .sk-fab-scrim{display:block;position:fixed;inset:0;z-index:149;
 html.skin-trener .sk-fab-scrim.show{opacity:1;pointer-events:auto}
 html.skin-trener .sk-nahoru{right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 
+/* Kolo 65 (C6): konfety jako v Trenérovi (triggerConfetti), jen ve vzhledu Trenéra, nad okny (600). */
+.sk-konfeta{display:none}
+html.skin-trener .sk-konfeta{display:block;position:fixed;top:-20px;width:8px;height:14px;z-index:600;pointer-events:none;border-radius:2px;animation:skKonfetaPad linear forwards}
+@keyframes skKonfetaPad{0%{transform:translateY(0) rotate(0deg)}100%{transform:translateY(105vh) rotate(540deg)}}
+@media (prefers-reduced-motion: reduce){html.skin-trener .sk-konfeta{display:none!important}}
 /* Kolo 59 (C1): omezení animací, když o to systém požádá (jako v Trenérovi). */
 @media (prefers-reduced-motion: reduce){
   html.skin-trener *,html.skin-trener *::before,html.skin-trener *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
@@ -2250,6 +2255,21 @@ function commitPendingTest(){
 // aplikace používá i jinde) a revertMil() ji naopak o jednu vrátí (taky
 // s potvrzením) — obojí jen na aktivních milnících, popořadě, bez přeskakování.
 function milStage(p,id){return p?.milestones?.[id]?.stage||0;}
+// Kolo 65 (C6): konfety jako v Trenérovi — při postupu na 🌳 a při uzavření turnaje. Jen vzhled
+// Trenéra; při omezení pohybu se nevytvoří vůbec. Barvy z palety (hřiště, křída, zlatá, bílá).
+function skKonfety(){
+  if(!isTrener()||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cs=getComputedStyle(document.documentElement);
+  const barvy=['--court','--court-dark','--chalk','--fav-gold'].map(v=>cs.getPropertyValue(v).trim()).filter(Boolean).concat('#ffffff');
+  for(let i=0;i<70;i++){
+    const k=document.createElement('div');k.className='sk-konfeta';
+    k.style.left=Math.random()*100+'vw';
+    k.style.background=barvy[Math.floor(Math.random()*barvy.length)];
+    k.style.animationDuration=(2+Math.random()*1.5)+'s';
+    k.style.animationDelay=(Math.random()*.35)+'s';
+    document.body.appendChild(k);setTimeout(()=>k.remove(),4200);
+  }
+}
 function advanceMil(id){
   const p=gP();if(!p)return;
   const cur=milStage(p,id);if(cur>=3)return;
@@ -2259,6 +2279,7 @@ function advanceMil(id){
     p.milestones=p.milestones||{};
     p.milestones[id]={stage:next.n,date:today()};
     save();renderDetail();
+    if(next.n===3)skKonfety();
   },{icon:next.emoji,note:'Zaznamená se s dnešním datem.',btnCls:'btn-p'});
 }
 function revertMil(id){
@@ -6164,7 +6185,7 @@ function closeTournament(tid){
     const last=tournamentMatches(tid).slice(-1)[0];
     mhAdd('turnaj',tid,last?last.date:today());
     save();updateMhDot();closeModal();openTournamentDetail(tid);
-    toast('Turnaj uzavřen 🏁');
+    toast('Turnaj uzavřen 🏁');skKonfety();
     nudgeBackupAfterMilestone('Turnaj uzavřen');
   });
 }
@@ -7597,8 +7618,11 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra se vpravo dole (nad oranžovým tlačítkem Zápas) objeví, když v dlouhé obrazovce (Přehled týmu, karta hráčky, Nápověda) sjedeš kus dolů. Klepnutím se vrátíš na začátek. Nahoře samo zmizí.`,
  kw:"nahoru šipka tlačítko začátek scroll posun"},
 {q:`Proč se ve vzhledu Trenéra nic nehýbe?`,
- a:`Když máš v telefonu nebo počítači zapnuté omezení pohybu (v nastavení přístupnosti, třeba „Omezit pohyb“ nebo „Odstranit animace“), Bombito ve vzhledu Trenéra vypne přechody a animace, stejně jako Trenér. Funguje všechno stejně, jen bez pohybu. Stisknuté tlačítko se jen krátce ztmaví.`,
- kw:"animace pohyb omezit přístupnost nevolnost migréna přechody"},
+ a:`Když máš v telefonu nebo počítači zapnuté omezení pohybu (v nastavení přístupnosti, třeba „Omezit pohyb“ nebo „Odstranit animace“), Bombito ve vzhledu Trenéra vypne přechody a animace, stejně jako Trenér. Funguje všechno stejně, jen bez pohybu. Stisknuté tlačítko se jen krátce ztmaví a konfety nepadají.`,
+ kw:"animace pohyb omezit přístupnost nevolnost migréna přechody konfety"},
+{q:`Proč občas padají konfety?`,
+ a:`Ve vzhledu Trenéra Bombito oslaví dvě věci: když hráčka postoupí v milníku na 🌳 Pravidelně v zápase a když uzavřeš turnaj. Konfety během pár vteřin samy zmizí a nic nezakrývají, dál můžeš normálně klepat. Se zapnutým omezením pohybu nepadají. V klasickém vzhledu nejsou.`,
+ kw:"konfety oslava milník strom turnaj uzavřít"},
 {q:`Proč PDF a sezónní shrnutí vypadají v obou vzhledech stejně?`,
  a:`Záměrně. PDF report je dělaný pro tisk a pro rodiče a sezónní shrnutí (Wrapped) má vlastní „story" design — obojí proto zůstává stejné, ať máš zapnutý jakýkoli vzhled.`,
  kw:"pdf wrapped shrnutí vzhled stejné tisk report"},
