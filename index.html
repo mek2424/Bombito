@@ -445,6 +445,8 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .ov-tbl tr:hover td{background:#0f1a10}
 .ov-tbl td:first-child{font-weight:600;position:sticky;left:0;background:#0d160e;z-index:1}
 .ov-tbl tr:hover td:first-child{background:#0f1a10}
+/* Kolo 68 (Mek 27. 10.): záhlaví sloupce se jmény drží vlevo stejně jako jména, jinak při posunu tabulky do strany odjelo a vznikla díra. */
+.ov-tbl th:first-child{left:0;z-index:3}
 .ov-rank{font-size:0.65rem;color:var(--gm);margin-left:3px}
 /* GROUP TEST MODAL TABLE */
 .grp-tbl{width:100%;border-collapse:collapse;font-size:0.8rem}
@@ -737,6 +739,8 @@ html.skin-trener .kol{position:relative;width:44px;height:44px;flex-shrink:0;bor
 html.skin-trener .kol.big{width:72px;height:72px}
 html.skin-trener .kol-c{position:absolute;inset:4px;border-radius:50%;background:var(--av-bg);color:var(--court-ink);display:flex;align-items:center;justify-content:center;font-size:17px}
 html.skin-trener .kol.big .kol-c{inset:6px;font-size:28px}
+html.skin-trener .kol-tlum .kol-c{background:var(--flat-bg);color:var(--ink-faint-ink)}
+html.skin-trener .m-t.kol-t-tlum{background:var(--flat-bg);color:var(--ink-faint-ink)}
 html.skin-trener .kol-em{font-size:18px}
 html.skin-trener .kol.big .kol-em{font-size:28px}
 html.skin-trener .kol-sat{position:absolute;width:17px;height:17px;box-sizing:border-box;border-radius:50%;border:2px solid var(--card);display:flex;align-items:center;justify-content:center;font-size:10px;background:var(--card);color:var(--ink)}
@@ -1450,6 +1454,7 @@ function load(){
     const testDates=new Set();
     S.players.forEach(p=>(p.testSessions||[]).forEach(s=>{if(s.date>=mhStart)testDates.add(s.date);}));
     testDates.forEach(d=>mhAdd('test',d,d));
+    mhUklid();
     S.matches.filter(m=>m.finished!==false&&!m._autosave&&m.date>=mhStart).forEach(m=>mhAdd('zapas',m.id,m.date));
     (S.tournaments||[]).filter(t=>t.closed).forEach(t=>{
       const last=tournamentMatches(t.id).slice(-1)[0];
@@ -4772,15 +4777,20 @@ function playerBadgesOrdered(p){
   const bs=(p.badges||[]).map(id=>badgeView(S.config.badges.find(b=>b.id===id),p)).filter(Boolean);
   return[...bs.filter(b=>b.special),...bs.filter(b=>!b.special)];
 }
+// Kolo 68 (D2, Mek 27. 10.): hráčka bez silné stránky dostane uprostřed koláže tlumeně svou
+// nejlepší metriku, když má aspoň T NEJLEPSI_T (průměr týmu). Pod průměrem ne: „nejlepší“
+// vlastnost by vyzněla jako slabina. Pořadí: silná stránka › odznak › tlumená nejlepší › milník.
+const NEJLEPSI_T=50;
 function collageData(p,norms){
-  const mils=S.config.milestones.filter(m=>m.active!==false);
-  return{str:playerStrengths(p,norms),badges:playerBadgesOrdered(p),mils,stages:mils.map(m=>milStage(p,m.id))};
+  const mils=S.config.milestones.filter(m=>m.active!==false),str=playerStrengths(p,norms);
+  const best=str.length?null:strengthTs(p,norms).filter(x=>x.t>=NEJLEPSI_T).sort((a,b)=>b.t-a.t)[0]||null;
+  return{str,best,badges:playerBadgesOrdered(p),mils,stages:mils.map(m=>milStage(p,m.id))};
 }
 function milStageColor(st){return`var(--kol-m${Math.max(0,Math.min(3,st||0))})`;}
 function collageTip(d){
   const c=k=>d.stages.filter(x=>x===k).length;
   return[
-    d.str.length?'Vyniká: '+d.str.map(x=>`${x.label} (T ${x.t})`).join(', '):'',
+    d.str.length?'Vyniká: '+d.str.map(x=>`${x.label} (T ${x.t})`).join(', '):d.best?`Nejlépe: ${d.best.label} (T ${d.best.t})`:'',
     d.badges.length?'Odznaky: '+d.badges.map(b=>b.label).join(', '):'',
     d.stages.some(x=>x>0)?'Milníky: '+[3,2,1].filter(k=>c(k)).map(k=>`${c(k)}× ${MIL_STAGES[k-1].emoji}`).join(' · '):''
   ].filter(Boolean).join('\n');
@@ -4788,7 +4798,7 @@ function collageTip(d){
 // size 44 (Domů) nebo 72 (karta hráčky). Bez jakýchkoli dat zůstává kolečko s iniciálami.
 function collageHtml(p,size,norms,onclick){
   const d=collageData(p,norms),best=Math.max(0,...d.stages);
-  if(!d.str.length&&!d.badges.length&&!best){
+  if(!d.str.length&&!d.badges.length&&!best&&!d.best){
     const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     return`<div class="pav">${ini}</div>`;
   }
@@ -4798,14 +4808,16 @@ function collageHtml(p,size,norms,onclick){
   let main,badges=d.badges;
   if(d.str[0])main=`<i class="fa-solid fa-${metricFa(d.str[0].id)}" aria-hidden="true"></i>`;
   else if(badges[0]){const t=badgeTint(badges[0]);main=`<span class="kol-em${badges[0].special&&isTrener()&&badges[0].fa?' kol-sp':''}"${t?` style="color:${t.ink}"`:''}>${badgeIco(badges[0])}</span>`;badges=badges.slice(1);}
+  else if(d.best)main=`<i class="fa-solid fa-${metricFa(d.best.id)}" aria-hidden="true"></i>`;
   else main=`<span class="kol-em">${MIL_STAGES[best-1].emoji}</span>`;
+  const tlum=!d.str.length&&!d.badges.length&&!!d.best;
   const rr=R-(big?2:1),cw=big?24:17;
   const at=deg=>{const r=deg*Math.PI/180;return`left:${Math.round(R+rr*Math.cos(r)-cw/2)}px;top:${Math.round(R+rr*Math.sin(r)-cw/2)}px`;};
   const sDeg=big?[-45,-135,-90]:[-45,-135],bDeg=[45,135,90,0,180];
   const sats=d.str.slice(1,1+sDeg.length).map((x,i)=>`<span class="kol-sat kol-s" style="${at(sDeg[i])}"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span>`).join('')
     +badges.slice(0,bDeg.length).map((b,i)=>`<span class="kol-sat kol-b${b.special?' sp':''}${b.fa?' fa':''}" style="${at(bDeg[i])};${badgeChipStyle(b)}">${badgeIco(b)}</span>`).join('');
   const tip=collageTip(d).replace(/"/g,'&quot;');
-  return`<div class="kol${big?' big':''}" style="--ring:conic-gradient(${ring})" role="img" aria-label="${tip.replace(/\n/g,'. ')}" title="${tip}"${onclick?` onclick="${onclick}"`:''}><div class="kol-c">${main}</div>${sats}</div>`;
+  return`<div class="kol${big?' big':''}${tlum?' kol-tlum':''}" style="--ring:conic-gradient(${ring})" role="img" aria-label="${tip.replace(/\n/g,'. ')}" title="${tip}"${onclick?` onclick="${onclick}"`:''}><div class="kol-c">${main}</div>${sats}</div>`;
 }
 // Ikona metriky v řádcích Fyzické/Herní (vidět jen ve vzhledu Trenéra) — u T ≥ 60 zeleně
 // a se štítkem T, takže je hned vidět, odkud koláž bere.
@@ -4826,7 +4838,7 @@ function openCollage(pid){
   const p=S.players.find(x=>x.id===pid);if(!p)return;
   const d=collageData(p,activeNorms());
   const strRows=d.str.length?d.str.map(x=>`<div class="kol-row"><span class="m-ic on"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span><span class="kol-l">${x.label}</span><span class="m-t">T ${x.t}</span></div>`).join('')
-    :`<div class="kol-none">Zatím žádná metrika s T aspoň ${STRENGTH_T}</div>`;
+    :`<div class="kol-none">Zatím žádná metrika s T aspoň ${STRENGTH_T}</div>`+(d.best?`<div class="kol-row"><span class="m-ic"><i class="fa-solid fa-${metricFa(d.best.id)}" aria-hidden="true"></i></span><span class="kol-l">Nejlépe: ${d.best.label}</span><span class="m-t kol-t-tlum">T ${d.best.t}</span></div>`:'');
   const bRow=d.badges.length?`<div class="brow">${d.badges.map(b=>`<span class="ba ${b.special?"sp":""}" style="${b.special?"":badgeTagStyle(b.color,'ba')}">${badgeIco(b)} ${b.label}</span>`).join('')}</div>`:`<div class="kol-none">Žádné odznaky</div>`;
   const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st">${st?MIL_STAGES[st-1].emoji+' '+MIL_STAGES[st-1].label:'—'}</span></div>`;}).join('');
   openModal(`<div class="kol-hd">${collageHtml(p,72,activeNorms())}<h2>${p.name}</h2></div>
@@ -6277,6 +6289,7 @@ function deleteTournament(tid){
   confirmAction('Zrušit turnaj? Zápasy zůstanou uložené, jen se rozpojí.',()=>{
     (S.matches||[]).forEach(m=>{if(m.tournamentId===tid)delete m.tournamentId;});
     S.tournaments=(S.tournaments||[]).filter(t=>t.id!==tid);
+    mhUklid();updateMhDot();
     save();closeModal();openTournaments();
   });
 }
@@ -6515,7 +6528,7 @@ function deleteTest(idx){
   confirmAction('Smazat test z '+fmtDate(s.date)+'?',()=>{
     const snap=undoSnapshot();
     p.testSessions.splice(idx,1);
-    save();renderDetail();
+    mhUklid();updateMhDot();save();renderDetail();
     if(snap)offerUndo(snap,'Testování z '+fmtDate(s.date)+' smazáno');else toast('Test smazán');
   },undoOpts());
 }
@@ -6580,6 +6593,7 @@ function deleteMatch(mid){
     const tid=(S.matches||[]).find(m=>m.id===mid)?.tournamentId;
     S.matches=(S.matches||[]).filter(m=>m.id!==mid);
     if(tid)cleanupTournamentIfEmpty(tid);
+    mhUklid();updateMhDot();
     save();
     if(document.getElementById('zapView')?.style.display==='block')renderZapasy();else renderDetail();
     if(snap)offerUndo(snap,'Zápasový záznam smazán');else toast('Zápas smazán');
@@ -6637,6 +6651,15 @@ function mhExists(type,refId){return(S.minihry||[]).some(x=>x.type===type&&x.ref
 function mhAdd(type,refId,date){
   if(mhExists(type,refId))return;
   S.minihry.push({id:'mh_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),type,refId,date,played:false,playedAt:null,answers:null});
+}
+// Kolo 68 (Mek 27. 10.: „smazaný zápas zůstává v minihrách“): minihra, jejíž zápas, turnaj nebo
+// testování už neexistuje, se odstraní. Volá se po smazání a při načtení (uklidí i starší zbytky).
+function mhUklid(){
+  const z=new Set((S.matches||[]).map(m=>m.id)),t=new Set((S.tournaments||[]).map(x=>x.id));
+  const d=new Set();S.players.forEach(p=>(p.testSessions||[]).forEach(x=>d.add(x.date)));
+  const n=(S.minihry||[]).length;
+  S.minihry=(S.minihry||[]).filter(m=>m.type==='zapas'?z.has(m.refId):m.type==='turnaj'?t.has(m.refId):m.type==='test'?d.has(m.refId):true);
+  return S.minihry.length!==n;
 }
 function mhHasUnplayed(){return(S.minihry||[]).some(m=>!m.played);}
 function updateMhDot(){
@@ -7595,7 +7618,7 @@ const HELP_DATA=[
 {q:`Co jsou Minihry?`,
  a:`Minihry appku na chvíli promění v tipovací hru pro tebe jako trenéra. Po hromadném testování, po zápase nebo po uzavření turnaje appka připraví krátkou minihru — nejdřív si tipneš (třeba kdo měl v zápase nejvíc bodů), appka pak ukáže skutečný výsledek, vždycky jako celé pořadí/kompletní obrázek, ne jen jestli ses trefila. Je to čistě bonus na pobavení a otestování vlastního odhadu, na fungování appky to nemá žádný vliv.`},
 {q:`Kdy appka minihru vytvoří?`,
- a:`Automaticky po třech typech událostí: po zapsání „Skupinového testu" (testovací minihra), po dokončení zápasu tlačítkem „Ukončit zápas" (zápasová minihra), a po „🏁 Uzavření turnaje" (turnajová minihra). Appka minihru nikdy nevytvoří sama od sebe bez některé z těchhle akcí.`},
+ a:`Automaticky po třech typech událostí: po zapsání „Skupinového testu" (testovací minihra), po dokončení zápasu tlačítkem „Ukončit zápas" (zápasová minihra), a po „🏁 Uzavření turnaje" (turnajová minihra). Appka minihru nikdy nevytvoří sama od sebe bez některé z těchhle akcí.<br>Když zápas, turnaj nebo testování smažeš, zmizí i jeho minihra.`},
 {q:`Jak minihru najdu a spustím?`,
  a:`V menu ⋮ klikni na „🎮 Minihry" — appka ukáže seznam všech minihry, neodehrané nahoře, odehrané appka zešedí. Kliknutím na konkrétní minihru ji spustíš.`},
 {q:`Co znamená barevná tečka u ikony ⋮?`,
@@ -7723,7 +7746,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
  kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér rukopis písmo"},
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
- a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost), a když nemá ani odznak, nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
+ a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost). Když nemá ani odznak, je uprostřed <b>šedě</b> její nejlepší metrika, pokud má aspoň T 50 (průměr): to není silná stránka, ale to, v čem je zatím nejlepší. Jinak je uprostřed nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
  kw:"koláž kolečko avatar iniciály prstenec ikona ikony silná stránka vyniká odznaky milníky fáze T-skóre symbol význam legenda"},
 {q:`Co je oranžové kulaté tlačítko s plusem vpravo dole?`,
  a:`Rychlé spuštění zápasu, jen ve vzhledu Trenéra. Klepnutím se vysune nabídka:<br>• <b>Spustit zápas</b> = stejné jako Spustit zápas v nabídce ⋮. Když máš rozehraný zápas, nabídne pokračování.<br>• <b>Přepínač Turnaj</b> nad ním říká, kam se zápas zapíše. Zapnutý (zelený, s názvem turnaje) = každý zápas spuštěný tlačítkem se zapíše do tohoto turnaje; v okně Nový zápas je zaškrtnuté „Zařadit do turnaje…“ a jde ho pro jeden zápas odškrtnout. Když je zápas jiný den, než se turnaj naposledy hrál, Bombito se zeptá, jestli je to opravdu stejný turnaj (třeba vícedenní), nebo samostatný zápas. Vypnutý („Turnaj vypnutý“) = zápas bude samostatný a Bombito ho samo k jiným zápasům téhož dne nespojí; do turnaje ho můžeš přidat později ručně v Turnajích.<br>Při zapnutí vybereš otevřený turnaj z posledních dnů, nebo založíš nový (stačí název). Dokud je turnaj zapnutý, má oranžové tlačítko malý zlatý pohár. Po uzavření nebo zrušení turnaje se přepínač sám vypne. Turnaj, do kterého se nic nezapsalo, se při vypnutí smaže.<br>Zápasy spuštěné přes nabídku ⋮ fungují jako dřív: zápasy ze stejného dne Bombito spojí do turnaje samo. Nabídku zavřeš křížkem nebo klepnutím vedle.`},
