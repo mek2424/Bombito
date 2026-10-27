@@ -41,7 +41,7 @@ window.BOMBITO_VZHLED=(function(){
   // #339933, dostane novou výchozí (vlastní volbu jinou barvou to nemění).
   var DEF={skin:"klasik",dark:false,primary:"#2B7D2B",accent:"#E8622C",pismo:"patrick"},STARA_VYCHOZI="#339933";
   // Kolo 66 (P2): rukopis lepíků jako ve Vzhledu Deníčku v Trenérovi (DENIK_PISMA).
-  var PISMA={patrick:{rodina:"Patrick Hand",dotaz:"Patrick+Hand",nazev:"Úhledný"},caveat:{rodina:"Caveat",dotaz:"Caveat",nazev:"Rychlý"},kalam:{rodina:"Kalam",dotaz:"Kalam",nazev:"Fixou"}};
+  var PISMA={patrick:{rodina:"Patrick Hand",dotaz:"Patrick+Hand",nazev:"Úhledný"},caveat:{rodina:"Caveat",dotaz:"Caveat:wght@400;700",nazev:"Rychlý"},kalam:{rodina:"Kalam",dotaz:"Kalam:wght@400;700",nazev:"Fixou"}};
   function read(){
     var v=null;
     try{v=JSON.parse(localStorage.getItem("bombito_vzhled")||"null");}catch(e){}
@@ -739,29 +739,196 @@ html.skin-trener .kol{position:relative;width:44px;height:44px;flex-shrink:0;bor
 html.skin-trener .kol.big{width:72px;height:72px}
 html.skin-trener .kol-c{position:absolute;inset:4px;border-radius:50%;background:var(--av-bg);color:var(--court-ink);display:flex;align-items:center;justify-content:center;font-size:17px}
 html.skin-trener .kol.big .kol-c{inset:6px;font-size:28px}
-/* Kolo 69 (P4): týmový sešit poznámek — papír jako Deníček v Trenérovi (linky, svislá čára v hlavní
-   barvě, rukopis podle volby lepíků), jen bez listování: dny pod sebou, nejnovější nahoře. */
-#sesitBtnM{display:none!important}
-html.skin-trener #sesitBtnM{display:flex!important}
-html.skin-trener .sk-sesit{--s-papir:#FDFDF8;--s-linka:#BCD3EA;--s-okraj:#E08A8A;--s-ink:#1F3A7A;--radek:30px;--oks:62px;
-  --s-f:"Patrick Hand","Segoe Print",cursive;--s-v:19.5px;
-  background-color:var(--s-papir);color:var(--s-ink);border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.14);padding:var(--radek) 12px var(--radek) 0;margin-top:12px;
+/* ═══ Kolo 70: DENÍČEK — styly 1:1 z Trenéra (sešit, otáčení listu, Vzhled sešitu, lišta formátování).
+   Obrazovka existuje jen ve vzhledu Trenéra; proměnné, které Trenér má navíc, jsou tady na #denikView. */
+#denikView{--radius-sm:7px;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;position:relative;overflow:clip;overflow-clip-margin:28px}
+#denikView .dh-radek h2{font:400 24px/1 var(--font-display);letter-spacing:.02em;color:var(--court);margin:0}
+#denikView .dh-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--radius-sm);padding:0 12px;font:600 14px var(--font-body);cursor:pointer;flex:none;max-width:42vw}
+#denikView .dh-btn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#denikView .dh-btn:active{transform:scale(.97)}
+#denikView .dh-btn.ikona{width:36px;padding:0}
+#denikView .dh-btn.ghost{background:transparent;border-color:transparent;color:var(--ink-soft)}
+#denikView .dh-btn.ghost:hover{background:rgba(27,36,48,.05)}
+#denikView .dh-btn[hidden]{display:none}
+#denikView .hidden{display:none!important}
+#denikView .dh-btn .fa-chevron-down{font-size:10px}
+@media (max-width:599px){#denikDopsatBtn{width:36px;padding:0}#denikDopsatBtn span{display:none}}
+
+/* Hlavička Deníčku v jednom řádku (kolo 10): zpět, nadpis, Dopsat trénink, Vzhled — ať sešit
+   dostane co nejvíc výšky a nemusí se rolovat. */
+.dh-radek{display:flex;align-items:center;gap:8px;margin:0 0 10px;}
+.dh-radek h2{flex:1;min-width:0;font-size:24px;color:var(--court);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dh-radek .btn{margin-bottom:0;flex:none;}
+/* Vzhled se rozbaluje PŘES sešit, ne nad něj — sešit se kvůli němu nesmí zmenšovat a přesazovat. */
+/* Vzhled sešitu (kolo 12, Mek: „menu je zbytečně obří“): vzorky místo slov. Papír a jeho barva
+   jako čtyři ukázky papíru, rukopis jako tři „Aa“, vedle posuvník velikosti, zvuk ikonou v rohu,
+   dole rychlost listování. Co je co, říká bublina (title) a popisek pro čtečky (aria-label). */
+.denik-vzhled{position:absolute;right:0;top:46px;z-index:6;width:min(330px,100%);background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px 12px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;box-shadow:0 14px 34px rgba(0,0,0,.28);color:var(--ink);}
+.dvz-hlav{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.dvz-hlav span{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);}
+.dvz-zvuk{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:none;font-size:14px;}
+.dvz-zvuk.active{background:var(--court);border-color:var(--court);color:#fff;}
+.dvz-r{display:flex;align-items:center;gap:8px;min-width:0;}
+.dvz-vz{display:flex;gap:8px;flex:none;}
+.dvz-vz button{width:42px;height:34px;padding:0;border-radius:6px;border:1.5px solid var(--line);cursor:pointer;flex:none;}
+.dvz-vz button.active{border-color:var(--court);box-shadow:0 0 0 2px var(--court);}
+.dvz-vz button:focus-visible,.dvz-zvuk:focus-visible,.dvz-seg button:focus-visible{outline:2px solid var(--chalk);outline-offset:2px;}
+/* ukázky papíru: stejné barvy jako sešit, svislá čára v hlavní barvě trenéra */
+.dvz-papir button{--l:#A9C0D8;background-color:#EDEBDF;
+  background-image:linear-gradient(to right,transparent 10px,var(--court) 10px,var(--court) 11px,transparent 11px),repeating-linear-gradient(to bottom,transparent 0,transparent 6px,var(--l) 6px,var(--l) 7px);}
+.dvz-papir button[data-h$="ctverecky"]{background-image:linear-gradient(to right,transparent 10px,var(--court) 10px,var(--court) 11px,transparent 11px),repeating-linear-gradient(to bottom,transparent 0,transparent 5px,var(--l) 5px,var(--l) 6px),repeating-linear-gradient(to right,transparent 0,transparent 5px,var(--l) 5px,var(--l) 6px);}
+.dvz-papir button[data-h^="bily"]{--l:#BCD3EA;background-color:#FDFDF8;}
+.dvz-pismo button{background:#EDEBDF;color:#1F3A7A;font-size:20px;line-height:1;font-weight:400;}
+.dvz-odd{width:1px;align-self:stretch;background:var(--line);flex:none;}
+.dvz-posuv{display:flex;align-items:center;gap:6px;flex:1;min-width:0;color:var(--ink-soft);}
+.dvz-posuv input{flex:1;min-width:0;height:34px;margin:0;accent-color:var(--court);}
+.dvz-posuv .male{font-size:11px;} .dvz-posuv .velke{font-size:18px;}
+.dvz-r > .fa-book-open{color:var(--ink-soft);flex:none;}
+.dvz-seg{display:flex;flex:1;min-width:0;border:1.5px solid var(--line);border-radius:9px;overflow:hidden;}
+.dvz-seg button{flex:1 1 auto;min-width:0;height:32px;padding:0 3px;border:0;background:transparent;color:var(--ink);font:600 12px var(--font-body);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dvz-seg button+button{border-left:1.5px solid var(--line);}
+.dvz-seg button.active{background:var(--court);color:#fff;}
+/* ——— SEŠIT (kolo 10): pevná výška podle okna, obsah se sám sází do stránek ———
+   .sesit je papír (jedna stránka na telefonu, dvoustrana od 1000 px). Uvnitř je okno, které
+   ukazuje právě viditelné stránky, a v něm .sesit-list — vícesloupcová sazba pevné výšky:
+   co se nevejde na stránku, přeteče do dalšího sloupce vpravo, a listování je jen posun
+   listu o šířku okna. Stránky tak sází prohlížeč sám, i když trenér zrovna píše poznámku.
+   --radek a --m (měřítko písma) nastavuje denikRozvrh podle posuvníku velikosti písma;
+   všechno v sešitu je vysoké v násobcích --radek, ať text sedí na linkách. */
+.sesit{
+  --s-papir:#EDEBDF; --s-linka:#A9C0D8; --s-okraj:#E08A8A; --s-inkoust:#1F3A7A; --s-tuzka:#8A8F99;
+  --radek:28px; --m:1; --oks:calc(56px*var(--m)); --pas:calc(var(--radek)*1.5); --ctv:calc(var(--radek)/2);
+  --f-ruka:"Patrick Hand","Segoe Print","Bradley Hand",cursive; --v-nadpis:calc(23px*var(--m)); --v-text:calc(19.5px*var(--m)); --v-okraj:calc(19px*var(--m)); --posun:calc(-6px*var(--m));
+  position:relative;height:calc(var(--radek)*10.5);border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.16);color:var(--s-inkoust);
+}
+/* Svislá čára u data je v hlavní barvě trenéra (Mek 11. 10.), zesvětlená do papíru. */
+@supports (color:color-mix(in srgb,red 50%,blue)){ .sesit{--s-okraj:color-mix(in srgb,var(--court) 65%,var(--s-papir));} }
+.sesit[data-ton="bily"]{--s-papir:#FDFDF8; --s-linka:#BCD3EA;}
+.sesit[data-pismo="caveat"]{--f-ruka:"Caveat","Segoe Print","Bradley Hand",cursive; --v-nadpis:calc(27px*var(--m)); --v-text:calc(23px*var(--m)); --v-okraj:calc(22px*var(--m)); --posun:calc(-5px*var(--m));}
+.sesit[data-pismo="kalam"]{--f-ruka:"Kalam","Segoe Print","Bradley Hand",cursive; --v-nadpis:calc(21px*var(--m)); --v-text:calc(17.5px*var(--m)); --v-okraj:calc(17px*var(--m)); --posun:calc(-4px*var(--m));}
+html.skin-dark .sesit{box-shadow:0 8px 20px rgba(0,0,0,.5);}
+/* Papír: svislá čára u data + linky (nebo čtverečky). Stejný vzor má i otáčený list (.ot-strana). Linky jsou
+   posunuté o půl řádku, protože pás se šipkami nahoře má řádek a půl. */
+.sesit,.sesit .ot-strana{
+  background-color:var(--s-papir);
   background-image:linear-gradient(to right,transparent calc(var(--oks) - 1px),var(--s-okraj) calc(var(--oks) - 1px),var(--s-okraj) calc(var(--oks) + .5px),transparent calc(var(--oks) + .5px)),
     repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--radek) - 1px),var(--s-linka) calc(var(--radek) - 1px),var(--s-linka) var(--radek));
-  font:400 var(--s-v)/var(--radek) var(--s-f)}
-@supports (color:color-mix(in srgb,red 50%,blue)){html.skin-trener .sk-sesit{--s-okraj:color-mix(in srgb,var(--court) 65%,var(--s-papir))}}
-html.skin-trener[data-pismo="caveat"] .sk-sesit{--s-f:"Caveat","Segoe Print",cursive;--s-v:23px}
-html.skin-trener[data-pismo="kalam"] .sk-sesit{--s-f:"Kalam","Segoe Print",cursive;--s-v:17.5px}
-html.skin-trener .ss-den{display:grid;grid-template-columns:var(--oks) minmax(0,1fr);margin-bottom:var(--radek)}
-html.skin-trener .ss-datum{text-align:center;color:#8A8F99;font-size:.82em;white-space:nowrap;line-height:var(--radek)}
-html.skin-trener .ss-z{padding-left:10px;overflow-wrap:anywhere;min-height:var(--radek)}
-html.skin-trener .ss-jm{border:0;background:none;padding:0;font:inherit;color:#A8431C;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
-html.skin-trener .ss-tym{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%}
-html.skin-trener .ss-tym b{color:#2B6B2B}
-html.skin-trener .ss-prazdny{padding-left:calc(var(--oks) + 10px);color:#8A8F99}
-html.skin-trener .ss-form{display:flex;flex-direction:column;gap:8px}
-html.skin-trener .ss-form .ss-r{display:flex;gap:8px;align-items:center}
-html.skin-trener .ss-form textarea{min-height:64px}
+  background-position:0 0,0 calc(var(--posun) + var(--radek)/2);
+}
+.sesit[data-papir="ctverecky"],.sesit[data-papir="ctverecky"] .ot-strana{
+  background-image:linear-gradient(to right,transparent calc(var(--oks) - 1px),var(--s-okraj) calc(var(--oks) - 1px),var(--s-okraj) calc(var(--oks) + .5px),transparent calc(var(--oks) + .5px)),
+    repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--ctv) - 1px),var(--s-linka) calc(var(--ctv) - 1px),var(--s-linka) var(--ctv)),
+    repeating-linear-gradient(to right,transparent 0,transparent calc(var(--ctv) - 1px),var(--s-linka) calc(var(--ctv) - 1px),var(--s-linka) var(--ctv));
+  background-position:0 0,0 calc(var(--posun) + var(--radek)/2),0 0;
+}
+.sesit-okno{position:absolute;inset:0;overflow:hidden;border-radius:inherit;}
+.sesit-list{height:100%;padding:var(--pas) 0 var(--radek);column-count:1;column-gap:0;column-fill:auto;orphans:1;widows:1;}
+/* Pás nahoře: šipky v rozích a razítko měsíce tam, kde měsíc začíná (jinde jeho název tužkou). */
+.sesit-pas{position:absolute;left:0;right:0;top:0;height:var(--pas);z-index:2;pointer-events:none;}
+.sesit-pas > *{pointer-events:auto;}
+.sp-strana{position:absolute;top:0;height:100%;width:100%;display:flex;align-items:center;justify-content:center;padding:0 46px 0 var(--oks);pointer-events:none;}
+.sp-pokrac{font:400 calc(17px*var(--m))/1 var(--f-ruka);color:var(--s-tuzka);white-space:nowrap;}
+.sesit .li-sipka{position:absolute;top:50%;margin-top:-20px;width:40px;height:40px;border:0;background:transparent;color:var(--court-dark);font-size:17px;border-radius:50%;cursor:pointer;}
+.sesit .li-sipka.vlevo{left:calc((var(--oks) - 40px)/2);} .sesit .li-sipka.vpravo{right:4px;}
+.sesit .li-sipka:disabled{opacity:.25;cursor:default;}
+.sesit .li-sipka:focus-visible{outline:2px solid var(--court-dark);outline-offset:1px;}
+.sesit .mesic{display:flex;align-items:center;justify-content:center;}
+.sesit .mesic span{font:400 18px/1 var(--font-display);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;color:var(--court-dark);border:2px solid var(--court-dark);border-radius:5px;padding:4px 9px 2px;transform:rotate(-2.2deg);opacity:.88;}
+.sesit .zapis{position:relative;margin:0 0 var(--radek);padding:0 12px 0 calc(var(--oks) + 10px);break-inside:avoid;}
+.sesit .zapis.novy-mesic{break-before:column;}
+.sesit .zapis.prvni-vubec{break-before:auto;}
+.sesit .okraj{position:absolute;left:0;top:0;width:var(--oks);text-align:center;font-family:var(--f-ruka);color:var(--s-inkoust);}
+/* Datum na okraji jde změnit ťuknutím: přes něj leží neviditelné pole data. Schválně bez
+   jakéhokoli zvýraznění (jako odkaz na názvu), jen kurzor ruky. */
+.sesit .dz-datum{position:absolute;left:0;top:0;width:100%;height:calc(var(--radek)*2);margin:0;padding:0;border:0;opacity:0;cursor:pointer;font-size:16px;-webkit-appearance:none;appearance:none;}
+.sesit .okraj:has(.dz-datum:focus-visible) b{outline:2px solid var(--s-inkoust);outline-offset:1px;border-radius:3px;}
+.sesit .okraj b{display:block;font-weight:700;font-size:var(--v-okraj);line-height:var(--radek);white-space:nowrap;}
+.sesit .okraj span{display:block;font-size:calc(var(--v-okraj) - 3px);line-height:var(--radek);color:var(--s-tuzka);}
+.sesit .okraj .dvakrat{font-weight:600;color:var(--chalk-dark);}
+   na konci stránky neusekne */
+   lepík pod poznámkou (sešit se přeskládá), další ťuknutí ho zase sbalí. Sbalená značka je tužkou
+.sesit .obsah{min-width:0;}
+.sesit .obsah h3{margin:0;font:700 var(--v-nadpis)/var(--radek) var(--f-ruka);letter-spacing:0;color:var(--s-inkoust);overflow-wrap:anywhere;break-after:avoid;}
+/* Podtržení zvýrazňovačem: barvy všech zaměření po stejných dílech (skládá denikPodtrzeni),
+   zesvětlené do papíru a položené POD písmena, ať se název dobře čte. */
+.sesit .dz-nazev{background-size:100% 7px;background-position:0 100%;background-repeat:no-repeat;box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:0 2px 1px;}
+/* Název je odkaz do editoru tréninku — schválně k nerozeznání od obyčejného názvu (Mek:
+   „nenápadný, prakticky neviditelný“). Jediná stopa je kurzor ruky na počítači. */
+.sesit .dz-odkaz{cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.sesit .dz-odkaz:focus-visible{outline:2px solid var(--s-inkoust);outline-offset:2px;border-radius:3px;}
+.sesit .meta{display:flex;flex-wrap:wrap;column-gap:7px;font:500 calc(11.5px*var(--m)) var(--font-body);color:var(--s-tuzka);letter-spacing:.02em;break-after:avoid;}
+.sesit .meta span{display:inline-flex;align-items:center;gap:5px;height:var(--radek);white-space:nowrap;}
+.sesit .meta i{width:9px;height:9px;border-radius:50%;flex:none;}
+.sesit .pozn{margin:0;font:400 var(--v-text)/var(--radek) var(--f-ruka);cursor:text;border-radius:4px;min-height:var(--radek);overflow-wrap:anywhere;color:var(--s-inkoust);}
+/* Formátovaný text na linkách: žádné mezery navíc, řádek = řádek sešitu. */
+.sesit .pozn.rte-display p,.sesit .pozn.rte-display div,.sesit .ds-rte .rte-editor p,.sesit .ds-rte .rte-editor div{margin:0;}
+.sesit .pozn.rte-display ul,.sesit .pozn.rte-display ol,.sesit .ds-rte .rte-editor ul,.sesit .ds-rte .rte-editor ol{margin:0 0 0 24px;padding:0;}
+.sesit .pozn.rte-display li,.sesit .ds-rte .rte-editor li{margin:0;}
+.sesit .pozn.prazdna{color:var(--s-tuzka);}
+.sesit .pozn:focus-visible{outline:2px solid var(--s-inkoust);outline-offset:1px;}
+.sesit .ds-rte.rte-wrap{border:0;border-radius:0;background:transparent;overflow:visible;}
+.sesit .ds-rte .rte-toolbar{display:flex;gap:2px;height:var(--radek);padding:0;border:0;background:transparent;align-items:center;break-after:avoid;}
+.sesit .ds-rte .rte-btn{width:30px;height:min(26px,calc(var(--radek) - 2px));font-size:12.5px;color:var(--s-inkoust);border-radius:5px;}
+.sesit .ds-rte .rte-btn:hover{background:rgba(31,58,122,.12);}
+.sesit .ds-rte .rte-btn.sep{margin-left:8px;}
+.sesit .ds-rte .rte-editor{padding:0;min-height:var(--radek);border-radius:4px;outline:none;overflow-wrap:anywhere;
+  background:rgba(232,98,44,.1);background:color-mix(in srgb,var(--chalk) 10%,transparent);box-shadow:0 0 0 2px var(--chalk);
+  color:var(--s-inkoust);font:400 var(--v-text)/var(--radek) var(--f-ruka);}
+.sesit .upravy{display:flex;gap:8px;height:calc(var(--radek)*2);align-items:center;break-inside:avoid;}
+.sesit .upravy button{font:600 13px var(--font-body);height:36px;padding:0 14px;border-radius:10px;cursor:pointer;border:1.5px solid var(--court-dark);background:transparent;color:var(--court-dark);}
+.sesit .upravy button.hl{background:var(--chalk-dark);border-color:var(--chalk-dark);color:#fff;}
+.sesit .upravy.vpravo{justify-content:flex-end;}
+.sesit .upravy button.kos{width:36px;padding:0;}
+/* Otáčení listu „ohnutým rohem“ (kolo 12, denikListuj). Vrstva ořízne všechno na šířku a spodek
+   sešitu — i pro rozvržení stránky, takže nevznikne posuvník ani poskok; nahoru nechává místo.
+   Stránky listu jsou kopie skutečných stránek na stejném papíře; tvar a polohu jim nastavuje
+   skript v každém snímku (clip-path, transform). */
+.ot-vrstva{position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;overflow:hidden;}
+.ot-plocha{position:absolute;left:0;width:100%;}
+.sesit .ot-strana{position:absolute;top:0;left:0;overflow:hidden;}
+.ot-snimek{position:absolute;top:0;height:100%;}
+.ot-chlopen-obal{position:absolute;inset:0;filter:drop-shadow(0 2px 7px rgba(0,0,0,.28));}
+.sesit .ot-chlopen{transform-origin:0 0;}
+.ot-lesk,.ot-stin{position:absolute;left:0;top:0;height:300%;transform-origin:0 0;pointer-events:none;}
+.ot-lesk{width:90px;background:linear-gradient(to right,rgba(60,45,20,.30),rgba(255,255,255,.28) 30%,rgba(255,255,255,0));}
+.ot-stin-obal{position:absolute;top:0;overflow:hidden;}
+.ot-stin{width:70px;background:linear-gradient(to right,rgba(40,30,10,.32),rgba(40,30,10,0));}
+@keyframes dsProlni{from{opacity:.25}to{opacity:1}}
+.sesit-list.prolni{animation:dsProlni .22s ease-out;}
+/* Otevřený sešit: od 1000 px dvě stránky vedle sebe s hřbetem uprostřed. Svislé čáry (u data
+   i čtverečky) se kreslí pro každou stránku zvlášť, ať na pravé stránce sedí stejně jako vlevo. */
+@media (min-width:1000px){
+  .sesit{border-radius:6px;background-size:50% 100%,100% auto;background-repeat:repeat-x,repeat;}
+  .sesit[data-papir="ctverecky"]{background-size:50% 100%,auto,50% 100%;background-repeat:repeat-x,repeat,repeat-x;}
+  .sesit::after{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 26px);width:52px;pointer-events:none;z-index:1;
+    background:linear-gradient(to right,transparent,rgba(60,50,30,.10) 38%,rgba(60,50,30,.26) 49.4%,rgba(255,255,255,.35) 50.6%,rgba(60,50,30,.12) 62%,transparent);}
+  .sesit-list{column-count:2;}
+  .sesit .zapis{padding-right:22px;}
+  .sp-strana{width:50%;}
+  .sp-strana.prava{left:50%;}
+  /* Na počítači je razítko větší a smí lehce přesahovat přes linky (Mek 12. 10.). */
+  .sesit .mesic span{font-size:23px;padding:5px 11px 3px;}
+}
+/* Čekající trénink: psaný tužkou, za posledním záznamem. */
+.sesit .ds-prazdno{margin:0 12px 0 calc(var(--oks) + 10px);font:400 var(--v-text)/var(--radek) var(--f-ruka);color:var(--s-tuzka);}
+/* okno „Dopsat trénink zpětně“ */
+
+/* lišta formátování a zobrazení formátovaného textu (Trenér: .rte-*) */
+.rte-wrap{border:1px solid var(--line);border-radius:var(--radius-sm,7px);background:var(--paper);overflow:hidden}
+.rte-toolbar{display:flex;gap:2px;padding:3px;border-bottom:1px solid var(--line);background:var(--card)}
+.rte-btn{width:24px;height:24px;border:none;background:none;border-radius:4px;color:var(--ink-soft);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.rte-btn:hover{background:var(--line)}
+.rte-editor{min-height:30px;padding:5px 7px;font-size:12px;outline:none;font-family:inherit;color:var(--ink)}
+.rte-editor:empty::before{content:attr(data-placeholder);color:var(--ink-faint)}
+.rte-editor ol,.rte-display ol{list-style-type:decimal}.rte-editor ol ol,.rte-display ol ol{list-style-type:lower-alpha}
+.rte-editor ul,.rte-display ul{list-style-type:disc}.rte-editor ul ul,.rte-display ul ul{list-style-type:circle}
+/* záložka Deníček: jen ikona v barvě křídy, jako vstup do Deníčku v Trenérovi */
+html.skin-trener .sk-tabs button.sk-tab-dk{flex:0 0 52px;color:var(--chalk-ink)}
+html.skin-trener .sk-tabs button.sk-tab-dk i{font-size:16px}
+html.skin-trener .sk-tabs button.sk-tab-dk.active{color:var(--chalk-ink)}
+@media(max-width:420px){html.skin-trener .sk-tabs button{gap:4px;font-size:12px}}
+/* v Deníčku plovoucí tlačítko Zápas nepatří (zakrývalo by sešit) */
+html.skin-trener body.dk-on .sk-fab{display:none}
 html.skin-trener .kol-tlum .kol-c{background:var(--flat-bg);color:var(--ink-faint-ink)}
 html.skin-trener .m-t.kol-t-tlum{background:var(--flat-bg);color:var(--ink-faint-ink)}
 html.skin-trener .kol-em{font-size:18px}
@@ -1151,7 +1318,6 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
     <button class="btn btn-o" id="ovBtnM" onclick="toggleOverview();closeMenu()"><span class="k-only">📊 Přehled týmu</span><span class="t-only t-lbl"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Přehled týmu</span></button>
     <button class="btn btn-o" id="cmpBtnM" onclick="toggleCmp();closeMenu()"><span class="k-only">⚖ Porovnání</span><span class="t-only t-lbl"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Porovnání</span></button>
     <button class="btn btn-o" onclick="openMinihry();closeMenu()"><span class="k-only">🎮 Minihry</span><span class="t-only t-lbl"><i class="fa-solid fa-gamepad" aria-hidden="true"></i>Minihry</span><span class="stale-dot mh-dot" style="display:none"></span></button>
-    <button class="btn btn-o" id="sesitBtnM" onclick="openSesit();closeMenu()"><span class="t-only t-lbl"><i class="fa-solid fa-book-open" aria-hidden="true"></i>Sešit poznámek</span></button>
     <hr class="sep-line"><div class="mnu-eyebrow">Zápasy</div>
     <button class="btn btn-p mn-start" onclick="openLiveMatch();closeMenu()"><span class="k-only">🏆 Spustit zápas</span><span class="t-only t-lbl"><i class="fa-solid fa-play" aria-hidden="true"></i>Spustit zápas</span></button>
     <button class="btn btn-o" onclick="openAllMatchesLibrary();closeMenu()"><span class="k-only">📚 Záznamy zápasů</span><span class="t-only t-lbl"><i class="fa-solid fa-list" aria-hidden="true"></i>Záznamy zápasů</span></button>
@@ -1175,6 +1341,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
   <button type="button" data-nav="ov" onclick="skTab('ov')"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Přehled</button>
   <button type="button" data-nav="cmp" onclick="skTab('cmp')"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Porovnání</button>
   <button type="button" data-nav="zapasy" onclick="skTab('zapasy')"><i class="fa-solid fa-trophy" aria-hidden="true"></i>Zápasy</button>
+  <button type="button" data-nav="denik" class="sk-tab-dk" onclick="skTab('denik')" aria-label="Deníček" title="Deníček"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>
 </nav>
 <div id="sidebarBackdrop" onclick="closeSidebar()"></div>
 <div class="body-wrap">
@@ -1193,6 +1360,27 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
     <div id="cmpView" style="display:none"></div>
     <div id="ovView" style="display:none"></div>
     <div id="zapView" style="display:none"></div>
+    <!-- Kolo 70: Deníček (jen vzhled Trenéra) — rozložení 1:1 jako #denikView v Trenérovi -->
+    <section id="denikView" style="display:none">
+      <div class="dh-radek">
+        <button type="button" class="dh-btn ikona ghost" id="denikZpetBtn" aria-label="Zpět" title="Zpět" hidden><i class="fa-solid fa-arrow-left"></i></button>
+        <h2>Deníček</h2>
+        <button type="button" class="dh-btn" id="denikFiltrBtn" aria-label="Koho ukázat" title="Koho ukázat"><i class="fa-solid fa-user-group"></i><span>Všichni</span><i class="fa-solid fa-chevron-down"></i></button>
+        <button type="button" class="dh-btn" id="denikDopsatBtn" aria-label="Nový zápis" title="Nový zápis"><i class="fa-solid fa-plus"></i><span> Zápis</span></button>
+        <button type="button" class="dh-btn ikona" id="denikVzhledBtn" aria-label="Vzhled sešitu" title="Vzhled sešitu" aria-expanded="false" aria-controls="denikVzhled"><i class="fa-solid fa-sliders"></i></button>
+      </div>
+      <div class="denik-vzhled hidden" id="denikVzhled">
+        <div class="dvz-hlav"><span>Vzhled sešitu</span><button type="button" class="dvz-zvuk" id="denikZvukBtn"><i class="fa-solid fa-volume-high"></i></button></div>
+        <div class="dvz-vz dvz-papir" data-co="papirTon" role="group" aria-label="Papír"><button type="button" data-h="tlumeny-linky" title="Tlumený, linky" aria-label="Tlumený papír, linky"></button><button type="button" data-h="tlumeny-ctverecky" title="Tlumený, čtverečky" aria-label="Tlumený papír, čtverečky"></button><button type="button" data-h="bily-linky" title="Bílý, linky" aria-label="Bílý papír, linky"></button><button type="button" data-h="bily-ctverecky" title="Bílý, čtverečky" aria-label="Bílý papír, čtverečky"></button></div>
+        <div class="dvz-r"><div class="dvz-vz dvz-pismo" data-co="pismo" role="group" aria-label="Rukopis"><button type="button" data-h="patrick" title="Úhledný rukopis" aria-label="Úhledný rukopis" style="font-family:'Patrick Hand',cursive;">Aa</button><button type="button" data-h="caveat" title="Rychlý rukopis" aria-label="Rychlý rukopis" style="font-family:'Caveat',cursive;font-size:24px;">Aa</button><button type="button" data-h="kalam" title="Rukopis fixou" aria-label="Rukopis fixou" style="font-family:'Kalam',cursive;font-size:18px;">Aa</button></div><span class="dvz-odd"></span>
+          <div class="dvz-posuv" title="Velikost písma"><i class="fa-solid fa-font male"></i><input type="range" id="denikVelikost" min="0" max="4" step="1" value="2" aria-label="Velikost písma"><i class="fa-solid fa-font velke"></i></div></div>
+        <div class="dvz-r" title="Rychlost listování"><i class="fa-solid fa-book-open"></i><div class="dvz-seg" data-co="rychlost" role="group" aria-label="Rychlost listování"><button type="button" data-h="pomalu">Pomalu</button><button type="button" data-h="stredne">Středně</button><button type="button" data-h="rychle">Rychle</button><button type="button" data-h="vypnuto" title="Bez otáčení listu, stránka se jen prolne">Vypnuto</button></div></div>
+      </div>
+      <div class="sesit" id="denikSesit" data-papir="linky" data-ton="tlumeny" data-pismo="patrick">
+        <div class="sesit-pas" id="denikPas"></div>
+        <div class="sesit-okno" id="denikOkno"><div class="sesit-list" id="denikList"></div></div>
+      </div>
+    </section>
   </main>
 </div>
 <div class="mo" id="modal" style="display:none"><div class="md" id="modalContent"></div></div>
@@ -2354,55 +2542,6 @@ function revertMil(id){
   },{icon:'↩️',note,btnCls:'btn-gray'});
 }
 
-// ═══ Kolo 69 (P4): TÝMOVÝ SEŠIT POZNÁMEK (jen vzhled Trenéra, menu ⋮ → Sešit poznámek) ═══
-// Všechny poznámky k hráčkám (p.notes, píšou se dál do lepíků) a týmové zápisy (S.teamNotes, píšou se
-// tady) po dnech, nejnovější nahoře. Jméno otevře kartu hráčky, týmový zápis jde upravit nebo smazat.
-function sesitDnyHtml(){
-  const dny={};
-  (S.teamNotes||[]).forEach(n=>{(dny[n.date]=dny[n.date]||[]).push({tym:n});});
-  getActiveP().forEach(p=>(p.notes||[]).forEach(n=>{if(n.text)(dny[n.date]=dny[n.date]||[]).push({p,n});}));
-  const klice=Object.keys(dny).sort((a,b)=>b.localeCompare(a));
-  if(!klice.length)return'<div class="ss-prazdny">Zatím žádné poznámky</div>';
-  return klice.map(d=>{
-    const z=dny[d].sort((a,b)=>(a.tym?0:1)-(b.tym?0:1)||(a.p&&b.p?a.p.name.localeCompare(b.p.name,'cs'):0)).map(x=>x.tym
-      ?`<div class="ss-z"><button type="button" class="ss-tym" onclick="upravTymZapis('${x.tym.id}')"><b>Tým:</b> ${lepikEsc(x.tym.text)}</button></div>`
-      :`<div class="ss-z"><button type="button" class="ss-jm" onclick="closeModal();selectPlayer('${x.p.id}')">${lepikEsc(playerLabel(x.p))}</button>: ${lepikEsc(x.n.text)}</div>`).join('');
-    return`<div class="ss-den"><div class="ss-datum">${fmtDate(d,true)}</div><div>${z}</div></div>`;
-  }).join('');
-}
-function openSesit(){
-  openModal(`${skHubHead('Sešit poznámek')}
-    <div class="ss-form" style="margin-top:12px"><div class="fg" style="margin:0"><label for="ssText">Zápis k týmu</label><textarea id="ssText" maxlength="400"></textarea></div>
-      <div class="ss-r fg" style="margin:0"><input id="ssDate" type="date" value="${today()}" style="flex:1"><button class="btn btn-p" onclick="pridatTymZapis()"><i class="fa-solid fa-pen" aria-hidden="true"></i> Zapsat</button></div></div>
-    <div class="sk-sesit" id="ssPapir">${sesitDnyHtml()}</div>`);
-}
-function pridatTymZapis(){
-  const t=(document.getElementById('ssText')?.value||'').trim();
-  if(!t){toast('Napiš zápis','err');return;}
-  S.teamNotes=S.teamNotes||[];
-  S.teamNotes.push({id:'tn_'+Date.now(),date:document.getElementById('ssDate').value||today(),text:t});
-  save();document.getElementById('ssText').value='';
-  document.getElementById('ssPapir').innerHTML=sesitDnyHtml();toast('Zapsáno do sešitu');
-}
-function upravTymZapis(id){
-  const n=(S.teamNotes||[]).find(x=>x.id===id);if(!n)return;
-  openModal(`${skHubHead('Zápis k týmu')}
-    <div class="fg" style="margin-top:12px"><textarea id="ssEdit" maxlength="400">${lepikEsc(n.text)}</textarea></div>
-    <div class="fg"><label>Datum</label><input id="ssEditDate" type="date" value="${n.date}"></div>
-    <div class="ma"><button class="btn btn-d" onclick="smazatTymZapis('${id}')"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Smazat</button><button class="btn btn-o" onclick="openSesit()">Zpět</button><button class="btn btn-p" onclick="ulozitTymZapis('${id}')">Uložit</button></div>`);
-}
-function ulozitTymZapis(id){
-  const n=(S.teamNotes||[]).find(x=>x.id===id);if(!n)return;
-  const t=(document.getElementById('ssEdit')?.value||'').trim();
-  if(!t){smazatTymZapis(id);return;}
-  n.text=t;n.date=document.getElementById('ssEditDate').value||n.date;save();openSesit();toast('Uloženo ✓');
-}
-function smazatTymZapis(id){
-  const snap=undoSnapshot();
-  S.teamNotes=(S.teamNotes||[]).filter(x=>x.id!==id);save();openSesit();
-  offerUndo(snap,'Zápis smazán',()=>{if(document.getElementById('ssPapir'))openSesit();});
-}
-
 // ═══ NOTES ═══
 function openNote(type,id){
   const item=S.config[type]?.find(x=>x.id===id);if(!item)return;
@@ -2675,6 +2814,11 @@ function render(){
   if(syncAutoBadges())save();
   const zap=document.getElementById("zapView"),zapOpen=!!zap&&zap.style.display!=="none"&&!S.cmpMode&&!(S.activeId&&gP());
   if(zap)zap.style.display="none";
+  // Kolo 70: Deníček zůstane otevřený stejně jako Zápasy; při odchodu se rozepsaný zápis uloží.
+  const dkv=document.getElementById("denikView"),dkOpen=!!dkv&&dkv.style.display!=="none"&&!S.cmpMode&&!(S.activeId&&gP());
+  if(dkv&&dkv.style.display!=="none"&&!dkOpen&&dkUprava)dkZavriUpravu(true,true);
+  if(dkv)dkv.style.display="none";
+  if(!dkOpen)document.body.classList.remove("dk-on");
   const sub=document.getElementById("subtitleEl");if(sub)sub.value=S.subtitle||"SK Meteor Praha";
   renderPL();
   document.getElementById("emptyState").style.display="none";
@@ -2684,10 +2828,11 @@ function render(){
   if(S.cmpMode){document.getElementById("cmpView").style.display="block";renderCmp();}
   else if(S.activeId&&gP())renderDetail();
   else if(zapOpen){zap.style.display="block";setNavActive('zapasy');renderZapasy();}
+  else if(dkOpen){dkv.style.display="block";setNavActive('denik');renderDenik();}
   else{setNavActive('home');document.getElementById("emptyState").style.display="flex";renderHome();}
   updateScopeChip();
   updateMhDot();
-  pushHistory(S.cmpMode?{type:'cmp'}:(S.activeId&&gP()?{type:'player',id:S.activeId}:zapOpen?{type:'zap'}:{type:'home'}));
+  pushHistory(S.cmpMode?{type:'cmp'}:(S.activeId&&gP()?{type:'player',id:S.activeId}:zapOpen?{type:'zap'}:dkOpen?{type:'denik',id:dkFiltr||''}:{type:'home'}));
 }
 // ══════════════════════════════════════════════════════════
 // HISTORIE NAVIGACE — Zpět/Dopředu (Kolo 27)
@@ -2712,9 +2857,15 @@ function pushHistory(screen){
 function applyScreen(screen){
   NAV_SUPPRESS=true;
   document.getElementById('zapView').style.display='none';
+  document.getElementById('denikView').style.display='none';
   if(screen.type==='home'){
     S.activeId=null;S.cmpMode=false;
     document.getElementById('ovView').style.display='none';
+    closeSidebar();render();
+  }else if(screen.type==='denik'){
+    S.activeId=null;S.cmpMode=false;dkFiltr=screen.id||null;dkKotva=null;
+    document.getElementById('ovView').style.display='none';
+    document.getElementById('denikView').style.display='block';
     closeSidebar();render();
   }else if(screen.type==='zap'){
     S.activeId=null;S.cmpMode=false;
@@ -2737,7 +2888,7 @@ function applyScreen(screen){
     S.cmpMode=false;
     renderOverview();
   }
-  setNavActive(screen.type==='home'?'home':screen.type==='ov'?'ov':screen.type==='cmp'?'cmp':screen.type==='zap'?'zapasy':null);
+  setNavActive(screen.type==='home'?'home':screen.type==='ov'?'ov':screen.type==='cmp'?'cmp':screen.type==='zap'?'zapasy':screen.type==='denik'?'denik':null);
   NAV_SUPPRESS=false;
   updateNavButtons();
 }
@@ -2847,10 +2998,12 @@ function skTab(which){
   else if(which==='ov'){if(!ovOpen)toggleOverview();}
   else if(which==='cmp'){if(!S.cmpMode)toggleCmp();}
   else if(which==='zapasy')openZapasy();
+  else if(which==='denik')openDenik(null);
 }
 // Kolo 67: obrazovka Zápasy (jen vzhled Trenéra, záložka Zápasy).
 function openZapasy(){
   const ov=document.getElementById('ovView');if(ov)ov.style.display='none';
+  const dv=document.getElementById('denikView');if(dv&&dv.style.display!=='none'){if(dkUprava)dkZavriUpravu(true,true);dv.style.display='none';}
   S.activeId=null;S.cmpMode=false;closeSidebar();
   document.getElementById('zapView').style.display='block';
   render();
@@ -2859,6 +3012,7 @@ function goHome(){
   S.activeId=null;
   S.cmpMode=false;
   const zv=document.getElementById('zapView');if(zv)zv.style.display='none';
+  const dv=document.getElementById('denikView');if(dv&&dv.style.display!=='none'){if(dkUprava)dkZavriUpravu(true,true);dv.style.display='none';}
   const ov=document.getElementById('ovView');
   if(ov)ov.style.display='none';
   setNavActive('home');
@@ -3374,9 +3528,9 @@ function buildMil(){
 // Zobrazeno jako druhá karta hned pod Milníky, protože obojí je nečíselný/kvalitativní
 // záznam o hráčce — appka je řadí od nejnovější, žádné omezení počtu.
 function buildPlayerNotesCard(p){
-  if(isTrener())return lepikNastenkaHtml(p);
+  if(isTrener())return''; // Kolo 70: všechny poznámky jsou v Deníčku (hlavička lepíku tam vede)
   const notes=[...(p.notes||[])].reverse();
-  const rows=notes.map(n=>`<div class="me" style="align-items:flex-start"><div class="ml"><b>${fmtDate(n.date)}</b><br><span style="font-size:0.8rem;font-weight:400;white-space:pre-wrap">${n.text}</span></div><button class="btn btn-o sm" onclick="openEditNote('${n.id}')">✎</button><button class="btn btn-d sm" onclick="deletePlayerNote('${n.id}')">✕</button></div>`).join("");
+  const rows=notes.map(n=>`<div class="me" style="align-items:flex-start"><div class="ml"><b>${fmtDate(n.date)}</b><br><span style="font-size:0.8rem;font-weight:400;white-space:pre-wrap">${dkJeRich(n.text)?lepikEsc(dkText(n.text)):n.text}</span></div><button class="btn btn-o sm" onclick="openEditNote('${n.id}')">✎</button><button class="btn btn-d sm" onclick="deletePlayerNote('${n.id}')">✕</button></div>`).join("");
   return`<div class="card"><h3>📝 Poznámky k hráčce</h3><button class="btn btn-o sm" style="margin-bottom:10px" onclick="openAddNote()">+ Přidat poznámku</button>${rows||'<div class="no-data">Zatím žádné poznámky</div>'}</div>`;
 }
 function openAddNote(){
@@ -3402,7 +3556,7 @@ function openEditNote(id){
   const n=p.notes?.find(x=>x.id===id);if(!n)return;
   openModal(`<h2>✎ Upravit poznámku</h2>
     <div class="fg"><label>Datum</label><input type="date" id="pnDate" value="${n.date}"></div>
-    <div class="fg"><textarea id="pnText">${n.text}</textarea></div>
+    <div class="fg"><textarea id="pnText">${dkJeRich(n.text)?lepikEsc(dkText(n.text)):n.text}</textarea></div>
     <div class="ma"><button class="btn btn-o" onclick="closeModalConfirm()">Zrušit</button><button class="btn btn-p" onclick="saveEditNote('${id}')">Uložit</button></div>`);
   setTimeout(snapModal,90);
 }
@@ -3457,8 +3611,8 @@ function lepikKartaHtml(p){
   const n=(p.notes||[]).length,posl=lepikPosledni(p),dnes=posl&&posl.date===today();
   return lepikHtml({key:'k:'+p.id,
     hlava:n?`${n} ${poznamekTvar(n)} · naposledy ${fmtDate(posl.date)}`:'Poznámky k hráčce',
-    hlavaLabel:'Všechny poznámky k hráčce',
-    text:posl?posl.text:'',stary:posl&&!dnes?posl.date:'',prazdny:!posl,placeholder:'Poznámka k hráčce…'});
+    hlavaLabel:'Všechny poznámky k hráčce v Deníčku',
+    text:posl?dkText(posl.text):'',stary:posl&&!dnes?posl.date:'',prazdny:!posl,placeholder:'Poznámka k hráčce…'});
 }
 function lepikNastenkaHtml(p){
   const ns=[...(p.notes||[])].sort((a,b)=>b.date.localeCompare(a.date));
@@ -3486,7 +3640,7 @@ function lepikKlik(e){
   const el=e.currentTarget,key=el.dataset.lepik,a=b.dataset.lp;
   if(a==='hlava'){
     if(key.startsWith('n:'))openEditNote(key.slice(2));
-    else{switchTab('milestones');setTimeout(()=>document.getElementById('lepikNastenka')?.scrollIntoView({behavior:'smooth',block:'start'}),60);}
+    else openDenik(key.slice(2)); // Kolo 70: Deníček jen s touhle hráčkou
     return;
   }
   if(a==='sbalit'){lepikPrepniSbaleni(el,!el.classList.contains('sbaleny'));return;}
@@ -3509,7 +3663,11 @@ function lepikPsat(el){
   const p=gP(),key=el.dataset.lepik,t=el.querySelector('.lp-text');if(!p||!t)return;
   let puv='';
   if(key.startsWith('n:'))puv=(p.notes||[]).find(n=>n.id===key.slice(2))?.text||'';
-  else{const posl=lepikPosledni(p);if(posl&&posl.date===today())puv=posl.text;}
+  else{const posl=lepikPosledni(p);if(posl&&posl.date===today()){
+    // Kolo 70: formátovaný zápis z Deníčku se na lepíku nepřepisuje (přišel by o formátování) —
+    // otevře se v Deníčku rovnou k úpravě.
+    if(dkJeRich(posl.text)){openDenik(p.id,posl.id);return;}
+    puv=posl.text;}}
   lepikPise=true;
   el.classList.remove('sbaleny');
   const pole=document.createElement('textarea');
@@ -5059,6 +5217,7 @@ function toggleOverview(){
     document.getElementById('playerDetail').style.display='none';
     document.getElementById('cmpView').style.display='none';
     document.getElementById('zapView').style.display='none';
+    const dv=document.getElementById('denikView');if(dv.style.display!=='none'){if(dkUprava)dkZavriUpravu(true,true);dv.style.display='none';document.body.classList.remove('dk-on');}
     document.getElementById('ovView').style.display='block';
     S.cmpMode=false;
     setNavActive('ov');
@@ -7602,7 +7761,7 @@ const HELP_DATA=[
  a:`Přímo na kartě hráčky v sekci Milníků nahoře aplikace ukazuje souhrn (kolik milníků je v jaké fázi) a u každého milníku zvlášť jeho aktuální fázi s datem. Klepnutím na souhrnný řádek se navíc rozbalí vysvětlení, co který emoji fáze znamená. V Přehledu týmu (📊) pak aplikace u každé hráčky zobrazuje totéž jako malou barevnou mřížku čtverečků — čím světlejší čtvereček, tím nižší fáze, tmavý/prázdný znamená ještě nezačato — a podržením na čtverečku aplikace ukáže, o který konkrétní milník jde.`,
  kw:"vysvětlení emoji fází legenda přehled týmu barevná mřížka"},
 {q:`Co jsou „Poznámky k hráčce" a čím se liší od Milníků?`,
- a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější. Ve vzhledu Trenéra jsou poznámky žluté lepíky a nejnovější je i na kartě hráčky pod tlačítky (viz Nápověda „Vzhled Trenéra“ → „Jak fungují lepíky s poznámkami k hráčce?“).`,
+ a:`Je to volný, datovaný text — na rozdíl od Milníků (pevně dané dovednosti appky, ANO/NE) sem appka nechá napsat cokoli, třeba postřeh z tréninku nebo co jste s hráčkou probraly. Appka je zobrazuje jako druhou kartu hned pod Milníky, řazené od nejnovější. Ve vzhledu Trenéra je nejnovější poznámka žlutý lepík na kartě hráčky pod tlačítky a všechny poznámky jsou v Deníčku (viz Nápověda „Vzhled Trenéra“ → „Jak fungují lepíky s poznámkami k hráčce?“ a „Co je Deníček?“).`,
  kw:"poznámky hráčka deník zápisník postřehy"},
 {q:`Jak poznámku k hráčce přidám, upravím nebo smažu?`,
  a:`V sekci Milníků na kartě hráčky klikni na „+ Přidat poznámku" — appka nabídne datum (jde změnit) a textové pole. Existující poznámku appka nechá upravit tlačítkem „✎" u ní, nebo smazat tlačítkem „✕" (appka se zeptá na potvrzení). Počet poznámek appka nijak neomezuje.`},
@@ -7802,7 +7961,7 @@ const HELP_DATA=[
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
 {q:`Jak přepnu Bombito do vzhledu Trenéra a zpátky?`,
- a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b> (zápasové statistiky týmu), bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
+ a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b> (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
  kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
  a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
@@ -7816,11 +7975,11 @@ const HELP_DATA=[
 {q:`Co dělá tlačítko Zpět na telefonu?`,
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, vrátí tě na předchozí obrazovku (hráčka, Domů, Přehled, Porovnání…), stejně jako dřív spodní lišta, která ve vzhledu Trenéra na telefonu už není. Na první obrazovce po spuštění Zpět Bombito opustí.<br>Na iPhonu nainstalovaná aplikace systémové Zpět nemá, proto je v hlavičce šipka Zpět (ukáže se, jen když je kam se vrátit). Na počítači jsou v hlavičce šipky Zpět i Dopředu.<br>Tlačítko „Vrátit poslední akci“ v živém zápase (když se při zapisování uklikneš) zůstává, jak bylo.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
-{q:`Co je Sešit poznámek?`,
- a:`Ve vzhledu Trenéra je v menu ⋮ <b>Sešit poznámek</b>: jedno místo, kde si přečteš, co se o týmu psalo. Na linkovaném papíře (jako Deníček v Trenérovi, stejným rukopisem jako lepíky) jsou dny pod sebou, nejnovější nahoře, datum na okraji.<br>• <b>Poznámky k hráčkám</b> z lepíků. Klepnutím na jméno otevřeš kartu hráčky. Píšou se dál do lepíku na kartě.<br>• <b>Zápisy k týmu</b> (označené „Tým:“), které nepatří žádné hráčce, třeba jak proběhl trénink. Napíšeš je nahoře v sešitu, datum je předvyplněné na dnešek. Klepnutím na zápis ho upravíš nebo smažeš (s „Vrátit“).<br>Zápisy k týmu jsou součástí dat Bombita, takže jsou i v záloze.`,
- kw:"sešit deníček poznámky tým zápis trénink"},
+{q:`Co je Deníček?`,
+ a:`Ve vzhledu Trenéra je Deníček poslední záložka nahoře (oranžová ikona knihy). Je to stejný sešit jako Deníček v Trenérovi: linkovaný papír, datum a den na okraji, rukopis, měsíce s razítkem a listování.<br>• <b>Co v něm je:</b> poznámky k hráčkám (stejné jako na lepíku na kartě) a zápisy o celém týmu. Bez filtru vidíš od každé hráčky a od týmu jen <b>poslední zápis</b>. Tlačítkem s jménem nahoře (Všichni) vybereš Tým nebo jednu hráčku a uvidíš <b>všechny</b> jejich zápisy. Zpátky na všechny se vrátíš šipkou vlevo nahoře nebo systémovým Zpět.<br>• <b>Nový zápis:</b> tlačítko s plusem. Ve filtru hned píšeš k vybrané hráčce nebo týmu, jinak nejdřív vybereš komu. Zápis má dnešní datum.<br>• <b>Psaní:</b> ťukni na text zápisu a piš rovnou do sešitu. Nad textem je lišta: tučně, kurzíva, odrážky, číslovaný seznam a odsazení. Zápis se uloží sám, jakmile ťukneš jinam (s „Vrátit“). Esc psaní zruší, Ctrl+Enter uloží. Koš vpravo zápis smaže (s „Vrátit“). Zápis, ve kterém nic nenapíšeš, zmizí.<br>• <b>Datum</b> změníš ťuknutím na datum na okraji. Jméno hráčky otevře její kartu.<br>• <b>Listování:</b> šipky v rozích nahoře, přetažení prstem do strany, na počítači šipky na klávesnici. List se otočí ohnutým rohem a zašustí; při smazání je slyšet guma.<br>• <b>Vzhled sešitu</b> (ikona vpravo nahoře): papír tlumený nebo bílý, linky nebo čtverečky, rukopis (stejný jako u lepíků), velikost písma, rychlost listování a zvuky. Vzhled si pamatuje zařízení.<br>Zápisy jsou součástí dat Bombita, takže jsou i v záloze.`,
+ kw:"deníček sešit poznámky tým zápis listování formátování tučně odrážky"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
- a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
+ a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ otevře Deníček jen s touto hráčkou, kde jsou všechny její poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem nebo s formátováním (tučně, odrážky…) napíšeš v Deníčku. Formátovanou dnešní poznámku lepík otevře rovnou v Deníčku, aby formátování nezmizelo.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
  kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér rukopis písmo"},
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
  a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost). Když nemá ani odznak, je uprostřed <b>šedě</b> její nejlepší metrika, pokud má aspoň T 50 (průměr): to není silná stránka, ale to, v čem je zatím nejlepší. Jinak je uprostřed nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
@@ -8139,6 +8298,463 @@ window.addEventListener('appinstalled',()=>{window.__bombitoInstall=null;window.
   document.body.appendChild(b);
   new MutationObserver(()=>{cil=document.getElementById('modal').style.display!=='none'?document.querySelector('#modal .md'):document.querySelector('main');videt();}).observe(document.getElementById('modal'),{attributes:true,attributeFilter:['style']});
 })();
+// ═══ Kolo 70 (Mek 27. 10.): DENÍČEK — sešit 1:1 podle Deníčku v Trenérovi (jen vzhled Trenéra) ═══
+// Nahrazuje Sešit poznámek z kola 69. Převzato z Trenéra (renderDenik, denikRozvrh, denikListuj,
+// denikPas, Vzhled sešitu, poznámka s formátováním, zvuky listu a gumy) bez smajlíků a lepíků.
+// Záznam = poznámka k hráčce (p.notes, píše se i do lepíku na kartě) nebo zápis o týmu (S.teamNotes).
+// Text je HTML z editoru (tučně, kurzíva, odrážky, číslování, odsazení), starý prostý text se
+// převede při zobrazení (dkRichHtml). Hlavní stránka = poslední zápis každé hráčky a týmu;
+// filtr (dkFiltr = 'tym' | id hráčky) ukáže všechny jejich zápisy.
+const DK_DNY=["ne","po","út","st","čt","pá","so"];
+const DK_MESICE=["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
+const DK_PAPIRY=["linky","ctverecky"],DK_TONY=["tlumeny","bily"],DK_ZVUKY=["ano","ne"];
+const DK_RYCHLOSTI={pomalu:[950,700],stredne:[760,560],rychle:[550,420],vypnuto:null};
+const DK_RADKY=[24,26,28,32,36],DK_POZN_MAX=2000;
+const DK_KLIC='bombito_denik',DK_VELIKOST_KLIC='bombito_denik_velikost';
+const DK_TAGY=new Set(["P","DIV","BR","UL","OL","LI","B","STRONG","I","EM","U"]);
+const DK_STRIP=new Set(["SCRIPT","STYLE","IFRAME","OBJECT","EMBED"]);
+const DK_SNIFF=new RegExp(`<\\/?(${[...DK_TAGY].join("|")})[ >]`,"i");
+let dkFiltr=null,dkUprava=null,dkNovy=null,dkKotva=null,dkStrana=0,dkStran=0,dkMapa=[],dkOtaceni=false,dkMazani=false;
+let dkVelikost=(()=>{try{const n=parseInt(localStorage.getItem(DK_VELIKOST_KLIC),10);return n>=0&&n<DK_RADKY.length?n:2;}catch(e){return 2;}})();
+function dkVzhled(){
+  let v={};try{v=JSON.parse(localStorage.getItem(DK_KLIC)||'{}')||{};}catch(e){}
+  return{papir:DK_PAPIRY.includes(v.papir)?v.papir:'linky',ton:DK_TONY.includes(v.ton)?v.ton:'tlumeny',
+    zvuk:DK_ZVUKY.includes(v.zvuk)?v.zvuk:'ano',rychlost:Object.prototype.hasOwnProperty.call(DK_RYCHLOSTI,v.rychlost)?v.rychlost:'stredne',
+    pismo:BOMBITO_VZHLED.read().pismo};
+}
+// ---- formátovaný text (převzato z Trenéra: sanitizeRichHtml, richValueToHtml, richHasContent) ----
+function dkSanitize(html){
+  const tmp=document.createElement('div');tmp.innerHTML=html||'';
+  (function clean(node){[...node.childNodes].forEach(ch=>{
+    if(ch.nodeType===3)return;
+    if(ch.nodeType!==1){ch.remove();return;}
+    if(DK_STRIP.has(ch.tagName)){ch.remove();return;}
+    if(!DK_TAGY.has(ch.tagName)){while(ch.firstChild)node.insertBefore(ch.firstChild,ch);node.removeChild(ch);return;}
+    [...ch.attributes].forEach(a=>ch.removeAttribute(a.name));clean(ch);
+  });})(tmp);
+  return tmp.innerHTML;
+}
+function dkRichHtml(raw){
+  if(!raw)return'';
+  return dkSanitize(DK_SNIFF.test(raw)?raw:String(raw).split(/\r?\n/).map(l=>`<p>${lepikEsc(l)}</p>`).join(''));
+}
+function dkText(raw){const t=document.createElement('div');t.innerHTML=dkRichHtml(raw);t.querySelectorAll('p,div,li,br').forEach(e=>e.append(' '));return(t.textContent||'').replace(/\s+/g,' ').trim();}
+function dkMaObsah(raw){return!!dkText(raw);}
+function dkJeRich(raw){return DK_SNIFF.test(raw||'');}
+function dkRtePole(hodnota){
+  return`<div class="rte-wrap ds-rte"><div class="rte-toolbar">
+    <button type="button" class="rte-btn" data-rte-cmd="bold" title="Tučně (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+    <button type="button" class="rte-btn" data-rte-cmd="italic" title="Kurzíva (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+    <button type="button" class="rte-btn sep" data-rte-cmd="insertUnorderedList" title="Odrážky"><i class="fa-solid fa-list-ul"></i></button>
+    <button type="button" class="rte-btn" data-rte-cmd="insertOrderedList" title="Číslovaný seznam"><i class="fa-solid fa-list-ol"></i></button>
+    <button type="button" class="rte-btn" data-rte-cmd="outdent" title="Zmenšit odsazení"><i class="fa-solid fa-outdent"></i></button>
+    <button type="button" class="rte-btn" data-rte-cmd="indent" title="Zvětšit odsazení"><i class="fa-solid fa-indent"></i></button>
+  </div><div class="rte-editor" contenteditable="true" data-placeholder="" aria-label="Zápis do deníčku" role="textbox" aria-multiline="true">${dkRichHtml(hodnota)}</div></div>`;
+}
+function dkRteHodnota(pole){const h=dkSanitize(pole?pole.innerHTML:'');return(pole&&pole.textContent||'').trim()?h:'';}
+function dkPoznDlouha(html){const t=document.createElement('div');t.innerHTML=html||'';return(t.textContent||'').length>DK_POZN_MAX||(html||'').length>DK_POZN_MAX*6;}
+function dkPoznStejna(a,b){return dkRichHtml(a||'')===dkRichHtml(b||'')||(!dkMaObsah(a)&&!dkMaObsah(b));}
+// Lišta formátování (jako v Trenérovi: mousedown nesebere fokus, prázdné pole dostane odstavec).
+document.addEventListener('mousedown',e=>{if(e.target.closest('[data-rte-cmd]'))e.preventDefault();});
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-rte-cmd]');if(!btn||btn.disabled)return;
+  const ed=btn.closest('.rte-wrap')?.querySelector('.rte-editor');if(!ed||ed.getAttribute('contenteditable')!=='true')return;
+  ed.focus();
+  if(!ed.firstChild){ed.innerHTML='<p><br></p>';const r=document.createRange();r.setStart(ed.firstChild,0);r.collapse(true);const s=window.getSelection();s.removeAllRanges();s.addRange(r);}
+  document.execCommand(btn.dataset.rteCmd,false,null);
+  ed.dispatchEvent(new Event('input',{bubbles:true}));
+});
+document.addEventListener('focusin',e=>{if(e.target.classList&&e.target.classList.contains('rte-editor')){try{document.execCommand('defaultParagraphSeparator',false,'p');}catch(_){}}});
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('rte-editor')&&!e.target.textContent.trim()&&!e.target.querySelector('li'))e.target.innerHTML='';});
+// ---- zvuky (page_turn.mp3, erase.mp3 z Trenéra) ----
+const dkZvuky={};
+function dkZvuk(co){
+  if(dkVzhled().zvuk==='ne')return;
+  try{const a=dkZvuky[co]||(dkZvuky[co]=new Audio(co==='list'?'page_turn.mp3':'erase.mp3'));a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{});}catch(e){}
+}
+// ---- data ----
+function dkZaznamy(){
+  const out={};
+  S.players.filter(p=>!p.archived).forEach(p=>(p.notes||[]).forEach(n=>{if(n&&n.id)out[n.id]={id:n.id,kdo:p.id,den:n.date,pozn:n.text||''};}));
+  (S.teamNotes||[]).forEach(n=>{if(n&&n.id)out[n.id]={id:n.id,kdo:'tym',den:n.date,pozn:n.text||''};});
+  return out;
+}
+function dkZdroj(id){
+  for(const p of S.players){const n=(p.notes||[]).find(x=>x.id===id);if(n)return{n,p};}
+  const n=(S.teamNotes||[]).find(x=>x.id===id);return n?{n,p:null}:null;
+}
+function dkCas(id){const m=/_(\d+)/.exec(id||'');return m?+m[1]:0;}
+function dkKdoNazev(kdo){if(kdo==='tym')return'Tým';const p=S.players.find(x=>x.id===kdo);return p?p.name:'Hráčka';}
+function dkVyber(){
+  const vse=Object.values(dkZaznamy()).filter(z=>/^\d{4}-\d{2}-\d{2}$/.test(z.den||''));
+  if(dkFiltr)return vse.filter(z=>z.kdo===dkFiltr);
+  const posl={};
+  vse.forEach(z=>{const o=posl[z.kdo];if(!o||z.den>o.den||(z.den===o.den&&dkCas(z.id)>dkCas(o.id)))posl[z.kdo]=z;});
+  // rozepsaný nový zápis zůstane vidět, i když není poslední
+  if(dkUprava&&!Object.values(posl).some(z=>z.id===dkUprava)){const z=vse.find(x=>x.id===dkUprava);if(z)posl['_'+z.id]=z;}
+  return Object.values(posl);
+}
+function dkListy(){
+  const vse=dkVyber().sort((a,b)=>a.den.localeCompare(b.den)||dkCas(a.id)-dkCas(b.id));
+  const out=[];
+  vse.forEach(z=>{const m=z.den.slice(0,7);let l=out[out.length-1];if(!l||l.mesic!==m){l={mesic:m,text:dkMesicText(z.den),zapisy:[]};out.push(l);}l.zapisy.push(z);});
+  return out;
+}
+function dkMesicText(den){const m=/^(\d{4})-(\d{2})/.exec(den||'');return m?(DK_MESICE[+m[2]-1]||'')+' '+m[1]:'';}
+function dkDenText(den){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(den||'');if(!m)return'';
+  const d=new Date(+m[1],+m[2]-1,+m[3]);
+  return DK_DNY[d.getDay()]+' '+(+m[3])+'. '+(+m[2])+'.'+(m[1]!==today().slice(0,4)?' '+m[1]:'');
+}
+function dkUloz(id,zmena){
+  const s=dkZdroj(id);if(!s)return;
+  Object.assign(s.n,zmena);
+  if(s.p)s.p.notes.sort((a,b)=>a.date.localeCompare(b.date));
+  save();
+}
+function dkSmaz(id){
+  const s=dkZdroj(id);if(!s)return;
+  if(s.p)s.p.notes=s.p.notes.filter(x=>x.id!==id);else S.teamNotes=S.teamNotes.filter(x=>x.id!==id);
+  save();
+}
+// ---- obrazovka ----
+function denikOtevreny(){const v=document.getElementById('denikView');return!!v&&v.style.display!=='none';}
+function openDenik(filtr,upravit){
+  ['ovView','zapView'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.display='none';});
+  S.activeId=null;S.cmpMode=false;closeSidebar();
+  dkFiltr=filtr||null;dkKotva=upravit?{id:upravit}:null;
+  document.getElementById('denikView').style.display='block';
+  render();
+  if(upravit)dkSesitUprav(upravit);
+}
+function dkHlava(){
+  document.querySelector('#denikView .dh-radek h2').textContent=dkFiltr?dkKdoNazev(dkFiltr):'Deníček';
+  document.getElementById('denikZpetBtn').hidden=!dkFiltr;
+  const f=document.getElementById('denikFiltrBtn');
+  f.querySelector('span').textContent=dkFiltr?(dkFiltr==='tym'?'Tým':playerLabel(S.players.find(p=>p.id===dkFiltr)||{name:''})):'Všichni';
+}
+function renderDenik(){
+  const list=document.getElementById('denikList');if(!list)return;
+  document.body.classList.add('dk-on');
+  const stare=dkPole(),rozepsano=stare?{html:stare.innerHTML,fokus:document.activeElement===stare}:null;
+  if(dkUprava&&!dkZdroj(dkUprava))dkUprava=null;
+  dkPouzijVzhled();dkHlava();
+  const listy=dkListy();
+  if(!listy.length){
+    dkKotva=null;
+    list.innerHTML=`<p class="ds-prazdno">${dkFiltr?'Zatím žádný zápis. Nový přidáš tlačítkem s plusem nahoře.':'Zatím tu nic není. Zápis o týmu nebo o hráčce přidáš tlačítkem s plusem nahoře, poznámku k hráčce i na lepíku na její kartě.'}</p>`;
+    dkRozvrh();return;
+  }
+  let html='';
+  listy.forEach((l,i)=>l.zapisy.forEach((z,j)=>{html+=dkZapisHtml(z,j===0?' novy-mesic'+(i===0?' prvni-vubec':''):'',l.mesic);}));
+  list.innerHTML=html;
+  const nove=dkPole();
+  if(nove&&rozepsano){nove.innerHTML=rozepsano.html;if(rozepsano.fokus){nove.focus({preventScroll:true});dkKurzorNaKonec(nove);}}
+  dkRozvrh();
+}
+function dkZapisHtml(z,tridy,mesic){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(z.den),d=new Date(+m[1],+m[2]-1,+m[3]);
+  const okraj=`<div class="okraj"><b>${+m[3]}. ${+m[2]}.</b><span>${DK_DNY[d.getDay()]}</span><input type="date" class="dz-datum" value="${z.den}" max="${today()}" aria-label="Změnit datum, teď ${dkDenText(z.den)}"></div>`;
+  const tym=z.kdo==='tym',ma=dkMaObsah(z.pozn);
+  const nadpis=dkFiltr?'':`<h3><span class="dz-nazev${tym?' dz-tym':''}${tym?'':' dz-odkaz'}"${tym?'':` data-ds="otevrit" role="link" tabindex="0"`}>${lepikEsc(dkKdoNazev(z.kdo))}</span></h3>`;
+  const telo=dkUprava===z.id
+    ?dkRtePole(z.pozn)+`<div class="upravy vpravo"><button type="button" class="kos" data-ds="smazat" aria-label="Smazat zápis" title="Smazat zápis"><i class="fa-solid fa-trash"></i></button></div>`
+    :`<div class="pozn rte-display${ma?'':' prazdna'}" data-ds="upravit" tabindex="0" role="button" aria-label="Upravit zápis">${ma?dkRichHtml(z.pozn):'dopsat…'}</div>`;
+  return`<article class="zapis${tridy}" data-id="${z.id}" data-mesic="${mesic}">${okraj}<div class="obsah">${nadpis}${telo}</div></article>`;
+}
+function dkPole(){return document.querySelector('#denikList .ds-rte .rte-editor');}
+function dkKurzorNaKonec(pole){try{const r=document.createRange();r.selectNodeContents(pole);r.collapse(false);const s=window.getSelection();s.removeAllRanges();s.addRange(r);}catch(e){}}
+function dkViditelnych(){return getComputedStyle(document.getElementById('denikList')).columnCount==='2'?2:1;}
+function dkVyskaSesitu(okno,shora,radek){const r=Math.max(8,Math.floor((okno-shora-20-2.5*radek)/radek));return(r+2.5)*radek;}
+function dkStranaKurzoru(list,sirka){
+  const pole=dkPole(),sel=window.getSelection&&window.getSelection();
+  if(!pole||!sel||!sel.rangeCount||!pole.contains(sel.anchorNode))return null;
+  const r=sel.getRangeAt(0).cloneRange();r.collapse(false);
+  const o=r.getClientRects()[0]||(sel.anchorNode.nodeType===1?sel.anchorNode:sel.anchorNode.parentNode).getBoundingClientRect();
+  if(!o||(!o.width&&!o.height&&!o.left))return null;
+  return Math.max(0,Math.floor((o.left-list.getBoundingClientRect().left+1)/sirka));
+}
+function dkRozvrh(){
+  if(!denikOtevreny())return;
+  const sesit=document.getElementById('denikSesit'),list=document.getElementById('denikList'),okno=document.getElementById('denikOkno');
+  const R=DK_RADKY[dkVelikost];
+  sesit.style.setProperty('--radek',R+'px');sesit.style.setProperty('--m',String(R/28));
+  sesit.style.height=dkVyskaSesitu(window.innerHeight,sesit.getBoundingClientRect().top,R)+'px';
+  const vid=dkViditelnych(),sirka=list.clientWidth/vid,l0=list.getBoundingClientRect().left;
+  const strana=x=>Math.max(0,Math.round((x-l0)/sirka));
+  const clanky=[...list.querySelectorAll('.zapis')],zac=clanky.map(c=>strana(c.getBoundingClientRect().left));
+  dkStran=0;dkMapa=[];
+  if(clanky.length){
+    const kusy=clanky[clanky.length-1].getClientRects();
+    dkStran=Math.max(zac[zac.length-1],strana(kusy[kusy.length-1].left))+1;
+    let j=0,mesic=clanky[0].dataset.mesic;
+    for(let p=0;p<dkStran;p++){
+      let zacatek=false;
+      while(j<clanky.length&&zac[j]<=p){if(clanky[j].classList.contains('novy-mesic')&&zac[j]===p)zacatek=true;mesic=clanky[j].dataset.mesic;j++;}
+      dkMapa.push({mesic,text:dkMesicText(mesic+'-01'),zacatek});
+    }
+  }
+  let cil=dkStran-1;
+  const psani=dkUprava?dkStranaKurzoru(list,sirka):null;
+  const najdi=k=>k&&clanky.findIndex(c=>c.dataset.id===k.id);
+  if(psani!==null)cil=psani;
+  else if(dkUprava){const i=najdi({id:dkUprava});if(i>=0)cil=zac[i];}
+  else if(dkKotva){const i=najdi(dkKotva);if(i>=0)cil=zac[i]+(dkKotva.posun||0);else dkKotva=null;}
+  dkUkazStranu(cil,true);
+  okno.scrollLeft=0;okno.scrollTop=0;
+}
+function dkUkazStranu(p,tise){
+  const list=document.getElementById('denikList'),vid=dkViditelnych(),sirka=list.clientWidth/vid;
+  p=Math.max(0,Math.min(p,Math.max(0,dkStran-1)));
+  dkStrana=vid===2?p-(p%2):p;
+  list.style.transform=dkStrana?`translateX(${-dkStrana*sirka}px)`:'';
+  if(!tise){
+    const l0=list.getBoundingClientRect().left,clanky=[...list.querySelectorAll('.zapis')];
+    const zac=clanky.map(c=>Math.max(0,Math.round((c.getBoundingClientRect().left-l0)/sirka)));
+    let i=zac.findIndex(z=>z>=dkStrana);
+    if(i===-1||zac[i]>=dkStrana+vid)i=Math.max(0,(i===-1?clanky.length:i)-1);
+    const c=clanky[i];
+    dkKotva=c&&dkStrana+vid<dkStran?{id:c.dataset.id,posun:Math.max(0,dkStrana-zac[i])}:null;
+  }
+  dkPas();
+}
+function dkPas(){
+  const vid=dkViditelnych();
+  let h=`<button type="button" class="li-sipka vlevo" data-ds="starsi" aria-label="Předchozí stránka"${dkStrana>0?'':' disabled'}><i class="fa-solid fa-chevron-left"></i></button>`;
+  for(let i=0;i<vid;i++){const s=dkMapa[dkStrana+i];h+=`<div class="sp-strana${i?' prava':''}">${!s?'':s.zacatek?`<div class="mesic"><span>${s.text}</span></div>`:`<span class="sp-pokrac">${s.text.toLowerCase()}</span>`}</div>`;}
+  h+=`<button type="button" class="li-sipka vpravo" data-ds="novejsi" aria-label="Další stránka"${dkStrana+vid<dkStran?'':' disabled'}><i class="fa-solid fa-chevron-right"></i></button>`;
+  document.getElementById('denikPas').innerHTML=h;
+}
+// Konec psaní: uloží (jen změnu) s „Vrátit“; prázdný zápis zmizí (nový bez textu i vymazaný).
+function dkZavriUpravu(ulozit,nasilu){
+  const id=dkUprava;if(!id)return true;
+  const pole=dkPole(),s=dkZdroj(id);
+  let text=null;
+  if(ulozit&&s&&pole){
+    text=dkRteHodnota(pole);
+    if(dkPoznDlouha(text)){
+      if(!nasilu){toast(`Zápis je moc dlouhý, vejde se nejvýš ${DK_POZN_MAX} znaků.`,'err');return false;}
+      text=dkRichHtml((pole.innerText||pole.textContent||'').slice(0,DK_POZN_MAX));
+    }
+  }
+  dkUprava=null;
+  const clanek=pole&&pole.closest('.zapis');
+  if(clanek){const l=document.getElementById('denikList'),sirka=l.clientWidth/dkViditelnych(),z=Math.max(0,Math.round((clanek.getBoundingClientRect().left-l.getBoundingClientRect().left)/sirka));dkKotva={id,posun:Math.max(0,dkStrana-z)};}
+  if(pole)pole.closest('.ds-rte').remove();
+  const novy=dkNovy===id;dkNovy=null;
+  if(s&&((text!==null&&!dkMaObsah(text))||(!ulozit&&novy))){
+    if(novy){dkSmaz(id);dkKotva=null;renderDenik();return true;}
+    const snap=undoSnapshot();dkSmaz(id);dkZvuk('guma');renderDenik();offerUndo(snap,'Zápis smazán');return true;
+  }
+  if(text!==null&&s&&!dkPoznStejna(text,s.n.text)){
+    const snap=novy?null:undoSnapshot();
+    dkUloz(id,{text});renderDenik();
+    if(snap)offerUndo(snap,'Uloženo');else toast('Zapsáno');
+    return true;
+  }
+  renderDenik();return true;
+}
+function dkSesitUprav(id){
+  if(dkUprava===id)return;
+  if(!dkZavriUpravu(true))return;
+  if(!dkZdroj(id))return;
+  dkUprava=id;renderDenik();
+  const pole=dkPole();if(pole){pole.focus({preventScroll:true});dkKurzorNaKonec(pole);dkRozvrh();}
+}
+function dkZmenDatum(id,den){
+  const s=dkZdroj(id);if(!s||den===s.n.date)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(den)||den>today()){toast('Datum je v budoucnu.','err');renderDenik();return;}
+  dkZavriUpravu(true,true);
+  dkKotva={id,posun:0};dkUloz(id,{date:den});renderDenik();toast(`Datum změněno na ${dkDenText(den)}.`);
+}
+// Otočení listu „ohnutým rohem“ — beze změny převzato z Trenéra (denikListuj).
+function dkListuj(smer){
+  if(dkOtaceni||!denikOtevreny())return;
+  dkZavriUpravu(true,true);
+  const vid=dkViditelnych(),cil=dkStrana-smer*vid;
+  if(cil<0||cil>=dkStran)return;
+  dkZvuk('list');
+  const list=document.getElementById('denikList'),sesit=document.getElementById('denikSesit');
+  const klid=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const doby=DK_RYCHLOSTI[dkVzhled().rychlost];
+  if(klid||!doby){dkUkazStranu(cil);list.classList.remove('prolni');void list.offsetWidth;list.classList.add('prolni');return;}
+  dkOtaceni=true;
+  const dvoj=vid===2,dal=smer<0,SW=sesit.clientWidth,H=sesit.clientHeight,W=SW/vid,ms=doby[dvoj?0:1];
+  const strana=(i,prazdna)=>{
+    const f=document.createElement('div');f.className='ot-strana';f.style.cssText=`width:${W}px;height:${H}px;`;
+    if(!prazdna){const s=document.createElement('div');s.className='ot-snimek';s.style.cssText=`width:${SW}px;left:${-i*W}px;`;
+      s.append(document.getElementById('denikPas').cloneNode(true),document.getElementById('denikOkno').cloneNode(true));
+      s.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));s.querySelectorAll('.li-sipka').forEach(e=>e.remove());f.appendChild(s);}
+    return f;
+  };
+  const NAD=120,vrstva=document.createElement('div');vrstva.className='ot-vrstva';vrstva.style.top=-NAD+'px';
+  const plocha=document.createElement('div');plocha.className='ot-plocha';plocha.style.cssText=`top:${NAD}px;height:${H}px;`;vrstva.appendChild(plocha);
+  let predni,chlopen,lezi=null;
+  if(dvoj){lezi=strana(dal?0:1);lezi.style.left=(dal?0:W)+'px';predni=strana(dal?1:0);dkUkazStranu(cil);chlopen=strana(dal?0:1);}
+  else if(dal){predni=strana(0);dkUkazStranu(cil);chlopen=strana(0,true);}
+  else{lezi=strana(0);lezi.style.left='0px';dkUkazStranu(cil);predni=strana(0);chlopen=strana(0,true);}
+  const sG=dvoj&&!dal?-1:1,hr=dvoj?W:0,odkud=dvoj?(dal?W:0):0,kam=dvoj?(dal?0:W):-W;
+  predni.style.left=odkud+'px';predni.classList.add('ot-predni');chlopen.classList.add('ot-chlopen');
+  const lesk=document.createElement('i');lesk.className='ot-lesk';chlopen.appendChild(lesk);
+  const chlObal=document.createElement('div');chlObal.className='ot-chlopen-obal';chlObal.appendChild(chlopen);
+  const stinObal=document.createElement('div');stinObal.className='ot-stin-obal';stinObal.style.cssText=`left:${odkud}px;width:${W}px;height:${H}px;`;
+  const stin=document.createElement('i');stin.className='ot-stin';stinObal.appendChild(stin);
+  if(lezi)plocha.appendChild(lezi);
+  plocha.append(predni,stinObal,chlObal);sesit.appendChild(vrstva);
+  const obdelnik=[[0,0],[W,0],[W,H],[0,H]];
+  const orez=(body,n,M,znam)=>{const out=[];for(let i=0;i<body.length;i++){const a=body[i],b=body[(i+1)%body.length];
+    const da=znam*((a[0]-M[0])*n[0]+(a[1]-M[1])*n[1]),db=znam*((b[0]-M[0])*n[0]+(b[1]-M[1])*n[1]);
+    if(da>=0)out.push(a);if((da>=0)!==(db>=0)){const t=da/(da-db);out.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]);}}return out;};
+  const mnoh=body=>body.length<3?'polygon(0 0,0 0,0 0)':'polygon('+body.map(p=>`${p[0].toFixed(1)}px ${p[1].toFixed(1)}px`).join(',')+')';
+  const zdvih=Math.min(H*.16,120),plynule=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+  const cu=sG*(hr-kam),ku=-sG,naRub=p=>[(p[0]-cu)/ku,p[1]],naPredni=p=>[hr+sG*p[0]-odkud,p[1]];
+  const t0=performance.now();let hotovo=false;
+  const konec=()=>{if(hotovo)return;hotovo=true;vrstva.remove();dkOtaceni=false;};
+  const krok=ted=>{
+    if(hotovo)return;
+    const t=Math.min(1,(ted-t0)/ms);let e=plynule(t);if(!dvoj&&!dal)e=1-e;
+    const O=[W,H],P=[W-2*W*e,H-zdvih*Math.sin(Math.PI*Math.min(1,e*1.15))];
+    const d=Math.hypot(O[0]-P[0],O[1]-P[1])||1,n=[(O[0]-P[0])/d,(O[1]-P[1])/d],M=[(O[0]+P[0])/2,(O[1]+P[1])/2];
+    predni.style.clipPath=mnoh(orez(obdelnik,n,M,-1).map(naPredni));
+    chlopen.style.clipPath=mnoh(orez(obdelnik,n,M,1).map(naRub));
+    const A00=1-2*n[0]*n[0],A01=-2*n[0]*n[1],A11=1-2*n[1]*n[1],mn=2*(M[0]*n[0]+M[1]*n[1]);
+    chlopen.style.transform=`matrix(${sG*A00*ku},${A01*ku},${sG*A01},${A11},${hr+sG*(A00*cu+mn*n[0])},${A01*cu+mn*n[1]})`;
+    const sila=Math.sin(Math.PI*e),[mx,my]=naPredni(M);
+    stin.style.transform=`translate(${mx}px,${my}px) rotate(${Math.atan2(n[1],sG*n[0])}rad) translate(0,${-1.5*H}px)`;
+    stin.style.opacity=(.15+.85*sila).toFixed(3);
+    const[lx,ly]=naRub(M);
+    lesk.style.transform=`translate(${lx}px,${ly}px) rotate(${Math.atan2(n[1],n[0]/ku)}rad) translate(0,${-1.5*H}px)`;
+    lesk.style.opacity=(.3+.7*sila).toFixed(3);
+    if(t<1)requestAnimationFrame(krok);else konec();
+  };
+  krok(t0);requestAnimationFrame(krok);setTimeout(konec,ms+400);
+}
+// ---- Vzhled sešitu (jako v Trenérovi; rukopis je společný s lepíky, Nastavení › Vzhled) ----
+function dkPouzijVzhled(){
+  const v=dkVzhled(),sesit=document.getElementById('denikSesit');if(!sesit)return;
+  sesit.dataset.papir=v.papir;sesit.dataset.ton=v.ton;sesit.dataset.pismo=v.pismo;
+  const hod=(co)=>co==='papirTon'?v.ton+'-'+v.papir:v[co];
+  document.querySelectorAll('#denikVzhled [data-co]').forEach(sk=>sk.querySelectorAll('[data-h]').forEach(b=>{const on=b.dataset.h===hod(sk.dataset.co);b.classList.toggle('active',on);b.setAttribute('aria-pressed',on);}));
+  const z=document.getElementById('denikZvukBtn'),zap=v.zvuk==='ano';
+  z.classList.toggle('active',zap);z.setAttribute('aria-pressed',zap);
+  z.title=zap?'Zvuky zapnuté (ťukni pro vypnutí)':'Zvuky vypnuté (ťukni pro zapnutí)';
+  z.firstElementChild.className=zap?'fa-solid fa-volume-high':'fa-solid fa-volume-xmark';
+  document.getElementById('denikVelikost').value=dkVelikost;
+}
+function dkVzhledNastav(zmena){
+  if(zmena.pismo){setVzhled({pismo:zmena.pismo});return;}
+  const v=Object.assign(dkVzhled(),zmena);delete v.pismo;
+  try{localStorage.setItem(DK_KLIC,JSON.stringify(v));}catch(e){}
+  dkPouzijVzhled();dkRozvrh();
+}
+// ---- filtr a nový zápis ----
+function dkPocet(kdo){return Object.values(dkZaznamy()).filter(z=>z.kdo===kdo).length;}
+function dkVyberHtml(akce){
+  const row=(kdo,fa,txt,pocet)=>`<button class="sk-row-btn" onclick="${akce}('${kdo}')"><i class="fa-solid fa-${fa}" aria-hidden="true"></i>${lepikEsc(txt)}${pocet!=null?`<span class="sk-row-n">${pocet}</span>`:''}<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i></button>`;
+  return`<div class="sk-rows" style="margin-top:12px">${akce==='dkFiltruj'?row('','book-open','Poslední zápisy všech',null):''}${row('tym','users','Tým',dkPocet('tym'))}${getActiveP().map(p=>row(p.id,'user',p.name,dkPocet(p.id))).join('')}</div>`;
+}
+function dkOtevriFiltr(){dkZavriUpravu(true,true);openModal(`${skHubHead('Koho ukázat')}${dkVyberHtml('dkFiltruj')}`);}
+function dkFiltruj(kdo){closeModal();openDenik(kdo||null);}
+function dkNovyZapis(){
+  if(!dkZavriUpravu(true))return;
+  if(dkFiltr){dkZalozit(dkFiltr);return;}
+  openModal(`${skHubHead('Nový zápis')}${dkVyberHtml('dkZalozit')}`);
+}
+function dkZalozit(kdo){
+  if(document.getElementById('modal').style.display!=='none')closeModal();
+  const n={id:(kdo==='tym'?'tn_':'n_')+Date.now(),date:today(),text:''};
+  if(kdo==='tym'){S.teamNotes=S.teamNotes||[];S.teamNotes.push(n);}
+  else{const p=S.players.find(x=>x.id===kdo);if(!p)return;p.notes=p.notes||[];p.notes.push(n);}
+  dkNovy=n.id;dkKotva={id:n.id};
+  dkSesitUprav(n.id);
+}
+async function dkAkce(akce,el){
+  const karta=el.closest('.zapis'),id=karta&&karta.dataset.id;
+  if(akce==='starsi'){dkListuj(1);return;}
+  if(akce==='novejsi'){dkListuj(-1);return;}
+  if(akce==='otevrit'){const s=dkZdroj(id);if(s&&s.p){dkZavriUpravu(true,true);selectPlayer(s.p.id);}return;}
+  if(akce==='upravit'){dkSesitUprav(id);return;}
+  if(akce==='smazat'){
+    const s=dkZdroj(id);if(!s)return;
+    dkMazani=true;
+    confirmAction(`Smazat zápis z ${dkDenText(s.n.date)}?`,()=>{
+      dkMazani=false;dkUprava=null;dkNovy=null;
+      const pole=dkPole();if(pole)pole.closest('.ds-rte').remove();
+      const soused=karta.previousElementSibling||karta.nextElementSibling;
+      dkKotva=soused&&soused.classList.contains('zapis')?{id:soused.dataset.id,posun:0}:null;
+      const snap=undoSnapshot();dkSmaz(id);dkZvuk('guma');renderDenik();offerUndo(snap,'Zápis smazán');
+    },{noteTrener:'',yesLabel:'Smazat'});
+    // zrušení potvrzení: psaní pokračuje
+    setTimeout(()=>{const m=document.getElementById('modal');const hlid=()=>{if(m.style.display==='none'){dkMazani=false;const p=dkPole();if(p)p.focus({preventScroll:true});}else setTimeout(hlid,200);};hlid();},0);
+  }
+}
+// ---- obsluha (převzato z Trenéra) ----
+(function(){
+  const sesit=document.getElementById('denikSesit'),list=document.getElementById('denikList');
+  list.addEventListener('mousedown',e=>{if(e.target.closest('[data-ds="smazat"]')||(dkUprava&&e.target.closest('.dz-datum')))e.preventDefault();});
+  sesit.addEventListener('click',e=>{
+    const d=e.target.closest('.dz-datum');
+    if(d){let pole=d;if(dkUprava){const id=d.closest('.zapis').dataset.id;if(!dkZavriUpravu(true))return;pole=document.querySelector(`#denikList .zapis[data-id="${id}"] .dz-datum`);}
+      try{if(pole&&pole.showPicker)pole.showPicker();else if(pole)pole.focus();}catch(err){}return;}
+    const b=e.target.closest('[data-ds]');if(b&&!b.disabled)dkAkce(b.dataset.ds,b);
+  });
+  list.addEventListener('change',e=>{const d=e.target.closest('.dz-datum');if(d)dkZmenDatum(d.closest('.zapis').dataset.id,d.value);});
+  list.addEventListener('keydown',e=>{
+    if(e.target.closest('.ds-rte')){
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dkZavriUpravu(false);}
+      else if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();dkZavriUpravu(true);}
+      return;
+    }
+    const b=e.target.closest('[data-ds="otevrit"],[data-ds="upravit"]');
+    if(b&&b===e.target&&(e.key==='Enter'||e.key===' ')){e.preventDefault();dkAkce(b.dataset.ds,b);}
+  });
+  list.addEventListener('input',e=>{if(e.target.closest('.ds-rte'))dkRozvrh();});
+  // Zápis se ukládá sám, jakmile z něj trenér odejde (lišta formátování a koš fokus neberou).
+  list.addEventListener('focusout',e=>{
+    const obal=e.target.closest&&e.target.closest('.ds-rte');if(!obal||!dkUprava)return;
+    setTimeout(()=>{if(!dkUprava||dkMazani||!obal.isConnected||obal.contains(document.activeElement))return;dkZavriUpravu(true);},0);
+  });
+  list.addEventListener('focusin',e=>{
+    if(dkOtaceni||e.target.closest('.ds-rte'))return;
+    const vid=dkViditelnych(),sirka=list.clientWidth/vid;
+    const s=dkStrana+Math.floor((e.target.getBoundingClientRect().left-document.getElementById('denikOkno').getBoundingClientRect().left+1)/sirka);
+    if(s<dkStrana||s>=dkStrana+vid)dkUkazStranu(s);
+  });
+  document.getElementById('denikOkno').addEventListener('scroll',e=>{e.currentTarget.scrollLeft=0;e.currentTarget.scrollTop=0;});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&denikOtevreny()&&dkUprava&&!dkMazani)dkZavriUpravu(true,true);});
+  window.addEventListener('resize',dkRozvrh);
+  if(document.fonts&&document.fonts.addEventListener)document.fonts.addEventListener('loadingdone',()=>dkRozvrh());
+  document.addEventListener('keydown',e=>{
+    if(!denikOtevreny()||(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+    const a=document.activeElement;
+    if(a&&(a.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
+    if(document.getElementById('modal').style.display!=='none')return;
+    e.preventDefault();dkListuj(e.key==='ArrowLeft'?1:-1);
+  });
+  let dot=null;
+  sesit.addEventListener('touchstart',e=>{dot=e.touches.length===1&&!e.target.closest('.ds-rte,.dz-datum')?{x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()}:null;},{passive:true});
+  sesit.addEventListener('touchend',e=>{const d=dot,k=e.changedTouches&&e.changedTouches[0];dot=null;if(!d||!k)return;
+    const dx=k.clientX-d.x,dy=k.clientY-d.y;if(Math.abs(dx)<60||Math.abs(dx)<2.2*Math.abs(dy)||Date.now()-d.t>700)return;dkListuj(dx>0?1:-1);},{passive:true});
+  document.getElementById('denikVelikost').addEventListener('input',e=>{
+    const n=parseInt(e.target.value,10);dkVelikost=n>=0&&n<DK_RADKY.length?n:2;
+    try{localStorage.setItem(DK_VELIKOST_KLIC,String(dkVelikost));}catch(err){}dkRozvrh();
+  });
+  document.getElementById('denikVzhledBtn').addEventListener('click',()=>{
+    const p=document.getElementById('denikVzhled'),ot=p.classList.contains('hidden');
+    p.classList.toggle('hidden',!ot);document.getElementById('denikVzhledBtn').setAttribute('aria-expanded',ot);
+    if(ot)BOMBITO_VZHLED.nahledPisem();
+  });
+  document.getElementById('denikVzhled').addEventListener('click',e=>{
+    if(e.target.closest('#denikZvukBtn')){dkVzhledNastav({zvuk:dkVzhled().zvuk==='ano'?'ne':'ano'});return;}
+    const b=e.target.closest('[data-h]');if(!b)return;
+    const co=b.parentNode.dataset.co;
+    if(co==='papirTon'){const[ton,papir]=b.dataset.h.split('-');dkVzhledNastav({ton,papir});}else dkVzhledNastav({[co]:b.dataset.h});
+  });
+  document.getElementById('denikZpetBtn').addEventListener('click',()=>{dkZavriUpravu(true,true);navBack();});
+  document.getElementById('denikFiltrBtn').addEventListener('click',dkOtevriFiltr);
+  document.getElementById('denikDopsatBtn').addEventListener('click',dkNovyZapis);
+})();
+
 // Kolo 63: plovoucí tlačítko Zápas (jen vzhled Trenéra, v klasiku display:none).
 (function(){
   const scrim=document.createElement('div');scrim.className='sk-fab-scrim';
