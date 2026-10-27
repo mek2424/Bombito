@@ -1237,6 +1237,7 @@ html.skin-trener .help-block{border-bottom-color:var(--line)}
 html.skin-trener .help-block summary{color:var(--ink)}
 html.skin-trener .help-block summary:hover,html.skin-trener .help-qa summary{color:var(--court-ink)}
 html.skin-trener .help-qa .help-badge{background:var(--paper);border-color:var(--line)}
+html.skin-trener table:not(.pdf-tbl) th,html.skin-trener table:not(.pdf-tbl) th *:not(.t-ic):not(i),html.skin-trener .st span,html.skin-trener .slbl,html.skin-trener .help-group-title,html.skin-trener .live-section-label,html.skin-trener .sk-11{font-size:11px!important}
 html.skin-trener .help-ico{width:20px;text-align:center;margin-right:6px;color:var(--court-ink)}
 html.skin-trener .help-badge .help-ico{width:auto;margin-right:4px;color:var(--ink-soft)}
 html.skin-trener .mh-ico{width:18px;text-align:center;margin-right:4px;color:var(--court-ink)}
@@ -2372,7 +2373,7 @@ function openBadges(){
     const b=badgeView(b0,p);
     const on=p.badges.includes(b.id);
     const style=on?`border-color:${b.color};background:${b.color}22;color:${b.color}`:"";
-    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}${b.auto?" auto":""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"${b.auto?` title="${b.label} se přidělí sama podle příjmu v zápasech" aria-disabled="true"`:''}><div class="bi"${(()=>{const t=badgeTint(b);return t?` style="background:${t.bg};color:${t.ink}"`:'';})()}>${badgeIco(b)}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
+    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}${b.auto?" auto":""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"${b.auto?` title="${b.label} se přidělí sama podle příjmu v zápasech" aria-disabled="true"`:''}><div class="bi"${(()=>{const t=badgeTint(b);return t?` style="background:${t.bg};color:${t.ink}"`:'';})()}>${badgeIco(b)}</div><div>${b.label}</div>${b.special?'<div class="sk-11" style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
   }).join("");
   openModal(`<h2>🏅 Odznaky</h2><p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${p.name}</p><div class="btg">${btns}</div><div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
@@ -2439,7 +2440,7 @@ function openAddTest(){
   const gaA=S.config.game.filter(m=>m.active!==false);
   const phi=phA.map(m=>`<div class="fg"><label>${m.label} (${m.unit})${m.lowerBetter?" — nižší = lepší":m.id==="dosah_vyskoku"?" — výskok se dopočítá":""}</label><input type="number" id="ph_${m.id}" step="0.1" placeholder="–"></div>`).join("");
   // Game: score + attempts per test
-  const gai=gaA.map(m=>`<div class="fg"><label>${m.label}</label><div class="fr"><div><label style="font-size:0.62rem;color:var(--gm)">Úspěšné</label><input type="number" id="ga_s_${m.id}" min="0" step="1" placeholder="–"></div><div><label style="font-size:0.62rem;color:var(--gm)">Počet pokusů (výchozí: ${m.defaultMax})</label><input type="number" id="ga_a_${m.id}" min="1" step="1" placeholder="${m.defaultMax}"></div></div></div>`).join("");
+  const gai=gaA.map(m=>`<div class="fg"><label>${m.label}</label><div class="fr"><div><label class="sk-11" style="font-size:0.62rem;color:var(--gm)">Úspěšné</label><input type="number" id="ga_s_${m.id}" min="0" step="1" placeholder="–"></div><div><label class="sk-11" style="font-size:0.62rem;color:var(--gm)">Počet pokusů (výchozí: ${m.defaultMax})</label><input type="number" id="ga_a_${m.id}" min="1" step="1" placeholder="${m.defaultMax}"></div></div></div>`).join("");
   openModal(`<h2>📋 Nový test</h2>
     <div class="fg"><label>Datum</label><input type="date" id="testDate" value="${today()}"></div>
     <hr class="sep"><span class="slbl">💪 Fyzické testy</span>${phi||'<p class="no-data">Žádné aktivní metriky</p>'}
@@ -5670,7 +5671,7 @@ function openLiveScreen(){
       <button onclick="closeLiveScreen()" style="background:transparent;border:none;color:var(--w);font-size:1.1rem;cursor:pointer;padding:4px 8px">✕</button>
       <div style="flex:1;min-width:0">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px">🏆 vs ${LM.opponent}</div>
-        <div style="font-size:0.62rem;color:var(--x-sub);letter-spacing:1px">${fmtDate(LM.date)} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[LM.mode]}</div>
+        <div class="sk-11" style="font-size:0.62rem;color:var(--x-sub);letter-spacing:1px">${fmtDate(LM.date)} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[LM.mode]}</div>
       </div>
       <span class="live-badge">LIVE</span>
       <button class="lm-zahodit" onclick="zahoditZapas()" aria-label="Zahodit zápas" title="Zahodit zápas"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>
@@ -6787,7 +6788,7 @@ function openEditTest(idx){
   }).join('');
   const gai=gaA.map(m=>{
     const gs=gameScore(sess.game,m.id);
-    return`<div class="fg"><label>${m.label} (výchozí: ${m.defaultMax} pokusů)</label><div class="fr"><div><label style="font-size:0.62rem;color:var(--gm)">Úspěšné</label><input type="number" id="eg_s_${m.id}" value="${gs?gs.score:''}" placeholder="–"></div><div><label style="font-size:0.62rem;color:var(--gm)">Pokusy</label><input type="number" id="eg_a_${m.id}" value="${gs?gs.attempts:m.defaultMax}" placeholder="${m.defaultMax}"></div></div></div>`;
+    return`<div class="fg"><label>${m.label} (výchozí: ${m.defaultMax} pokusů)</label><div class="fr"><div><label class="sk-11" style="font-size:0.62rem;color:var(--gm)">Úspěšné</label><input type="number" id="eg_s_${m.id}" value="${gs?gs.score:''}" placeholder="–"></div><div><label class="sk-11" style="font-size:0.62rem;color:var(--gm)">Pokusy</label><input type="number" id="eg_a_${m.id}" value="${gs?gs.attempts:m.defaultMax}" placeholder="${m.defaultMax}"></div></div></div>`;
   }).join('');
   openModal(`<h2>✎ Upravit test</h2>
     <div class="fg"><label>Datum</label><input type="date" id="ep_date" value="${sess.date}"></div>
@@ -7991,7 +7992,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, vrátí tě na předchozí obrazovku (hráčka, Domů, Přehled, Porovnání…), stejně jako dřív spodní lišta, která ve vzhledu Trenéra na telefonu už není. Na první obrazovce po spuštění Zpět Bombito opustí.<br>Na iPhonu nainstalovaná aplikace systémové Zpět nemá, proto je v hlavičce šipka Zpět (ukáže se, jen když je kam se vrátit). Na počítači jsou v hlavičce šipky Zpět i Dopředu.<br>Tlačítko „Vrátit poslední akci“ v živém zápase (když se při zapisování uklikneš) zůstává, jak bylo.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
 {q:`Co je Deníček?`,
- a:`Ve vzhledu Trenéra je Deníček poslední záložka nahoře (oranžová ikona knihy). Je to stejný sešit jako Deníček v Trenérovi: linkovaný papír, datum a den na okraji, rukopis a listování. Zápisy jdou za sebou bez ohledu na měsíc a razítko nahoře ukazuje, které měsíce na stránce jsou (třeba „Leden – Květen 2026“).<br>• <b>Co v něm je:</b> poznámky k hráčkám (stejné jako na lepíku na kartě) a zápisy o celém týmu. Bez filtru vidíš od každé hráčky a od týmu jen <b>poslední zápis</b>. Tlačítkem s jménem nahoře (Všichni) vybereš Tým nebo jednu hráčku a uvidíš <b>všechny</b> jejich zápisy. Zpátky na všechny se vrátíš šipkou vlevo nahoře nebo systémovým Zpět.<br>• <b>Nový zápis:</b> tlačítko s plusem. Ve filtru hned píšeš k vybrané hráčce nebo týmu, jinak nejdřív vybereš komu. Zápis má dnešní datum.<br>• <b>Psaní:</b> ťukni na text zápisu a piš rovnou do sešitu. Nad textem je lišta: tučně, kurzíva, odrážky, číslovaný seznam a odsazení. Zápis se uloží sám, jakmile ťukneš jinam (s „Vrátit“). Esc psaní zruší, Ctrl+Enter uloží. Koš vpravo zápis smaže (s „Vrátit“). Zápis, ve kterém nic nenapíšeš, zmizí.<br>• <b>Datum</b> změníš ťuknutím na datum na okraji. Jméno hráčky otevře její kartu.<br>• <b>Listování:</b> šipky v rozích nahoře, přetažení prstem do strany, na počítači šipky na klávesnici. List se otočí ohnutým rohem a zašustí; při smazání je slyšet guma.<br>• <b>Vzhled sešitu</b> (ikona vpravo nahoře): papír tlumený nebo bílý, linky nebo čtverečky, rukopis (stejný jako u lepíků), velikost písma, rychlost listování a zvuky. Vzhled si pamatuje zařízení.<br>Zápisy jsou součástí dat Bombita, takže jsou i v záloze.`,
+ a:`Ve vzhledu Trenéra je Deníček poslední záložka nahoře (oranžová ikona knihy). Je to stejný sešit jako Deníček v Trenérovi: linkovaný papír, datum a den na okraji, rukopis a listování. Zápisy jdou za sebou bez ohledu na měsíc a razítko nahoře ukazuje, které měsíce na stránce jsou (třeba „Leden – Květen 2026“).<br>• <b>Co v něm je:</b> poznámky k hráčkám (stejné jako na lepíku na kartě) a zápisy o celém týmu. Bez filtru vidíš od každé hráčky a od týmu jen <b>poslední zápis</b>. Tlačítkem s ikonou lidí nahoře (Všichni) vybereš Tým nebo jednu hráčku a uvidíš <b>všechny</b> jejich zápisy. Jméno je pak v nadpisu a na tlačítku zůstane jen ikona, klepnutím na ni vybereš jinou. Zpátky na všechny se vrátíš šipkou vlevo nahoře nebo systémovým Zpět.<br>• <b>Nový zápis:</b> tlačítko s plusem. Ve filtru hned píšeš k vybrané hráčce nebo týmu, jinak nejdřív vybereš komu. Zápis má dnešní datum.<br>• <b>Psaní:</b> ťukni na text zápisu a piš rovnou do sešitu. Nad textem je lišta: tučně, kurzíva, odrážky, číslovaný seznam a odsazení. Zápis se uloží sám, jakmile ťukneš jinam (s „Vrátit“). Esc psaní zruší, Ctrl+Enter uloží. Koš vpravo zápis smaže (s „Vrátit“). Zápis, ve kterém nic nenapíšeš, zmizí.<br>• <b>Datum</b> změníš ťuknutím na datum na okraji. Jméno hráčky otevře její kartu.<br>• <b>Listování:</b> šipky v rozích nahoře, přetažení prstem do strany, na počítači šipky na klávesnici. List se otočí ohnutým rohem a zašustí; při smazání je slyšet guma.<br>• <b>Vzhled sešitu</b> (ikona vpravo nahoře): papír tlumený nebo bílý, linky nebo čtverečky, rukopis (stejný jako u lepíků), velikost písma, rychlost listování a zvuky. Vzhled si pamatuje zařízení.<br>Zápisy jsou součástí dat Bombita, takže jsou i v záloze.`,
  kw:"deníček sešit poznámky tým zápis listování formátování tučně odrážky"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
  a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ otevře Deníček jen s touto hráčkou, kde jsou všechny její poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem nebo s formátováním (tučně, odrážky…) napíšeš v Deníčku. Formátovanou dnešní poznámku lepík otevře rovnou v Deníčku, aby formátování nezmizelo.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
@@ -8454,7 +8455,8 @@ function dkHlava(){
   document.querySelector('#denikView .dh-radek h2').textContent=dkFiltr?dkKdoNazev(dkFiltr):'Deníček';
   document.getElementById('denikZpetBtn').hidden=!dkFiltr;
   const f=document.getElementById('denikFiltrBtn');
-  f.querySelector('span').textContent=dkFiltr?(dkFiltr==='tym'?'Tým':playerLabel(S.players.find(p=>p.id===dkFiltr)||{name:''})):'Všichni';
+  f.querySelector('span').textContent=dkFiltr?'':'Všichni';
+  f.querySelector('span').hidden=!!dkFiltr;
 }
 function renderDenik(){
   const list=document.getElementById('denikList');if(!list)return;
