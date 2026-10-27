@@ -629,7 +629,8 @@ html.skin-trener #sidebarToggle{width:40px;height:40px;padding:0;border-radius:7
 html.skin-trener #menuToggle{width:36px;height:36px;padding:0;margin-left:0;border-radius:7px;background:rgba(255,255,255,.12);color:#fff;font-size:16px;align-items:center;justify-content:center;position:relative}
 html.skin-trener #menuToggle:hover{background:rgba(255,255,255,.22)}
 html.skin-trener #menuToggle .mh-dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;margin:0;border:2px solid var(--court);background:var(--chalk)}
-@media(max-width:768px){html.skin-trener #hdrBack,html.skin-trener #hdrFwd{display:none}html.skin-trener #hdrHelp{margin-left:auto}}
+/* Kolo 64: na telefonu místo spodní lišty jen šipka Zpět v hlavičce (iPhone nemá systémové Zpět). */
+@media(max-width:768px){html.skin-trener #hdrFwd{display:none}html.skin-trener #hdrBack:disabled{visibility:hidden}}
 
 /* ── Záložky pod hlavičkou ── */
 html.skin-trener .sk-tabs{display:flex;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;position:relative;z-index:140}
@@ -675,8 +676,11 @@ html.skin-trener #sidebarBackdrop{background:rgba(27,36,48,.5);backdrop-filter:n
 }
 
 /* ── Spodní lišta Zpět/Dopředu ── */
+/* Kolo 64 (Mek 27. 10.): ve vzhledu Trenéra lišta není, Zpět obstará systém a šipka v hlavičce.
+   Místo dole drží plovoucí tlačítko Zápas, proto stejný spodní okraj obsahu. */
 @media(max-width:768px){
-  html.skin-trener .nav-bottom-bar{height:58px;background:var(--card);border-top:1px solid var(--line)}
+  html.skin-trener .nav-bottom-bar{display:none}
+  html.skin-trener main,html.skin-trener .pl{padding-bottom:88px}
 }
 html.skin-trener .nav-bottom-bar button{color:var(--ink);font-size:14px;gap:6px}
 html.skin-trener .nav-bottom-bar button i{font-size:15px}
@@ -952,10 +956,7 @@ html.skin-trener .sk-fab.tur:not(.open) .sk-fab-badge{display:flex}
 html.skin-trener .sk-fab-scrim{display:block;position:fixed;inset:0;z-index:149;background:rgba(27,36,48,.3);opacity:0;pointer-events:none;transition:opacity .18s ease}
 html.skin-trener .sk-fab-scrim.show{opacity:1;pointer-events:auto}
 html.skin-trener .sk-nahoru{right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px))}
-@media(max-width:768px){
-  html.skin-trener .sk-fab{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
-  html.skin-trener .sk-nahoru{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
-}
+
 /* Kolo 59 (C1): omezení animací, když o to systém požádá (jako v Trenérovi). */
 @media (prefers-reduced-motion: reduce){
   html.skin-trener *,html.skin-trener *::before,html.skin-trener *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
@@ -2572,6 +2573,7 @@ function pushHistory(screen){
   NAV_HIST.push(screen);
   NAV_POS=NAV_HIST.length-1;
   if(NAV_HIST.length>60){const cut=NAV_HIST.length-60;NAV_HIST=NAV_HIST.slice(cut);NAV_POS-=cut;}
+  if(NAV_POS>0)BACKNAV.screen();
   updateNavButtons();
 }
 function applyScreen(screen){
@@ -2601,7 +2603,11 @@ function applyScreen(screen){
   updateNavButtons();
 }
 function screenValid(s){return s.type!=='player'||S.players.some(p=>p.id===s.id);}
-function navBack(){
+// Kolo 64: tlačítka (hlavička, lišta) volají navBack()/navForward(); ve vzhledu Trenéra se tím
+// zároveň spotřebuje/přidá záznam v historii prohlížeče (BACKNAV.screenUi), aby systémové Zpět sedělo.
+function navBack(){if(NAV_POS>0&&BACKNAV.screenUi(-1))return;navBackRaw();}
+function navForward(){if(navForwardRaw())BACKNAV.screenUi(1);}
+function navBackRaw(){
   if(NAV_POS<=0)return;
   let i=NAV_POS-1;
   while(i>0&&!screenValid(NAV_HIST[i]))i--;
@@ -2609,19 +2615,21 @@ function navBack(){
   NAV_POS=i;
   applyScreen(NAV_HIST[NAV_POS]);
 }
-function navForward(){
-  if(NAV_POS>=NAV_HIST.length-1)return;
+function navForwardRaw(){
+  if(NAV_POS>=NAV_HIST.length-1)return false;
   let i=NAV_POS+1;
   while(i<NAV_HIST.length-1&&!screenValid(NAV_HIST[i]))i++;
-  if(!screenValid(NAV_HIST[i]))return;
+  if(!screenValid(NAV_HIST[i]))return false;
   NAV_POS=i;
   applyScreen(NAV_HIST[NAV_POS]);
+  return true;
 }
 function setNavBtnState(id,enabled){const el=document.getElementById(id);if(el)el.disabled=!enabled;}
 function updateNavButtons(){
   const backOk=NAV_POS>0,fwdOk=NAV_POS<NAV_HIST.length-1;
   setNavBtnState('navBackBtn',backOk);setNavBtnState('navFwdBtn',fwdOk);
   setNavBtnState('navBackBtnM',backOk);setNavBtnState('navFwdBtnM',fwdOk);
+  setNavBtnState('hdrBack',backOk);setNavBtnState('hdrFwd',fwdOk); // Kolo 64: na telefonu se neaktivní šipka schová
 }
 // Domovská obrazovka (Kolo 26) — nahrazuje obsah #emptyState, když není vybraná
 // hráčka, není zapnuté Porovnání a není otevřený Přehled týmu. Stejný princip jako
@@ -7168,7 +7176,7 @@ const HELP_DATA=[
 {q:`Co udělá tlačítko „🏠 Domů" / klik na nápis „Bombito"?`,
  a:`Obojí tě vrátí na domovskou obrazovku appky — mřížku karet všech aktivních hráček s jejich Overall skóre a průměrem týmu (viz blok „Domovská obrazovka"). Je to appčin „výchozí bod", na který se appka vrací i po každém novém otevření appky.`},
 {q:`Jak fungují tlačítka Zpět/Dopředu?`,
- a:`Appka si pamatuje, kterými hlavními obrazovkami jsi prošel (hráčka → Domů → Přehled → Porovnání a tak dál) a tlačítka „← Zpět" / „Dopředu →" (dole na mobilu jako lišta, na počítači jako pilulky nahoře) tě mezi nimi vrací a posouvá — podobně jako tlačítka Zpět/Vpřed v internetovém prohlížeči. Přepínání mezi taby na kartě jedné hráčky (Fyzické/Herní/Zápas...) se do téhle historie nepočítá, jen velké přechody mezi celými obrazovkami.`,
+ a:`Appka si pamatuje, kterými hlavními obrazovkami jsi prošel (hráčka → Domů → Přehled → Porovnání a tak dál) a tlačítka „← Zpět" / „Dopředu →" (dole na mobilu jako lišta, na počítači jako pilulky nahoře) tě mezi nimi vrací a posouvá — podobně jako tlačítka Zpět/Vpřed v internetovém prohlížeči. Přepínání mezi taby na kartě jedné hráčky (Fyzické/Herní/Zápas...) se do téhle historie nepočítá, jen velké přechody mezi celými obrazovkami.<br>Ve vzhledu Trenéra na telefonu spodní lišta není: zpátky tě vrátí systémové Zpět (gesto nebo tlačítko telefonu) nebo šipka Zpět v hlavičce, viz „Co dělá tlačítko Zpět na telefonu?“.`,
  kw:"navigace historie back forward"},
 {q:`Proč appka po každém otevření skočí na domovskou obrazovku, i když jsem byla naposledy u konkrétní hráčky?`,
  a:`Je to záměr — domovská obrazovka appce slouží jako přehledný „výchozí bod" s celým týmem najednou, ať appku neotevíráš pokaždé rovnou na tom, u koho jsi skončil minule. Ke konkrétní hráčce se odtud dostaneš jedním klikem v mřížce karet nebo přes postranní seznam (☰).`},
@@ -7575,7 +7583,7 @@ const HELP_DATA=[
  a:`Jen ve vzhledu Trenéra: po smazání testování, zápasového záznamu nebo hráčky se dole ukáže hláška „… smazáno" s tlačítkem <b>Vrátit</b>. Klepnutím se všechno obnoví přesně do stavu před smazáním. Hláška svítí jen asi 8 sekund, potom už smazání vrátit nejde. V klasickém vzhledu tlačítko Vrátit není — tam je smazání hned napořád, proto se Bombito vždycky nejdřív zeptá.`,
  kw:"vrátit zpět smazání smazat smazané obnovit omylem undo"},
 {q:`Co dělá tlačítko Zpět na telefonu?`,
- a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, chová se Zpět jako dřív. Mezi obrazovkami (hráčka, Domů, Přehled…) se dál pohybuješ spodní lištou „Zpět / Dopředu", na počítači šipkami v hlavičce.`,
+ a:`Ve vzhledu Trenéra zavře to, co je právě otevřené — okno (třeba Nastavení nebo potvrzení), menu ⋮, seznam hráček ☰, sezónní shrnutí nebo obrazovku živého zápasu (rozehraný zápas zůstává uložený a „Spustit zápas" v něm pokračuje). Na počítači totéž dělá klávesa Escape. Když není nic otevřené, vrátí tě na předchozí obrazovku (hráčka, Domů, Přehled, Porovnání…), stejně jako dřív spodní lišta, která ve vzhledu Trenéra na telefonu už není. Na první obrazovce po spuštění Zpět Bombito opustí.<br>Na iPhonu nainstalovaná aplikace systémové Zpět nemá, proto je v hlavičce šipka Zpět (ukáže se, jen když je kam se vrátit). Na počítači jsou v hlavičce šipky Zpět i Dopředu.<br>Tlačítko „Vrátit poslední akci“ v živém zápase (když se při zapisování uklikneš) zůstává, jak bylo.`,
  kw:"zpět tlačítko telefon android escape zavřít okno menu"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
  a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ tě přenese na tab Milníky ke všem poznámkám.<br>• <b>Všechny poznámky</b> jsou na tabu Milníky, každá jako vlastní lepík s datem v hlavičce. Klepnutím na datum změníš datum poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem přidáš tlačítkem „+ Přidat poznámku“ na tabu Milníky.`,
@@ -7712,7 +7720,9 @@ function setVzhled(patch,live){
 // z Trenéra (setupBackButtonNav): každé otevřené okno/menu/panel přidá záznam do historie
 // prohlížeče, Zpět pak zavře to, co je navrchu, místo aby se odešlo z aplikace. Když se okno
 // zavře jinak (tlačítkem), aplikace si odpovídající záznam sama spotřebuje (history.back).
-// Nemá nic společného s NAV_HIST/navBack() (Kolo 27) — ta dál slouží spodní liště.
+// Kolo 64: navíc i obrazovky (NAV_HIST, Kolo 27). Každá nová obrazovka přidá záznam (screen),
+// systémové Zpět bez otevřeného okna pak vrátí předchozí obrazovku (navBackRaw). scr = kolik
+// takových záznamů v historii prohlížeče je; Zpět na úplně první obrazovce odejde z aplikace.
 const BACKNAV=(function(){
   const ITEMS={
     modal:{open:()=>document.getElementById('modal').style.display!=='none',close:()=>closeModal()},
@@ -7721,8 +7731,23 @@ const BACKNAV=(function(){
     wrapped:{open:()=>document.getElementById('wrappedView').style.display!=='none',close:()=>closeWrapped()},
     live:{open:()=>!!document.getElementById('liveOverlay'),close:()=>closeLiveScreen()},
   };
-  let stack=[],pending=0,deferred=0,deferTm=null;
+  let stack=[],pending=0,deferred=0,deferTm=null,scr=0;
   function push(){history.pushState({bombitoNav:stack.length},'');}
+  function odloz(){
+    if(pending>0){deferred++;if(!deferTm)deferTm=setTimeout(()=>{deferTm=null;pending=0;flushDeferred();},1500);}
+    else push();
+  }
+  // Nová obrazovka (pushHistory). Když je nahoře okno (třeba seznam hráček, ze kterého se právě
+  // vybírá), záznam obrazovky se přidá pod ně, jinak by Zpět zavřelo obrazovku místo okna.
+  function screen(){if(!isTrener())return;scr++;odloz();}
+  // Zpět/Dopředu tlačítkem: dir -1 spotřebuje záznam obrazovky (vrací true, obrazovku pak vrátí
+  // popstate), dir 1 přidá nový.
+  function screenUi(dir){
+    if(!isTrener())return false;
+    if(dir>0){scr++;odloz();return false;}
+    if(scr<=0||stack.length)return false;
+    history.back();return true;
+  }
   function flushDeferred(){if(deferTm){clearTimeout(deferTm);deferTm=null;}while(deferred>0){deferred--;push();}}
   function sync(){
     if(!isTrener())return;
@@ -7732,8 +7757,7 @@ const BACKNAV=(function(){
         stack.push(k);
         // Zavřít jedno a hned otevřít druhé (closeModal();openLiveScreen()…): vlastní krok
         // zpět ještě neproběhl, nový záznam se proto přidá až po něm (stejná past jako v Trenérovi).
-        if(pending>0){deferred++;if(!deferTm)deferTm=setTimeout(()=>{deferTm=null;pending=0;flushDeferred();},1500);}
-        else push();
+        odloz();
       }else if(!o&&i>=0){
         stack.splice(i,1);
         if(deferred>0){deferred--;return;}
@@ -7747,7 +7771,8 @@ const BACKNAV=(function(){
     mo.observe(document.body,{childList:true});
     window.addEventListener('popstate',()=>{
       if(pending>0){pending--;if(pending===0)flushDeferred();return;}
-      if(!isTrener()||!stack.length)return;
+      if(!isTrener())return;
+      if(!stack.length){if(scr>0){scr--;navBackRaw();}return;}
       const k=stack.pop();
       ITEMS[k].close();
     });
@@ -7757,10 +7782,10 @@ const BACKNAV=(function(){
     });
   }
   // Přepnutí do klasiku: vlastní záznamy v historii se spotřebují, ať Zpět funguje jako dřív.
-  function reset(){const n=stack.length;stack=[];deferred=0;if(n){pending+=n;history.go(-n);}}
+  function reset(){const n=stack.length+scr;stack=[];deferred=0;scr=0;if(n){pending+=n;history.go(-n);}}
   // Přepnutí do vzhledu Trenéra s už otevřeným oknem (Nastavení): okno se začne sledovat.
   function adopt(){sync();}
-  return {init,reset,adopt,_state:()=>({stack:stack.slice(),pending,deferred})};
+  return {init,reset,adopt,screen,screenUi,_state:()=>({stack:stack.slice(),pending,deferred,scr})};
 })();
 
 // Kolo 52: zbylá emoji v ovládání (tlačítka, ✎/✕, poznámky 💬/📝, živý zápas) a v nadpisech
