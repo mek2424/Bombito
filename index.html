@@ -1031,6 +1031,8 @@ html.skin-trener .tab:hover{color:var(--ink)}
 html.skin-trener .tab.active{color:var(--court-ink);border-bottom-color:var(--chalk)}
 html.skin-trener .tabsFade{bottom:1px;color:var(--ink-faint-ink)}
 html.skin-trener .card{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);padding:4px 14px 12px}
+html.skin-trener .sk-vysv{display:none}
+html.skin-trener .arch-sez{background:var(--card)!important;border-color:var(--line)!important}
 html.skin-trener .card h3{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--court-ink);padding:10px 0 8px;margin-bottom:6px;border-bottom:1px solid var(--line)}
 html.skin-trener .me,html.skin-trener .mi,html.skin-trener .gi,html.skin-trener .ed-item{border-bottom-color:var(--line)}
 html.skin-trener .me{padding:9px 0;gap:8px}
@@ -2347,7 +2349,7 @@ function addPlayer(){
 }
 function deletePlayer(){
   const p=gP();if(!p)return;
-  confirmAction('Smazat '+p.name+'?',()=>{
+  confirmAction((isTrener()?'Smazat hráčku ':'Smazat ')+p.name+'?',()=>{
     const snap=undoSnapshot();
     S.players=S.players.filter(x=>x.id!==p.id);
     S.activeId=S.players.length?S.players[0].id:null;
@@ -2435,7 +2437,7 @@ function openAddTest(){
   openModal(`<h2>📋 Nový test</h2>
     <div class="fg"><label>Datum</label><input type="date" id="testDate" value="${today()}"></div>
     <hr class="sep"><span class="slbl">💪 Fyzické testy</span>${phi||'<p class="no-data">Žádné aktivní metriky</p>'}
-    <hr class="sep"><span class="slbl">🎯 Herní testy</span><p style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">Vyplň počet pokusů jen pokud se liší od výchozího.</p>${gai||'<p class="no-data">Žádné aktivní metriky</p>'}
+    <hr class="sep"><span class="slbl">🎯 Herní testy</span><p class="sk-vysv" style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">Vyplň počet pokusů jen pokud se liší od výchozího.</p>${gai||'<p class="no-data">Žádné aktivní metriky</p>'}
     <hr class="sep"><span class="slbl">📝 Poznámka k testování</span><div class="fg"><textarea id="sessNote" placeholder="Volitelně — podmínky, únava týmu, počasí..."></textarea></div>
     <div class="ma"><button class="btn btn-o" onclick="closeModalConfirm()">Zrušit</button><button class="btn btn-p" onclick="saveTest()">Uložit</button></div>`);
   setTimeout(snapModal,90);
@@ -3384,7 +3386,7 @@ function buildSpider(){
   </div>`;
   return`<div class="norm-bar" id="normBarEl">${normBarInner()}</div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px">
-    <span style="font-size:0.77rem;color:var(--gm)">Zelená = aktuální · šedá = předchozí · zlatý bod = T≥75</span>
+    <span class="sk-vysv" style="font-size:0.77rem;color:var(--gm)">Zelená = aktuální · šedá = předchozí · zlatý bod = T≥75</span>
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.78rem"><input type="checkbox" id="prevTog" onchange="drawSpider()" checked style="accent-color:var(--gl)"> Předchozí</label>
   </div>
   <div class="g2">
@@ -4382,7 +4384,7 @@ function openArchiveView(){
         <span style="flex:1">${p.name} <small style="color:var(--gm)">Nar. ${p.birthYear} · ${p.testSessions?.length||0} testů</small></span>
         <button class="btn btn-o sm" onclick="restorePlayer('${p.id}');openArchiveView()">↩ Obnovit</button>
       </div>`).join('');
-    return`<div style="background:#0a140a;border:1px solid var(--brd);border-radius:10px;padding:14px;margin-bottom:12px">
+    return`<div class="arch-sez" style="background:#0a140a;border:1px solid var(--brd);border-radius:10px;padding:14px;margin-bottom:12px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div style="flex:1"><b>${s.name}</b> <span style="font-size:0.73rem;color:var(--gm)">${fmtDate(s.date)}</span></div>
         <button class="btn btn-o sm" onclick="closeModal();showSeasonWrapped(${si})">📊 Shrnutí</button>
@@ -4397,7 +4399,7 @@ function openArchiveView(){
       <button class="btn btn-o sm" onclick="restorePlayer('${p.id}');openArchiveView()">↩ Obnovit</button>
     </div>`).join('');
   openModal(`<h2>🗂 Archiv sezón</h2>
-    <p style="font-size:0.8rem;color:var(--gm);margin-bottom:14px">Archivované hráčky se nezobrazují v aktivním seznamu, ale jejich data posilují T-score normy.</p>
+    <p class="sk-vysv" style="font-size:0.8rem;color:var(--gm);margin-bottom:14px">Archivované hráčky se nezobrazují v aktivním seznamu, ale jejich data posilují T-score normy.</p>
     ${seasonBlocks}
     ${orphans.length?`<div style="background:#0a140a;border:1px solid var(--brd);border-radius:10px;padding:14px;margin-bottom:12px"><div style="font-weight:600;margin-bottom:8px;font-size:0.82rem;color:var(--gm)">Ostatní archivované hráčky</div>${orphanRows}</div>`:''}
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
@@ -4780,7 +4782,7 @@ function wcMatches(w){
     <div class="wr-eyebrow">Sezóna v číslech</div>
     <div class="wr-h1" style="font-size:4.5rem;color:var(--gl)">${w.matches.count}</div>
     <div style="font-size:0.9rem;color:var(--gm)">odehraných zápasů</div>
-    <div style="font-size:0.78rem;color:rgba(255,255,255,.4);margin-top:14px">${w.matches.sets} setů celkem</div>
+    <div style="font-size:0.78rem;color:rgba(255,255,255,.4);margin-top:14px">${setyTxt(w.matches.sets,'setů')} celkem</div>
   </div>`;
 }
 function wcRecordsPhysical(w){return wcRecordsGrid('Rekordy sezóny · 1/3','Fyzické testy',w.records.physical);}
@@ -5165,7 +5167,7 @@ function openGroupTest(){
   openModal(`<h2>⚡ Skupinový test</h2>
     <div class="fg"><label>Datum</label><input type="date" id="grpDate" value="${today()}"></div>
     <div class="fg"><label>Počet pokusů (herní metriky)</label><input type="number" id="grpAttempts" value="15" min="1" style="width:100px"></div>
-    <div style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">Vyplň jen hodnoty, které jsi změřil. Prázdná pole se přeskočí. U herních metrik zadej počet úspěšných, ne procenta.</div>
+    <div class="sk-vysv" style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">Vyplň jen hodnoty, které jsi změřil. Prázdná pole se přeskočí. U herních metrik zadej počet úspěšných, ne procenta.</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px">
       <table class="grp-tbl">
         <thead><tr><th>Hráčka</th>${phHeads}${gaHeads}</tr></thead>
@@ -6134,7 +6136,7 @@ function buildZapasTab(){
       <div style="font-size:0.8rem;color:var(--gm)">
         ${mActions.filter(a=>a.type==='body').length?`Body: <b style="color:${mBody>0?'var(--gl)':mBody<0?'var(--red)':'var(--gm)'}">${mBody>0?'+':''}${mBody}</b>`:''} 
         ${mRecvAvg?`Příjem: <b style="color:${mRecvAvg<=2?'var(--gl)':mRecvAvg<=3.5?'var(--acc)':'var(--red)'}">${mRecvAvg} (${recvPct(parseFloat(mRecvAvg))}%)</b>`:''}
-        · ${m.sets.length} ${m.sets.length===1?'set':'setů'}
+        · ${setyTxt(m.sets.length,m.sets.length===1?'set':'setů')}
       </div>
       ${tournamentBadgeHtml(m)}
     </div>`;
@@ -6204,7 +6206,7 @@ function openAllMatchesLibrary(){
       <div style="font-size:0.8rem;color:var(--gm)">
         ${m.mode!=='prijem'?`Body: <b style="color:${totalBody>0?'var(--gl)':totalBody<0?'var(--red)':'var(--gm)'}">${totalBody>0?'+':''}${totalBody}</b>`:''}
         ${recvAvgPct!=null?` Příjem: <b style="color:${recvAvgPct>=80?'var(--gl)':recvAvgPct>=50?'var(--acc)':'var(--red)'}">${recvAvgPct}%</b>`:''}
-        · ${withData.length} hráček · ${m.sets.length} ${m.sets.length===1?'set':'setů'}
+        · ${withData.length} hráček · ${setyTxt(m.sets.length,m.sets.length===1?'set':'setů')}
       </div>
       ${tournamentBadgeHtml(m)}
       <div style="display:flex;justify-content:flex-end;margin-top:6px">
@@ -6236,7 +6238,7 @@ function openMatchLibrary(pid){
       <div style="font-size:0.8rem;color:var(--gm)">
         ${mActions.filter(a=>a.type==='body').length?`Body: <b style="color:${mBody>0?'var(--gl)':mBody<0?'var(--red)':'var(--gm)'}">${mBody>0?'+':''}${mBody}</b>`:''} 
         ${mRecvAvg?`Příjem: <b>${mRecvAvg} (${recvPct(parseFloat(mRecvAvg))}%)</b>`:''}
-        · ${m.sets.length} ${m.sets.length===1?'set':'sety/setů'}
+        · ${setyTxt(m.sets.length,m.sets.length===1?'set':'sety/setů')}
       </div>
       ${tournamentBadgeHtml(m)}
       <div style="display:flex;justify-content:flex-end;margin-top:4px">
@@ -6342,7 +6344,7 @@ function openMatchDetail(mid){
   }).join('');
 
   openModal(`<h2>🏆 vs ${m.opponent}</h2>
-    <p style="color:var(--gm);font-size:0.8rem;margin-bottom:14px">${fmtDate(m.date)} · ${m.sets.length} setů${m.note?` · ${m.note}`:''}</p>
+    <p style="color:var(--gm);font-size:0.8rem;margin-bottom:14px">${fmtDate(m.date)} · ${setyTxt(m.sets.length,'setů')}${m.note?` · ${m.note}`:''}</p>
     ${setBlocks}
     <div class="ma">
       <button class="btn btn-o" onclick="closeModal();openMatchStats('${mid}')">📊 Statistiky</button>
@@ -6357,7 +6359,7 @@ function openMatchStats(mid){
   const withData=allPlayers.filter(p=>m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
   const allActions=m.sets.flatMap(s=>s.actions);
   openModal(`<h2>📊 vs ${m.opponent}</h2>
-    <div style="font-size:0.78rem;color:var(--gm);margin-bottom:12px">${fmtDate(m.date)} · ${m.sets.length} setů · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[m.mode]}</div>
+    <div style="font-size:0.78rem;color:var(--gm);margin-bottom:12px">${fmtDate(m.date)} · ${setyTxt(m.sets.length,'setů')} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[m.mode]}</div>
     <div class="set-tabs" style="margin-bottom:12px" id="statsSetTabs">
       ${m.sets.map((s,i)=>`<div class="set-tab" onclick="showMatchSetStats('${mid}',${i})">${s.closed?'✓ ':''}Set ${s.num}</div>`).join('')}
       <div class="set-tab active" onclick="showMatchTotal('${mid}')">Celkem</div>
@@ -6710,7 +6712,7 @@ function openTournamentDetail(tid,backMid){
     <p style="color:var(--gm);font-size:0.78rem;margin-bottom:14px">${tournamentDateRange(tid)} · ${ms.length} ${ms.length===1?'zápas':ms.length<5?'zápasy':'zápasů'}</p>
     <div class="card" style="margin-bottom:12px">
       <h3>📈 Forma hráček</h3>
-      <p style="font-size:0.72rem;color:var(--gm);margin-bottom:8px">Výkon v tomhle turnaji vs. vlastní průměr mimo něj (podrž/najeď na štítek pro čísla). Forma/Špatenka se ukáže, jen když je odchylka větší než obvyklé kolísání té hráčky.</p>
+      <p class="sk-vysv" style="font-size:0.72rem;color:var(--gm);margin-bottom:8px">Výkon v tomhle turnaji vs. vlastní průměr mimo něj (podrž/najeď na štítek pro čísla). Forma/Špatenka se ukáže, jen když je odchylka větší než obvyklé kolísání té hráčky.</p>
       ${formaHtml}
     </div>
     <div class="card" style="margin-bottom:12px">
@@ -7107,7 +7109,7 @@ function openMinihry(){
     </div>`;
   }).join('');
   openModal(`<h2>🎮 Minihry</h2>
-    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Tipovací minihry z testování, zápasů a turnajů. Zašedlé jsi už odehrál.</p>
+    <p class="sk-vysv" style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">Tipovací minihry z testování, zápasů a turnajů. Zašedlé jsi už odehrál.</p>
     <div style="max-height:60vh;overflow-y:auto;margin-bottom:12px">${rows||'<div class="no-data">Zatím žádné minihry</div>'}</div>
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
 }
@@ -7581,7 +7583,8 @@ const HELP_DATA=[
  a:`Archivace znamená, že hráčka zmizí z aktivního seznamu a přehledů (protože už netrénuje — odešla z týmu, přestoupila jinam...), ale VŠECHNA její naměřená data appka podrží dál v databázi, aby dál počítala do norem při přepnutí na „🗃 Databáze" (viz otázka o přepínači výš). Archivace se nedělá tlačítkem přímo u hráčky, ale je součástí uzavírání sezóny — v menu ⋮ → „📦 Sezóna" → „📦 Uzavřít sezónu a archivovat" zaškrtneš, které hráčky do další sezóny nepokračují, a ty appka při uzavření sezóny archivuje. Podrobně v bloku „Uzavření sezóny".`,
  kw:"archivace vyřazení odchod z týmu"},
 {q:`Jak archivovanou hráčku vrátím zpátky (Obnovit)?`,
- a:`V menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón" najdeš seznam archivovaných hráček (buď pod sezónou, do které patřily, nebo v sekci „Ostatní archivované hráčky") a u každé je tlačítko „↩ Obnovit" — po kliknutí se hráčka vrátí zpátky do aktivního seznamu se všemi svými starými daty beze změny.`},
+ a:`V menu ⋮ → „📦 Sezóna" → „🗂 Archiv sezón" najdeš seznam archivovaných hráček (buď pod sezónou, do které patřily, nebo v sekci „Ostatní archivované hráčky") a u každé je tlačítko „↩ Obnovit" — po kliknutí se hráčka vrátí zpátky do aktivního seznamu se všemi svými starými daty beze změny.<br>Dokud je hráčka v archivu, není na Domů ani v seznamu hráček, ale její data dál posilují T-skóre normy.`,
+ kw:"archiv obnovit archivované hráčky norma T-skóre"},
 {q:`Jak hráčku úplně smažu — a dá se to vrátit?`,
  a:`Na kartě hráčky najdeš v jejím menu možnost smazání; appka se nejdřív zeptá na potvrzení, protože jde o TRVALÉ smazání — na rozdíl od archivace appka v tomhle případě hráčku i všechna její data (testy, zápasy, vše) úplně a nenávratně odstraní. Appka to neumí vrátit zpět — jediná záchrana je mít předtím staženou zálohu Export JSON a z ní hráčku ručně obnovit importem. Pokud si nejsi jistý, jestli hráčku ještě budeš chtít, použij radši Archivaci (viz výš) — ta data nemaže, jen schová.<br>Ve vzhledu Trenéra je smazání (stejně jako Upravit a Kopírovat hráčku) pod tlačítkem ⋮ vpravo v řádku tlačítek na kartě hráčky. Po smazání se tam navíc na pár sekund ukáže „Vrátit“.`,
  kw:"smazání hráčky trvalé nevratné"},
@@ -7607,7 +7610,7 @@ const HELP_DATA=[
  a:`V menu ⋮ klikni na „⚡ Skupinový test" — appka ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a metrikami jako sloupci, kam vyplňuješ hodnoty přímo za sebou bez přepínání mezi kartami. Je to rychlejší na tělocvičně, ale má jedno omezení: počet pokusů u herních metrik appka bere jako jedno společné číslo pro celý tým najednou (nastavíš ho nahoře nad tabulkou), zatímco v testu jedné hráčky (+ Test) jde počet pokusů nastavit zvlášť pro každou metriku. Appka po uložení skupinového testu navíc rovnou připraví testovací Miniher (viz blok „Minihry").`,
  kw:"hromadný test celý tým najednou"},
 {q:`Musím vyplnit úplně všechny metriky, nebo jde nějaké přeskočit?`,
- a:`Jde přeskočit cokoli — appka ukládá jen políčka, která vyplníš, prázdná appka jednoduše přeskočí a při výpočtech (grafy, T-skóre, Overall) je ignoruje, místo aby je počítala jako nulu. Klidně tedy zapíšeš jen část metrik, když na zbytek nebyl čas.`},
+ a:`Jde přeskočit cokoli — appka ukládá jen políčka, která vyplníš, prázdná appka jednoduše přeskočí a při výpočtech (grafy, T-skóre, Overall) je ignoruje, místo aby je počítala jako nulu. Klidně tedy zapíšeš jen část metrik, když na zbytek nebyl čas.<br>U herních metrik se zapisuje počet úspěšných pokusů, ne procenta. Počet pokusů v testu měň, jen když se dnes dělal jiný počet než výchozí.`},
 {q:`Jde datum testování nastavit i zpětně?`,
  a:`Ano — pole s datem je normální kalendářní výběr bez omezení na dnešek, takže jde zapsat i starší testování, na které jsi třeba zapomněl, nebo doplnit historii při přechodu z jiné evidence.`},
 {q:`Jak testování později opravím nebo smažu?`,
@@ -7746,6 +7749,9 @@ const HELP_DATA=[
  a:`Appka kreslí tenkou tečkovanou čáru, co díky přeškálování T-skóre tvoří na Pavoukovi kruh přesně uprostřed grafu — to je referenční „Průměr". Ukazuje, kde by na všech osách skončila hráčka přesně na úrovni průměru zvolené referenční skupiny. Díky tomu na první pohled poznáš, jestli je hráččin graf uvnitř kruhu (pod průměrem) nebo mimo něj (nad průměrem), a hlavně u kterých konkrétních věcí.`},
 {q:`Co znamená zlatá hvězdička na ose „Útok"?`,
  a:`Objeví se přesně tehdy, když je hráčka zrovna na těžší variantě útoku („Útok na cíl" místo „Útok do pole", viz blok „Herní testy") — appka tak jednou hvězdičkou na jedné sloučené ose Útok signalizuje, na jaké obtížnosti se číslo, které vidíš, ve skutečnosti měřilo.`},
+{q:`Co znamenají barvy na Pavoukovi?`,
+ a:`Zelená čára je aktuální testování, šedá to předchozí (když je zapnutý přepínač Předchozí). Zlatý bod na ose znamená T-skóre aspoň 75.`,
+ kw:"barvy zelená šedá zlatý bod legenda pavouk T 75"},
 {q:`Co dělá přepínač „Předchozí" na Pavoukovi?`,
  a:`Když ho zapneš, appka do grafu vedle aktuálního profilu hráčky dokreslí i profil z jejího PŘEDCHOZÍHO testování — takže jedním pohledem porovnáš, jak se od minula posunula na všech osách najednou, ne jen v jedné metrice.`},
 {q:`Co je graf „T-score vývoj v čase" pod pavoukem?`,
@@ -7841,7 +7847,8 @@ const HELP_DATA=[
  a:`Forma appce říká, jestli hráčka v RÁMCI TOHOTO KONKRÉTNÍHO TURNAJE hrála výrazně LÍP nebo HŮŘ, než je JEJÍ VLASTNÍ obvyklý standard (ne standard týmu) — je to tedy čistě individuální srovnání hráčky se sebou samotnou, ne s ostatními. 🔥 = výrazně nad svým vlastním standardem, ❄️ = výrazně pod ním, ➖ = normální kolísání, nic pozoruhodného.`,
  kw:"forma hot cold výkyv turnaj"},
 {q:`Jak appka Formu počítá?`,
- a:`Appka porovná hráččin výkon v tomhle turnaji s jejím vlastním dlouhodobým průměrem MIMO tenhle turnaj, a to v kontextu toho, jak moc tahle konkrétní hráčka běžně kolísá mezi zápasy (stejný princip jako pásmo normálního kolísání u testů — viz blok „Jak číst grafy"). Teprve když je odchylka výraznější, než je pro ni typické, appka jí přidělí 🔥 nebo ❄️ — obyčejné kolísání v mezích jejího normálu appka nechá jako ➖.`},
+ a:`Appka porovná hráččin výkon v tomhle turnaji s jejím vlastním dlouhodobým průměrem MIMO tenhle turnaj, a to v kontextu toho, jak moc tahle konkrétní hráčka běžně kolísá mezi zápasy (stejný princip jako pásmo normálního kolísání u testů — viz blok „Jak číst grafy"). Teprve když je odchylka výraznější, než je pro ni typické, appka jí přidělí 🔥 nebo ❄️ — obyčejné kolísání v mezích jejího normálu appka nechá jako ➖.<br>Forma se ukáže v detailu turnaje (Forma hráček). Když na štítku podržíš prst (na počítači najedeš myší), uvidíš čísla: výkon v turnaji a vlastní průměr mimo něj.`,
+ kw:"forma štítek čísla podržet detail turnaje"},
 {q:`Co znamená „🏁 Uzavřít turnaj" a proč to udělat?`,
  a:`Uzavření appce řekne, že je turnaj definitivně u konce a jeho zápasy a Forma se už nebudou dál měnit — appka se před tím vždycky zeptá na potvrzení. Zároveň uzavření spustí turnajovou Minihru (tipovačku pro tebe, viz blok „Minihry") — bez uzavření appka turnajovou Minihru vůbec nenabídne.`},
 {q:`Jde uzavřený turnaj zase odemknout?`,
@@ -8064,6 +8071,7 @@ function openHelp(){
 // ══════════════════════════════════════════════════════════
 // VZHLED TRENÉRA (Kolo 51) — přepínání za běhu, barvy grafů, systémové Zpět
 // ══════════════════════════════════════════════════════════
+function setyTxt(n,klasik){return isTrener()?n+' '+(n===1?'set':n>=2&&n<=4?'sety':'setů'):n+' '+klasik;}
 function isTrener(){return document.documentElement.classList.contains('skin-trener');}
 // Paleta hráček ve světlém režimu — stejné odstíny, ztmavené na kontrast aspoň 3 : 1 s bílou
 // (dnešní pastelové #9ae84a, #cfe84a… na bílém podkladu nejsou vidět).
