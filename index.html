@@ -737,6 +737,17 @@ html.skin-trener .kol-st{font-size:12.5px;color:var(--ink-soft);white-space:nowr
 html.skin-trener .kol-none{font-size:13px;color:var(--ink-faint-ink);padding:8px 0}
 html.skin-trener .kol-sec .brow{display:flex;margin-top:8px}
 html.skin-trener .mi-note{font-size:12.5px;color:var(--ink-soft)}
+/* ── Kolo 58: odznaky s ikonou Font Awesome ── */
+html.skin-trener .bt.on,html.skin-trener .bt.sp-on{color:var(--ink)!important}
+html.skin-trener .kol-b.fa{font-size:8px}
+html.skin-trener .kol.big .kol-b.fa{font-size:11px}
+html.skin-trener .kol-b.sp.fa,html.skin-trener .kol-sp{color:var(--gold-ink)}
+html.skin-trener .bt .bi:has(>i.fa-solid){width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:17px}
+html.skin-trener .bt .bi:has(>i.fa-solid):not([style]){background:var(--gold-bg);color:var(--gold-ink)}
+html.skin-trener .fa-pick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+html.skin-trener .fa-pick-b{height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+html.skin-trener .fa-pick-b:hover{border-color:var(--court)}
+html.skin-trener .fa-pick-b.sel{border:2px solid var(--court);background:var(--av-bg);color:var(--court-ink)}
 /* ── Kolo 57: lepíky poznámek — přesně podle lepíku v Trenérovi (.denik-lepik, kolo 15 Trenéra).
    Papír má pevné barvy (stejné ve světlém i tmavém režimu). Ohnutý roh vlevo dole je skutečný
    ohyb: roh papíru chybí (clip-path) a cíp .lp-roh leží na papíře se stínem. ── */
@@ -1201,6 +1212,12 @@ const DEF_BADGES=[
   {id:"hecirka",     label:"Hecířka",    icon:"🔥", color:CACC},
   {id:"kapitanka",   label:"Kapitánka",  icon:"👑", color:CACC, special:true},
 ];
+// Kolo 58: ve vzhledu Trenéra má odznak ikonu Font Awesome (b.fa), emoji (b.icon) zůstává pro
+// klasik a jako záloha. Ikony se schválně nepotkávají s ikonami metrik (METRIC_FA), aby se
+// v koláži nepletl odznak se silnou stránkou. Výchozí odznaky ji dostanou při načtení (load).
+const BADGE_FA_DEF={blokar:'cubes-stacked',servis_girl:'paper-plane',bomberka:'bomb',capacka:'person-swimming',hecirka:'bullhorn',kapitanka:'crown'};
+const BADGE_FA_VYBER=['crown','bomb','bullhorn','paper-plane','person-swimming','cubes-stacked','trophy','medal','award','gem','brain','feather','mountain','handshake','anchor','heart'];
+DEF_BADGES.forEach(b=>{b.fa=BADGE_FA_DEF[b.id];});
 
 let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[],tournaments:[],minihry:[]};
 const CH={};
@@ -1274,7 +1291,7 @@ function load(){
     if(m.defaultMax==null)m.defaultMax=m.max||10;
     delete m.max; // migrate old format
   });
-  S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?CACC:CGREEN;});
+  S.config.badges.forEach(b=>{if(!b.color)b.color=b.special?CACC:CGREEN;if(b.fa===undefined&&BADGE_FA_DEF[b.id])b.fa=BADGE_FA_DEF[b.id];});
   if(!S.normScope)S.normScope="all";
   if(!S.matches)S.matches=[];
   if(!S.tournaments)S.tournaments=[];
@@ -2005,7 +2022,7 @@ function openBadges(){
   const btns=S.config.badges.map(b=>{
     const on=p.badges.includes(b.id);
     const style=on?`border-color:${b.color};background:${b.color}22;color:${b.color}`:"";
-    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"><div class="bi">${b.icon}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
+    return`<div class="bt ${on?(b.special?"sp-on":"on"):""}" id="bt_${b.id}" onclick="toggleBadge('${b.id}')" style="${style}"><div class="bi"${(()=>{const t=badgeTint(b);return t?` style="background:${t.bg};color:${t.ink}"`:'';})()}>${badgeIco(b)}</div><div>${b.label}</div>${b.special?'<div style="font-size:0.58rem;color:var(--acc);margin-top:2px">★</div>':''}</div>`;
   }).join("");
   openModal(`<h2>🏅 Odznaky</h2><p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${p.name}</p><div class="btg">${btns}</div><div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
@@ -2262,14 +2279,15 @@ function openMilEd(){
 }
 function openBadgeEd(){
   const list=S.config.badges.map((b,i)=>`<div class="ed-item">
-    <span style="font-size:1.2rem;flex-shrink:0">${b.icon}</span>
+    <span style="font-size:1.2rem;flex-shrink:0">${badgeIco(b)}</span>
     <div style="width:14px;height:14px;border-radius:50%;background:${b.color||CGREEN};flex-shrink:0;border:2px solid rgba(255,255,255,.3)"></div>
     <div class="ed-lbl">${b.label}${b.special?' <span style="color:var(--acc);font-size:0.68rem">★</span>':""}</div>
     <button class="btn btn-o sm" onclick="editBadge(${i})">✎</button>
     <button class="btn btn-d sm" onclick="delBadge(${i})">✕</button>
   </div>`).join("");
   openModal(`<h2>🏅 Odznaky</h2><div>${list}</div><hr class="sep">
-    <div class="fr"><div class="fg"><label>Emoji ikona</label><input id="ni" type="text" placeholder="🏅" maxlength="4"></div><div class="fg"><label>Název</label><input id="nb" type="text"></div></div>
+    <div class="fr"><div class="fg"><label>${isTrener()?'Emoji pro klasický vzhled':'Emoji ikona'}</label><input id="ni" type="text" placeholder="🏅" maxlength="4"></div><div class="fg"><label>Název</label><input id="nb" type="text"></div></div>
+    ${faPickHtml('nfa','')}
     <div class="fg"><label>Barva rámečku</label><div class="swatch-row" id="newSwatches">${BADGE_COLORS.map((c,i)=>`<div class="swatch ${i===0?"sel":""}" style="background:${c}" onclick="selSwatch(this,'newBadgeColor','${c}')"></div>`).join("")}</div><input type="hidden" id="newBadgeColor" value="${BADGE_COLORS[0]}"></div>
     <div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem"><input type="checkbox" id="nsp2" style="width:auto"> Speciální (zlatý shimmer efekt)</label></div>
     <div class="ma"><button class="btn btn-o" onclick="openEditor()">← Zpět</button><button class="btn btn-p" onclick="addBadge()">+ Přidat</button></div>`);
@@ -2319,16 +2337,30 @@ function saveMil(i){const m=S.config.milestones[i];m.label=document.getElementBy
 function editBadge(i){
   const b=S.config.badges[i];const curColor=b.color||CGREEN;
   openModal(`<h2>✎ Odznak</h2>
-    <div class="fr"><div class="fg"><label>Emoji</label><input id="ei2" value="${b.icon}" maxlength="4"></div><div class="fg"><label>Název</label><input id="eb" value="${b.label}"></div></div>
+    <div class="fr"><div class="fg"><label>${isTrener()?'Emoji pro klasický vzhled':'Emoji'}</label><input id="ei2" value="${b.icon}" maxlength="4"></div><div class="fg"><label>Název</label><input id="eb" value="${b.label}"></div></div>
+    ${faPickHtml('efa',b.fa||'')}
     <div class="fg"><label>Barva rámečku</label><div class="swatch-row">${BADGE_COLORS.map(c=>`<div class="swatch ${c===curColor?"sel":""}" style="background:${c}" onclick="selSwatch(this,'editBadgeColor','${c}')"></div>`).join("")}</div><input type="hidden" id="editBadgeColor" value="${curColor}"></div>
     <div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem"><input type="checkbox" id="esp" style="width:auto" ${b.special?"checked":""}> Speciální (zlatý shimmer)</label></div>
     <div class="ma"><button class="btn btn-o" onclick="openBadgeEd()">← Zpět</button><button class="btn btn-p" onclick="saveBadge(${i})">Uložit</button></div>`);
 }
-function saveBadge(i){const b=S.config.badges[i];b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;save();toast("Uloženo ✓");openBadgeEd();renderPL();}
+// Kolo 58: výběr ikony Font Awesome k odznaku (jen ve vzhledu Trenéra; v klasiku se nevykreslí).
+// Opětovné klepnutí na vybranou ikonu volbu zruší, odznak pak i ve vzhledu Trenéra ukáže emoji.
+function faPickHtml(inputId,cur){
+  if(!isTrener())return'';
+  const btns=BADGE_FA_VYBER.map(f=>`<button type="button" class="fa-pick-b${f===cur?' sel':''}" data-fa="${f}" aria-label="${f}" aria-pressed="${f===cur}" onclick="pickFa(this,'${inputId}')"><i class="fa-solid fa-${f}" aria-hidden="true"></i></button>`).join('');
+  return`<div class="fg"><label>Ikona</label><div class="fa-pick">${btns}</div><input type="hidden" id="${inputId}" value="${cur}"></div>`;
+}
+function pickFa(el,inputId){
+  const on=!el.classList.contains('sel');
+  el.closest('.fa-pick').querySelectorAll('.fa-pick-b').forEach(x=>{x.classList.remove('sel');x.setAttribute('aria-pressed','false');});
+  if(on){el.classList.add('sel');el.setAttribute('aria-pressed','true');}
+  document.getElementById(inputId).value=on?el.dataset.fa:'';
+}
+function saveBadge(i){const b=S.config.badges[i];const fa=document.getElementById("efa");if(fa)b.fa=fa.value||'';b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;save();toast("Uloženo ✓");openBadgeEd();renderPL();}
 function addPhys(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.physical.push({id:"m_"+Date.now(),label,unit:document.getElementById("nu")?.value.trim()||"",lowerBetter:document.getElementById("nlb")?.checked||false,spider:document.getElementById("nsp")?.checked!==false,showGraph:document.getElementById("nsg")?.checked!==false,active:true});save();toast("Přidáno ✓");openPhysEd();}
 function addGame(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.game.push({id:"m_"+Date.now(),label,defaultMax:parseInt(document.getElementById("nmax")?.value)||15,active:true});save();toast("Přidáno ✓");openGameEd();}
 function addMil(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.milestones.push({id:"m_"+Date.now(),label,active:true});save();toast("Přidáno ✓");openMilEd();}
-function addBadge(){const icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if(!icon||!label){toast("Zadej ikonu i název!","err");return;}S.config.badges.push({id:"b_"+Date.now(),label,icon,color:document.getElementById("newBadgeColor")?.value||CGREEN,special:document.getElementById("nsp2")?.checked||false});save();toast("Přidán ✓");openBadgeEd();}
+function addBadge(){const fa=document.getElementById("nfa")?.value||'';let icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if((!icon&&!fa)||!label){toast("Zadej ikonu i název!","err");return;}if(!icon)icon="🏅";S.config.badges.push({id:"b_"+Date.now(),label,icon,fa,color:document.getElementById("newBadgeColor")?.value||CGREEN,special:document.getElementById("nsp2")?.checked||false});save();toast("Přidán ✓");openBadgeEd();}
 
 // ═══ COMPARE ═══
 function toggleCmp(){S.cmpMode=!S.cmpMode;if(S.cmpMode)setNavActive('cmp');else document.getElementById("cmpBtn").className="btn btn-o sm";const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
@@ -2480,7 +2512,7 @@ function setNavActive(which){
 }
 function renderPL(){
   document.getElementById("playerList").innerHTML=getActiveP().map(p=>{
-    const b=p.badges.map(id=>{const bd=S.config.badges.find(x=>x.id===id);if(!bd)return"";const st=bd.special?"":badgeTagStyle(bd.color,'bc');return`<span class="bc ${bd.special?"sp":""}" style="${st}">${bd.icon}</span>`;}).join("");
+    const b=p.badges.map(id=>{const bd=S.config.badges.find(x=>x.id===id);if(!bd)return"";const st=bd.special?"":badgeTagStyle(bd.color,'bc');return`<span class="bc ${bd.special?"sp":""}" style="${st}">${badgeIco(bd)}</span>`;}).join("");
     const kap=hasKap(p);
     const cls=["pc",kap?"has-kap":"",S.cmpMode?(S.cmpIds.includes(p.id)?"cmp-sel":""):(p.id===S.activeId?"active":"")].filter(Boolean).join(" ");
     return`<div class="${cls}" onclick="${S.cmpMode?"toggleCmpP":"selectPlayer"}('${p.id}')"><div class="pc-name">${p.name}${staleDot(p)}</div><div class="pc-b">${b||''}</div></div>`;
@@ -2520,6 +2552,15 @@ function badgeTagStyle(color,bdProp){
   }
   return bdProp==='bc'?`background:${color}33;color:${color};border:1px solid ${color}`:`background:${color}33;border-color:${color};color:${color}`;
 }
+// Kolo 58: ikona odznaku — ve vzhledu Trenéra Font Awesome (když ji odznak má), jinak emoji.
+function badgeIco(b){return isTrener()&&b.fa?`<i class="fa-solid fa-${b.fa}" aria-hidden="true"></i>`:b.icon;}
+// Neprůhledné podbarvení barvou odznaku a tmavší odstín ikony (koláž, okno Odznaky).
+function badgeTint(b){
+  if(!isTrener()||!b.fa||b.special||!/^#[0-9a-fA-F]{6}$/.test(b.color||''))return null;
+  const dk=document.documentElement.classList.contains('skin-dark'),V=BOMBITO_VZHLED,bg=V.mix(dk?'#1F2630':'#FFFFFF',b.color,0.25);
+  return{bg,ink:dk?V.inkFor(b.color,[bg],true):V.inkFor(V.darkenHex(b.color,0.55),[bg],false)};
+}
+function badgeChipStyle(b){const t=badgeTint(b);return t?`background:${t.bg};color:${t.ink}`:'';}
 // Kolo 55 (Mek 26. 10.): otevřená hráčka začíná vždy nahoře. Dřív <main> držel posun
 // z předchozí obrazovky/hráčky. Přepnutí tabu u téže hráčky posun nemění.
 let _detailShownId=null,_detailToTop=false;
@@ -4481,13 +4522,13 @@ function collageHtml(p,size,norms,onclick){
   // Hlavní vlastnost: nejsilnější metrika › odznak (kapitánka první) › nejvyšší fáze milníku.
   let main,badges=d.badges;
   if(d.str[0])main=`<i class="fa-solid fa-${metricFa(d.str[0].id)}" aria-hidden="true"></i>`;
-  else if(badges[0]){main=`<span class="kol-em">${badges[0].icon}</span>`;badges=badges.slice(1);}
+  else if(badges[0]){const t=badgeTint(badges[0]);main=`<span class="kol-em${badges[0].special&&isTrener()&&badges[0].fa?' kol-sp':''}"${t?` style="color:${t.ink}"`:''}>${badgeIco(badges[0])}</span>`;badges=badges.slice(1);}
   else main=`<span class="kol-em">${MIL_STAGES[best-1].emoji}</span>`;
   const rr=R-(big?2:1),cw=big?24:17;
   const at=deg=>{const r=deg*Math.PI/180;return`left:${Math.round(R+rr*Math.cos(r)-cw/2)}px;top:${Math.round(R+rr*Math.sin(r)-cw/2)}px`;};
   const sDeg=big?[-45,-135,-90]:[-45,-135],bDeg=[45,135,90,0,180];
   const sats=d.str.slice(1,1+sDeg.length).map((x,i)=>`<span class="kol-sat kol-s" style="${at(sDeg[i])}"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span>`).join('')
-    +badges.slice(0,bDeg.length).map((b,i)=>`<span class="kol-sat kol-b${b.special?' sp':''}" style="${at(bDeg[i])}">${b.icon}</span>`).join('');
+    +badges.slice(0,bDeg.length).map((b,i)=>`<span class="kol-sat kol-b${b.special?' sp':''}${b.fa?' fa':''}" style="${at(bDeg[i])};${badgeChipStyle(b)}">${badgeIco(b)}</span>`).join('');
   const tip=collageTip(d).replace(/"/g,'&quot;');
   return`<div class="kol${big?' big':''}" style="--ring:conic-gradient(${ring})" role="img" aria-label="${tip.replace(/\n/g,'. ')}" title="${tip}"${onclick?` onclick="${onclick}"`:''}><div class="kol-c">${main}</div>${sats}</div>`;
 }
@@ -4511,7 +4552,7 @@ function openCollage(pid){
   const d=collageData(p,activeNorms());
   const strRows=d.str.length?d.str.map(x=>`<div class="kol-row"><span class="m-ic on"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span><span class="kol-l">${x.label}</span><span class="m-t">T ${x.t}</span></div>`).join('')
     :`<div class="kol-none">Zatím žádná metrika s T aspoň ${STRENGTH_T}</div>`;
-  const bRow=d.badges.length?`<div class="brow">${d.badges.map(b=>`<span class="ba ${b.special?"sp":""}" style="${b.special?"":badgeTagStyle(b.color,'ba')}">${b.icon} ${b.label}</span>`).join('')}</div>`:`<div class="kol-none">Žádné odznaky</div>`;
+  const bRow=d.badges.length?`<div class="brow">${d.badges.map(b=>`<span class="ba ${b.special?"sp":""}" style="${b.special?"":badgeTagStyle(b.color,'ba')}">${badgeIco(b)} ${b.label}</span>`).join('')}</div>`:`<div class="kol-none">Žádné odznaky</div>`;
   const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st">${st?MIL_STAGES[st-1].emoji+' '+MIL_STAGES[st-1].label:'—'}</span></div>`;}).join('');
   openModal(`<div class="kol-hd">${collageHtml(p,72,activeNorms())}<h2>${p.name}</h2></div>
     <div class="kol-sec"><h3>Vyniká</h3>${strRows}</div>
@@ -7086,6 +7127,9 @@ const HELP_DATA=[
 {title:"Odznaky",icon:"🏅",qa:[
 {q:`Co jsou Odznaky a co znamenají jednotlivé ikonky?`,
  a:`Odznaky jsou appčin způsob, jak hráčce dát viditelné ocenění/nálepku za nějakou vlastnost nebo úspěch (třeba 🧱 Blokař, 🎯 Servis Girl, 💣 Bomberka, 🤿 Čapačka, 🔥 Hecířka) — na rozdíl od milníků appka odznaky NEPOČÍTÁ ani neodvozuje sama z naměřených dat, jsou to čistě tvoje vlastní ocenění podle toho, co u hráčky vidíš na tréninku. Appka má i speciální odznak 👑 Kapitánka se zvláštním „třpytivým" vzhledem, který ji odlišuje od ostatních. Přesný seznam a vzhled odznaků jde upravit v Nastavení.`},
+{q:`Proč mají odznaky ve vzhledu Trenéra jiné ikony než emoji?`,
+ a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka = plavec, Hecířka = megafon, Kapitánka = koruna. Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
+ kw:"odznak ikona font awesome emoji trenér vzhled vybrat ikonu koruna megafon"},
 {q:`Jak appka odznak hráčce přidělí?`,
  a:`Appka to nedělá sama automaticky — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", appka ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
  kw:"udělení odznaku manuálně přiřazení"},
