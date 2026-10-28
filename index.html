@@ -1355,6 +1355,7 @@ html.skin-dark .med-sk.med-poz>summary{color:var(--pc)}
 .poz-klik{background:none;border:0;padding:3px 6px;margin-left:-6px;border-radius:8px;cursor:pointer;font-family:inherit;text-align:left}
 .poz-klik:hover{background:var(--line)}
 .poz-klik:focus-visible{outline:2px solid var(--court);outline-offset:1px}
+html.drz-drzi,html.drz-drzi *{-webkit-touch-callout:none!important;-webkit-user-select:none!important;user-select:none!important}
 html.skin-trener [data-pid],html.skin-trener [data-pid] *,html.skin-trener #emptyState,html.skin-trener #emptyState *,html.skin-trener #playerList,html.skin-trener #playerList *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 .poz-jm{margin:-4px 0 12px;font-weight:600;color:var(--ink-soft)}
 .pozv{display:flex;flex-direction:column}
@@ -1845,17 +1846,22 @@ let _pozDrz=null,_pozDrzXY=null,_pozDrzKdy=0,_pozDrzKlik=false;
 function pozDrzKarta(e){return isTrener()&&e.target.closest?e.target.closest('[data-pid]'):null;}
 // Kolo 83: oblast bez výběru textu (Domů a seznam hráček), aby podržení vedle karty nebo mezi kartami nespustilo Kopírovat.
 function pozDrzOblast(t){return isTrener()&&t&&t.closest?t.closest('#emptyState,#playerList'):null;}
+// Kolo 84: po otevření okna podržením je až do zvednutí prstu výběr zablokovaný všude (html.drz-drzi).
+let _drzDrzi=null;
+function drzZablokuj(){document.documentElement.classList.add('drz-drzi');clearTimeout(_drzDrzi);_drzDrzi=null;}
+function drzUvolni(){if(!document.documentElement.classList.contains('drz-drzi'))return;clearTimeout(_drzDrzi);_drzDrzi=setTimeout(()=>{document.documentElement.classList.remove('drz-drzi');},400);}
+function drzBlokuje(t){return document.documentElement.classList.contains('drz-drzi')||!!pozDrzOblast(t);}
 function pozDrzOtevri(k){if(Date.now()-_pozDrzKdy<800)return;_pozDrzKdy=Date.now();openPozice(k.dataset.pid);}
-document.addEventListener('contextmenu',e=>{const k=pozDrzKarta(e);if(k){e.preventDefault();pozDrzOtevri(k);return;}if(pozDrzOblast(e.target))e.preventDefault();});
+document.addEventListener('contextmenu',e=>{const k=pozDrzKarta(e);if(k){e.preventDefault();pozDrzOtevri(k);return;}if(drzBlokuje(e.target))e.preventDefault();});
 // Kolo 80: podržení karty nesmí na telefonu označit text (menu Kopírovat/Sdílet).
-document.addEventListener('selectstart',e=>{const t=e.target.nodeType===1?e.target:e.target.parentElement;if(pozDrzOblast(t))e.preventDefault();});
-document.addEventListener('selectionchange',()=>{try{const sel=getSelection();if(!sel.rangeCount||sel.isCollapsed)return;const n=sel.anchorNode,el=n&&(n.nodeType===1?n:n.parentElement);if(pozDrzOblast(el))sel.removeAllRanges();}catch(_){}});
+document.addEventListener('selectstart',e=>{const t=e.target.nodeType===1?e.target:e.target.parentElement;if(drzBlokuje(t))e.preventDefault();});
+document.addEventListener('selectionchange',()=>{try{const sel=getSelection();if(!sel.rangeCount||sel.isCollapsed)return;const n=sel.anchorNode,el=n&&(n.nodeType===1?n:n.parentElement);if(drzBlokuje(el))sel.removeAllRanges();}catch(_){}});
 document.addEventListener('touchstart',e=>{
   const k=pozDrzKarta(e);clearTimeout(_pozDrz);_pozDrz=null;_pozDrzKlik=false;if(!k||e.touches.length>1)return;
-  _pozDrzXY=[e.touches[0].clientX,e.touches[0].clientY];_pozDrz=setTimeout(()=>{_pozDrz=null;_pozDrzKlik=true;setTimeout(()=>{_pozDrzKlik=false;},1500);try{getSelection().removeAllRanges();}catch(_){}pozDrzOtevri(k);},450);
+  _pozDrzXY=[e.touches[0].clientX,e.touches[0].clientY];_pozDrz=setTimeout(()=>{_pozDrz=null;_pozDrzKlik=true;setTimeout(()=>{_pozDrzKlik=false;},1500);try{getSelection().removeAllRanges();}catch(_){}drzZablokuj();pozDrzOtevri(k);},450);
 },{passive:true});
 document.addEventListener('touchmove',e=>{if(_pozDrz&&Math.hypot(e.touches[0].clientX-_pozDrzXY[0],e.touches[0].clientY-_pozDrzXY[1])>10){clearTimeout(_pozDrz);_pozDrz=null;}},{passive:true});
-['touchend','touchcancel'].forEach(t=>document.addEventListener(t,()=>{clearTimeout(_pozDrz);_pozDrz=null;},{passive:true}));
+['touchend','touchcancel'].forEach(t=>document.addEventListener(t,()=>{clearTimeout(_pozDrz);_pozDrz=null;drzUvolni();},{passive:true}));
 // Klepnutí, které dlouhé podržení ukončí, už kartu neotevře.
 document.addEventListener('click',e=>{if(_pozDrzKlik&&pozDrzKarta(e)){_pozDrzKlik=false;e.stopPropagation();e.preventDefault();}},true);
 // Kolo 79: pozice všech aktivních hráček v jednom okně. Klepnutí na prázdný kroužek: hlavní, když hráčka hlavní
