@@ -1201,9 +1201,13 @@ html.skin-trener .sk-fab{display:block;position:fixed;right:calc(16px + env(safe
 html.skin-trener .sk-fab-btn{width:56px;height:56px;border-radius:50%;border:none;padding:0;background:var(--chalk);color:var(--on-chalk);font-size:21px;box-shadow:0 4px 14px rgba(27,36,48,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s ease}
 html.skin-trener .sk-fab-btn:hover{background:var(--chalk-dark)}
 html.skin-trener .sk-fab.open .sk-fab-btn{transform:rotate(45deg)}
-@keyframes skFabIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-html.skin-trener .sk-fab-menu{display:none;position:absolute;right:0;bottom:calc(100% + 14px);flex-direction:column;align-items:flex-end;gap:10px;animation:skFabIn .16s ease}
-html.skin-trener .sk-fab.open .sk-fab-menu{display:flex}
+/* Kolo 82: nabídka je pořád v DOM, skrývá ji visibility se zpožděním, aby doběhla animace zavření. */
+html.skin-trener .sk-fab-menu{display:flex;visibility:hidden;pointer-events:none;position:absolute;right:0;bottom:calc(100% + 14px);flex-direction:column;align-items:flex-end;gap:10px;transition:visibility 0s linear .32s}
+html.skin-trener .sk-fab.open .sk-fab-menu{visibility:visible;pointer-events:auto;transition-delay:0s}
+html.skin-trener .sk-fab-menu>.sk-fab-item{opacity:0;transform:translateY(14px) scale(.92);transform-origin:right center;transition:opacity .15s ease,transform .2s cubic-bezier(.3,.7,.4,1);transition-delay:calc(var(--z,0) * 28ms)}
+html.skin-trener .sk-fab.open .sk-fab-menu>.sk-fab-item{opacity:1;transform:none;transition:opacity .16s ease,transform .24s cubic-bezier(.2,.9,.3,1.25);transition-delay:calc(var(--o,0) * 32ms)}
+html.skin-trener .sk-fab-btn{transition:transform .24s cubic-bezier(.2,.9,.3,1.2),background .15s}
+@media (prefers-reduced-motion:reduce){html.skin-trener .sk-fab-menu>.sk-fab-item,html.skin-trener .sk-fab.open .sk-fab-menu>.sk-fab-item{transition:none}html.skin-trener .sk-fab-menu{transition:none}}
 html.skin-trener .sk-fab-item{display:flex;flex-direction:row-reverse;align-items:center;gap:10px;background:none;border:none;padding:0;cursor:pointer;color:var(--ink);font:inherit}
 html.skin-trener .sk-fab-lbl{background:var(--card);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;box-shadow:var(--shadow);white-space:nowrap}
 html.skin-trener .sk-fab-ico{width:42px;height:42px;border-radius:50%;background:var(--chalk);color:var(--on-chalk);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:var(--shadow);flex-shrink:0}
@@ -1216,7 +1220,7 @@ html.skin-trener .sk-fab-mezera{height:2px}
 html.skin-trener .sk-fab-item.off .sk-fab-ico{background:var(--card);color:var(--ink-faint-ink);border:1px solid var(--line)}
 html.skin-trener .sk-fab-badge{display:none;position:absolute;top:-3px;left:-3px;width:22px;height:22px;border-radius:50%;background:var(--gold-bg);color:var(--gold-ink);border:2px solid var(--card);font-size:10px;align-items:center;justify-content:center;pointer-events:none}
 html.skin-trener .sk-fab.tur:not(.open) .sk-fab-badge{display:flex}
-html.skin-trener .sk-fab-scrim{display:block;position:fixed;inset:0;z-index:149;background:rgba(27,36,48,.3);opacity:0;pointer-events:none;transition:opacity .18s ease}
+html.skin-trener .sk-fab-scrim{display:block;position:fixed;inset:0;z-index:149;background:rgba(27,36,48,.22);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .22s ease}
 html.skin-trener .sk-fab-scrim.show{opacity:1;pointer-events:auto}
 html.skin-trener .sk-nahoru{right:calc(22px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 
@@ -9342,8 +9346,9 @@ function testProHracku(druh){
     // Kolo 80: nad zápasem ostatní „přidat“ (nejčastější nejblíž tlačítku).
     const it=(a,fa,lbl)=>`<button type="button" class="sk-fab-item sk-fab-dalsi" data-a="${a}"><span class="sk-fab-ico"><i class="fa-solid fa-${fa}" aria-hidden="true"></i></span><span class="sk-fab-lbl">${lbl}</span></button>`;
     menu.insertAdjacentHTML('afterbegin',it('hracka','user-plus','Přidat hráčku')+it('skupina','clipboard-check','Skupinový test')+it('fyz','wave-square','Fyzický test')+it('her','bullseye','Herní test')+'<span class="sk-fab-mezera" aria-hidden="true"></span>');
+    const pol=[...menu.querySelectorAll('.sk-fab-item')];pol.forEach((b,i)=>{b.style.setProperty('--z',i);b.style.setProperty('--o',pol.length-1-i);});
   };
-  const nastav=o=>{if(o)kresli();w.classList.toggle('open',o);scrim.classList.toggle('show',o);btn.setAttribute('aria-expanded',String(o));};
+  const nastav=o=>{if(o){kresli();void menu.offsetWidth;}w.classList.toggle('open',o);scrim.classList.toggle('show',o);btn.setAttribute('aria-expanded',String(o));};
   window.skFabZavri=()=>nastav(false);window.skFabOtevreno=()=>w.classList.contains('open');
   window.skFabSync=()=>{const t=aktivniTurnaj();w.classList.toggle('tur',!!t);btn.setAttribute('aria-label',t?'Přidat – turnaj '+t.name:'Přidat');if(w.classList.contains('open'))kresli();};
   btn.addEventListener('click',()=>nastav(!w.classList.contains('open')));
