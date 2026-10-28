@@ -80,7 +80,7 @@ window.BOMBITO_VZHLED=(function(){
       "--court":v.primary,"--court-dark":darkenHex(v.primary,0.22),
       "--chalk":v.accent,"--chalk-dark":darkenHex(v.accent,0.18),
       "--court-ink":inkFor(v.primary,bgs,v.dark),"--chalk-ink":inkFor(v.accent,bgs,v.dark),
-      "--on-court":onFill(v.primary),"--on-chalk":onFill(v.accent)
+      "--on-court":onFill(v.primary),"--on-chalk":contrast("#ffffff",v.accent)>=3?"#ffffff":onFill(v.accent)
     };
   }
   function themeColor(c){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",c);}
@@ -661,8 +661,9 @@ html.skin-trener .btn-o{background:var(--card);border:1px solid var(--line);colo
 html.skin-trener .btn-o:hover{background:var(--paper);color:var(--ink);border-color:var(--ink-faint)}
 html.skin-trener .btn-d{background:var(--danger-bg);border:1px solid var(--danger-bg);color:var(--danger-ink)}
 html.skin-trener .btn-d:hover{background:var(--danger);border-color:var(--danger);color:#fff}
-html.skin-trener .btn-a{background:var(--chalk);color:var(--on-chalk);border:1px solid var(--chalk)}
-html.skin-trener .btn-a:hover{background:var(--chalk-dark)}
+/* Kolo 78: tlačítka s textem na tmavší variantě zvýrazňovací barvy, aby bílý text měl kontrast 4,5 : 1 (ikony na tlačítku Zápas zůstávají na základní). */
+html.skin-trener .btn-a{background:var(--chalk-dark);color:var(--on-chalk);border:1px solid var(--chalk-dark)}
+html.skin-trener .btn-a:hover{background:var(--chalk-dark);filter:brightness(.92)}
 html.skin-trener .btn-gray{background:transparent;border:1px solid transparent;color:var(--ink-soft)}
 html.skin-trener .btn-gray:hover{background:var(--paper);color:var(--ink);border-color:transparent}
 html.skin-trener .btn-gold{color:#1B2430}
@@ -688,6 +689,13 @@ html.skin-trener #sidebarBackdrop{background:rgba(27,36,48,.5);backdrop-filter:n
   html.skin-trener #sidebarBackdrop{z-index:155}
   html.skin-trener #sidebar.open{box-shadow:0 14px 34px rgba(0,0,0,.28)}
 }
+/* Kolo 78 (Mek 28. 10.): ve vzhledu Trenéra je seznam hráček i na počítači jen výsuvný pod ☰, obsah má celou šířku. */
+html.skin-trener #sidebarToggle{display:flex!important}
+html.skin-trener #sidebar{position:fixed;left:0;top:64px;bottom:0;z-index:160;transform:translateX(-100%);height:calc(100dvh - 64px);padding-top:0}
+html.skin-trener #sidebar.open{transform:translateX(0);box-shadow:0 14px 34px rgba(0,0,0,.28)}
+html.skin-trener #sidebarBackdrop.open{display:block;z-index:155}
+@media(min-width:1000px){html.skin-trener .home-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:860px}html.skin-trener .home-hero{max-width:860px}}
+@media(min-width:1400px){html.skin-trener .home-grid{grid-template-columns:repeat(5,minmax(0,1fr));max-width:1080px}html.skin-trener .home-hero{max-width:1080px}}
 
 /* ── Spodní lišta Zpět/Dopředu ── */
 /* Kolo 64 (Mek 27. 10.): ve vzhledu Trenéra lišta není, Zpět obstará systém a šipka v hlavičce.
@@ -723,9 +731,9 @@ html.skin-trener .stale-dot.red{background:var(--danger)}
 html.skin-trener .pav{background:var(--av-bg);color:var(--av-ink);border:0;font-family:'DM Sans',sans-serif}
 html.skin-trener .pdh{display:grid;grid-template-columns:52px minmax(0,1fr) auto;column-gap:12px;row-gap:0;align-items:center;margin-bottom:12px}
 html.skin-trener .pdh>.pav{grid-column:1;grid-row:1/4;width:52px;height:52px;font-size:17px;align-self:center}
-html.skin-trener .pdh>.pd-ov{grid-column:3;grid-row:1/4;align-self:center;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:8px 12px;min-width:0!important}
-html.skin-trener .pd-ov>div:first-child{font-size:10.5px!important;font-weight:700;letter-spacing:.06em!important;color:var(--ink-soft)!important}
-html.skin-trener .pd-ov .mv{font-size:38px!important;line-height:1}
+html.skin-trener .pdh>.pd-ov{grid-column:3;grid-row:1/4;align-self:center;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 16px;min-width:0!important}
+html.skin-trener .pd-ov>div:first-child{font-size:11.5px!important;font-weight:700;letter-spacing:.06em!important;color:var(--ink-soft)!important}
+html.skin-trener .pd-ov .mv{font-size:52px!important;line-height:1}
 html.skin-trener .pdh>.pdi{display:contents}
 html.skin-trener .pdi h2{grid-column:2;grid-row:1;font-size:30px;letter-spacing:.02em;color:var(--ink);text-transform:uppercase;font-weight:400}
 html.skin-trener .pdi p{grid-column:2;grid-row:2;font-size:12.5px;color:var(--ink-faint-ink);margin-top:3px}
@@ -946,7 +954,9 @@ html.skin-trener .kol.big .kol-s{font-size:11px}
 html.skin-trener .kol-b.sp{background:var(--gold-bg)}
 html.skin-trener .pdh:has(>.kol){grid-template-columns:76px minmax(0,1fr) auto}
 html.skin-trener .pdh>.kol{grid-column:1;grid-row:1/4;align-self:center;justify-self:center;cursor:pointer}
-html.skin-trener .home-card .kol{margin:4px 0 2px}
+html.skin-trener .home-card .kol{margin:4px 0 2px;width:54px;height:54px}
+html.skin-trener .home-card .kol-c{inset:5px;font-size:21px}
+html.skin-trener .home-card .kol-em{font-size:22px}
 html.skin-trener .m-ic{display:flex;align-items:center;justify-content:center;width:24px;height:24px;flex-shrink:0;border-radius:50%;background:var(--paper);color:var(--ink-soft);font-size:11px}
 html.skin-trener .m-ic.on{background:var(--court);color:var(--on-court)}
 html.skin-trener i.m-hi{display:block;margin-bottom:3px;font-size:11px}
@@ -1020,8 +1030,10 @@ html.skin-trener .ba{border-radius:999px;font-size:12px;padding:3px 10px;border-
 html.skin-trener .da .btn{height:38px;padding:0 11px;font-size:14px;display:inline-flex;align-items:center;gap:5px}
 html.skin-trener .da .btn i{font-size:14px}
 html.skin-trener .da .da-test{order:1;padding:0 12px}
-html.skin-trener .da .da-pdf{order:2}
-html.skin-trener .da .da-badges{order:3}
+html.skin-trener .da .da-badges{order:2;background:var(--gold-bg);border-color:color-mix(in srgb,var(--gold-text) 45%,transparent);color:var(--gold-ink)}
+html.skin-trener .da .da-badges:hover{border-color:var(--gold-text)}
+html.skin-trener .da .da-badges i{color:var(--gold-text)}
+html.skin-trener .da .da-pdf{order:3}
 html.skin-trener .da .da-ic{order:5;width:36px;height:36px;padding:0;justify-content:center;background:transparent;border:0;color:var(--ink-soft)}
 html.skin-trener .da .da-ic:hover{background:var(--paper)}
 html.skin-trener .da .da-ic.da-del{color:var(--danger-ink)}
@@ -1055,6 +1067,12 @@ html.skin-trener .note-btn.has-note{color:var(--chalk-ink)}
 html.skin-trener .mil-back{color:var(--ink-soft)}
 html.skin-trener .mst{border-color:var(--line)}
 html.skin-trener .mst.next{background:var(--warn-bg);border-color:var(--chalk)}
+.mil-ic{color:var(--court-ink)}
+.mil-ic-1{color:color-mix(in srgb,var(--court-ink) 55%,var(--card))}
+.mil-ic-2{color:color-mix(in srgb,var(--court-ink) 78%,var(--card))}
+html.skin-trener .mst .mil-ic{font-size:14px}
+html.skin-trener .mst.done .mil-ic{color:var(--on-court,#fff)}
+html.skin-trener .mst.locked .mil-ic{opacity:.45}
 html.skin-trener .mil-summary summary{border-bottom-color:var(--line)}
 html.skin-trener .mil-summary[open] summary{color:var(--ink)}
 html.skin-trener .mil-leg{background:var(--paper);color:var(--ink-soft)}
@@ -1197,6 +1215,7 @@ html.skin-trener .sk-konfeta{display:block;position:fixed;top:-20px;width:8px;he
 }
 .sk-modal-head{display:flex;align-items:center;justify-content:space-between}
 .sk-modal-head h2{margin-bottom:0!important}
+html.skin-trener .sk-close-roh{float:right;position:sticky;top:-4px;z-index:3;margin:-8px -8px 0 8px;background:var(--card)}
 .sk-close{width:36px;height:36px;border:0;border-radius:7px;background:transparent;color:var(--ink-soft);display:grid;place-items:center;padding:0;cursor:pointer;font-size:18px}
 .sk-close:hover{background:var(--paper)}
 .sk-grp{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--court-ink);margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
@@ -1235,6 +1254,53 @@ html.skin-trener .grp-tbl th{background:var(--paper);color:var(--ink-faint-ink);
 html.skin-trener .grp-tbl td{border-bottom-color:var(--line)}
 html.skin-trener .grp-tbl input{background:var(--paper);border:1px solid var(--line);color:var(--ink)}
 html.skin-trener .grp-tbl input:focus{border-color:var(--court)}
+html.skin-trener .grp-tbl input:disabled{opacity:.35;background:repeating-linear-gradient(135deg,var(--paper),var(--paper) 4px,var(--line) 4px,var(--line) 5px)}
+/* Kolo 78: pozice – písmeno v kroužku, hlavní plný, vedlejší obrys */
+.poz{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--pc);color:var(--pi);background:transparent;font:700 10.5px/1 'DM Sans',sans-serif;letter-spacing:0;flex-shrink:0;box-sizing:border-box;vertical-align:middle}
+.poz.hl{background:var(--pc);color:var(--pt)}
+.poz.vel{width:24px;height:24px;font-size:13px}
+html.skin-dark .poz:not(.hl){color:var(--pc)}
+.poz-chipy{display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle}
+html.skin-trener .home-card,html.skin-trener .pc{position:relative}
+.poz-roh{position:absolute;top:6px;right:6px;display:flex;gap:3px;z-index:1}
+.poz-roh .poz{width:17px;height:17px;font-size:10px}
+html.skin-trener .pc .poz-roh{top:8px;right:8px}
+html.skin-trener .home-card .poz-roh{top:0;right:12px;transform:translateY(-50%);gap:4px}
+html.skin-trener .home-card .poz-roh .poz{width:20px;height:20px;font-size:11px;background:var(--card);box-shadow:0 0 0 2px var(--card)}
+html.skin-trener .home-card .poz-roh .poz.hl{background:var(--pc)}
+html.skin-trener .home-grid{row-gap:28px;padding-top:10px}
+.domu-razeni{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.domu-razeni .poz-b{min-height:28px;padding:2px 9px;font-size:12px;border-radius:14px}
+html.skin-trener .home-card.home-kap{border:2px solid #D4A72C;box-shadow:0 0 0 3px var(--gold-bg),var(--shadow)}
+html.skin-dark .home-card.home-kap{border-color:var(--gold-text)}
+html.skin-trener .home-card .forma-roh{position:absolute;bottom:0;left:12px;transform:translateY(50%);z-index:1;display:flex;gap:4px}
+html.skin-trener .home-card .fr-k{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:10px;font:600 11px/1 'DM Sans',sans-serif;background:var(--card);box-shadow:0 0 0 2px var(--card);border:1px solid currentColor}
+html.skin-trener .home-card .fr-k.up{color:#C2410C}
+html.skin-trener .home-card .fr-k.down{color:#2563EB}
+html.skin-dark .home-card .fr-k.up{color:#FB923C}
+html.skin-dark .home-card .fr-k.down{color:#60A5FA}
+html.skin-trener .home-card .odz-roh{position:absolute;bottom:0;right:12px;transform:translateY(50%);z-index:1;display:flex;gap:4px}
+html.skin-trener .home-card .odz{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--card);color:var(--ink);box-shadow:0 0 0 2px var(--card)}
+html.skin-trener .home-card .kap-roh{position:absolute;top:0;left:12px;transform:translateY(-50%);z-index:1;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--gold-bg);color:var(--gold-ink);box-shadow:0 0 0 2px var(--card)}
+html.skin-trener .cmp-chip{position:relative}
+html.skin-trener .cmp-chip:has(.poz-roh){margin-top:9px}
+html.skin-trener .cmp-chip .poz-roh{top:0;right:-6px;transform:translateY(-70%);gap:2px}
+html.skin-trener .cmp-chip .poz-roh:has(>.poz:only-child){right:6px}
+html.skin-trener .cmp-chip .poz-roh .poz{width:14px;height:14px;font-size:8.5px;border-width:1px;background:var(--card);box-shadow:0 0 0 2px var(--card)}
+html.skin-trener .cmp-chip .poz-roh .poz.hl{background:var(--pc)}
+.poz-radek{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:2px 0 4px;font-size:13px;color:var(--ink-soft)}
+.poz-radek .pz{display:inline-flex;align-items:center;gap:5px}
+.poz-radek .pz b{color:var(--ink);font-weight:700}
+.poz-volba{display:flex;flex-wrap:wrap;gap:6px}
+.poz-b{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 10px 4px 6px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);font:600 13px 'DM Sans',sans-serif;cursor:pointer}
+.poz-b .poz{opacity:.45}
+.poz-b.sel{border-color:var(--ink-soft);background:var(--paper)}
+.poz-b.sel .poz{opacity:1}
+.poz-b:disabled{opacity:.35;cursor:default}
+.poz-filtr{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 10px}
+.poz-filtr .poz-b{min-height:32px;padding:3px 10px 3px 5px}
+.poz-filtr .poz-b.vse{padding:3px 12px}
+.mil-poz-h{display:flex;align-items:center;gap:7px;margin:14px 0 4px;padding-top:10px;border-top:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--court-ink)}
 html.skin-trener .ov-tbl th,html.skin-trener .ov-tbl td,html.skin-trener .grp-tbl th,html.skin-trener .grp-tbl td{text-align:center}
 html.skin-trener .ov-tbl th:first-child,html.skin-trener .ov-tbl td:first-child,html.skin-trener .grp-tbl th:first-child,html.skin-trener .grp-tbl td:first-child{text-align:left}
 html.skin-trener .ov-tbl th+th,html.skin-trener .ov-tbl td+td,html.skin-trener .grp-tbl th+th,html.skin-trener .grp-tbl td+td,html.skin-trener .mil-cmp-tbl th+th,html.skin-trener .mil-cmp-tbl td+td{border-left:1px solid var(--line)}
@@ -1542,6 +1608,9 @@ const DEF_MIL=[
   {id:"hlasite_prihlaseni", label:"Hlasité přihlášení se k míči", active:true},
   {id:"hraj_prsty",         label:"Co můžeš, hraj prsty",         active:true},
 ];
+// Kolo 78: ve vzhledu Trenéra fáze jako ikony (milIco), klasik a PDF dál emoji.
+const MIL_FA=['seedling','leaf','tree'];
+function milIco(n){const st=MIL_STAGES[n-1];if(!st)return'';return isTrener()?`<i class="fa-solid fa-${MIL_FA[n-1]} mil-ic mil-ic-${n}" aria-hidden="true" title="${st.label}"></i>`:st.emoji;}
 const MIL_STAGES=[
   {n:1,emoji:"🌱",label:"Trénink",            full:"začíná fungovat v tréninku"},
   {n:2,emoji:"🌿",label:"Herní cvičení",      full:"funguje v herním cvičení"},
@@ -1565,6 +1634,92 @@ const DEF_BADGES=[
 const BADGE_FA_DEF={blokar:'cubes-stacked',servis_girl:'paper-plane',bomberka:'bomb',capacka:'hands-holding-circle',hecirka:'bullhorn',kapitanka:'crown',prijimacka:'arrows-to-circle'};
 const BADGE_FA_VYBER=['crown','bomb','bullhorn','paper-plane','hands-holding-circle','arrows-to-circle','person-falling','cubes-stacked','trophy','medal','award','gem','brain','feather','mountain','handshake','anchor','heart'];
 DEF_BADGES.forEach(b=>{b.fa=BADGE_FA_DEF[b.id];});
+// Kolo 78 (Mek 28. 10.): pozice hráčky. Nepovinné: p.pozice={hlavni,vedlejsi:[]}. Milník nebo odznak
+// s polem pozice platí jen pro hráčky s některou z těch pozic; bez pole (nebo prázdné) je společný.
+// Nastavení a kroužky jsou jen ve vzhledu Trenéra; filtrování milníků a odznaků platí v obou vzhledech.
+const POZICE=[
+  {id:'smec',  zk:'S',label:'Smeč',  color:'#2E9E4F',ink:'#217A3B',txt:'#fff'},
+  {id:'blok',  zk:'B',label:'Blok',  color:'#3B7DD8',ink:'#2A64B5',txt:'#fff'},
+  {id:'nahra', zk:'N',label:'Náhra', color:'#E07A2E',ink:'#B05515',txt:'#fff'},
+  {id:'ucko',  zk:'U',label:'Účko',  color:'#9B59D0',ink:'#7A3DB0',txt:'#fff'},
+  {id:'libero',zk:'L',label:'Libero',color:'#E2B714',ink:'#8A6D00',txt:'#3A2E00'},
+];
+function pozDef(z){return POZICE.find(x=>x.id===z);}
+function pozHracky(p){
+  const z=p&&p.pozice;if(!z)return[];
+  const out=[];if(z.hlavni&&pozDef(z.hlavni))out.push(z.hlavni);
+  POZICE.forEach(d=>{if((z.vedlejsi||[]).includes(d.id)&&!out.includes(d.id))out.push(d.id);});
+  return out;
+}
+function proPozice(item,p){const z=item&&item.pozice;if(!z||!z.length)return true;const mp=pozHracky(p);return z.some(x=>mp.includes(x));}
+function metPlati(m,p){return !p||proPozice(m,p);}
+function milAktivni(p){return S.config.milestones.filter(m=>m.active!==false&&(!p||proPozice(m,p)));}
+function pozChip(z,hlavni,velka){
+  const d=pozDef(z);if(!d)return'';
+  return`<span class="poz${hlavni?' hl':''}${velka?' vel':''}" style="--pc:${d.color};--pi:${d.ink};--pt:${d.txt}" title="${d.label}${hlavni?' (hlavní)':''}">${d.zk}</span>`;
+}
+// Kroužky pozic v pravém horním rohu karty (Domů, seznam hráček), jen vzhled Trenéra.
+function pozRoh(p){
+  if(!isTrener())return'';const zs=pozHracky(p);if(!zs.length)return'';
+  return`<span class="poz-roh">${zs.map(z=>pozChip(z,z===p.pozice.hlavni)).join('')}</span>`;
+}
+// Odznak kapitánky (zvláštní odznak) v levém horním rohu karty Domů, jen vzhled Trenéra.
+function kapRoh(p){
+  if(!isTrener())return'';const b=playerBadgesOrdered(p).find(x=>x.special);if(!b)return'';
+  return`<span class="kap-roh" title="${b.label}">${badgeIco(b)}</span>`;
+}
+// Odznaky (bez kapitánky, ta je vlevo nahoře) v pravém dolním rohu karty Domů.
+function odznakyRoh(p){
+  if(!isTrener())return'';const bs=playerBadgesOrdered(p).filter(b=>!b.special);if(!bs.length)return'';
+  return`<span class="odz-roh">${bs.map(b=>`<span class="odz${b.fa?' fa':''}" style="${badgeChipStyle(b)}" title="${b.label}">${badgeIco(b)}</span>`).join('')}</span>`;
+}
+// Forma z posledního turnaje sezóny v levém dolním rohu karty Domů (stejná jako sloupec Forma v Zápasech).
+function posledniTurnajSezony(){
+  const ms=seasonRealMatches().slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const t=ms.map(m=>m.tournamentId).find(t=>t&&(S.tournaments||[]).some(x=>x.id===t));return t||null;
+}
+function formaRoh(p,tid){
+  if(!isTrener()||!tid)return'';const fo=computePlayerForma(p,tid);if(!fo)return'';
+  const kusy=[['body',fo.body?.badge],['příjem',fo.recv?.badge]].filter(x=>x[1]==='up'||x[1]==='down');if(!kusy.length)return'';
+  const t=(S.tournaments||[]).find(x=>x.id===tid);
+  const tip='Forma ('+(t?t.name:'poslední turnaj')+'): '+kusy.map(([k,b])=>k+' '+(b==='up'?'🔥':'❄️')).join(', ');
+  return`<span class="forma-roh" title="${tip}" aria-label="${tip}">${kusy.map(([k,b])=>`<span class="fr-k ${b}"><i class="fa-solid fa-${b==='up'?'fire':'snowflake'}" aria-hidden="true"></i>${k}</span>`).join('')}</span>`;
+}
+// Kroužky pozic u jména (jen vzhled Trenéra): hlavní plný, vedlejší obrys.
+function pozChipy(p){
+  if(!isTrener())return'';const zs=pozHracky(p);if(!zs.length)return'';
+  return`<span class="poz-chipy">${zs.map(z=>pozChip(z,z===p.pozice.hlavni)).join('')}</span>`;
+}
+function pozKartaHtml(p){
+  if(!isTrener())return'';const zs=pozHracky(p);if(!zs.length)return'';
+  const h=p.pozice.hlavni,ved=zs.filter(z=>z!==h);
+  const hl=h?`<span class="pz">${pozChip(h,true,true)}<b>${pozDef(h).label}</b></span>`:'';
+  const vd=ved.length?`<span class="pz">${ved.map(z=>`${pozChip(z,false,true)}${pozDef(z).label}`).join(' ')}</span>`:'';
+  return`<div class="poz-radek">${hl}${vd}</div>`;
+}
+// Výběr pozic (tlačítka s kroužkem a názvem). multi=false: nejvýš jedna, opětovné klepnutí zruší.
+function pozVolbaHtml(id,vybrane,multi,zakazana){
+  return`<div class="poz-volba" id="${id}" data-multi="${multi?1:0}">${POZICE.map(d=>{const on=(vybrane||[]).includes(d.id);
+    return`<button type="button" class="poz-b${on?' sel':''}" data-z="${d.id}" aria-pressed="${on}"${zakazana===d.id?' disabled':''} onclick="pozVolba(this)">${pozChip(d.id,true)}${d.label}</button>`;}).join('')}</div>`;
+}
+function pozVolba(el){
+  const box=el.closest('.poz-volba'),on=!el.classList.contains('sel');
+  if(box.dataset.multi!=='1')box.querySelectorAll('.poz-b').forEach(b=>{b.classList.remove('sel');b.setAttribute('aria-pressed','false');});
+  el.classList.toggle('sel',on);el.setAttribute('aria-pressed',String(on));
+  // Hlavní pozice nejde zároveň zvolit jako vedlejší.
+  if(box.id==='pozHl'){const hl=on?el.dataset.z:null;document.querySelectorAll('#pozVed .poz-b').forEach(b=>{const z=b.dataset.z===hl;b.disabled=z;if(z){b.classList.remove('sel');b.setAttribute('aria-pressed','false');}});}
+}
+function pozVybrane(id){return[...document.querySelectorAll('#'+id+' .poz-b.sel')].map(b=>b.dataset.z);}
+// Pozice u milníku/odznaku v Nastavení (jen vzhled Trenéra).
+function pozPoleHtml(cur){
+  if(!isTrener())return'';
+  return`<div class="fg"><label>Jen pro pozice</label>${pozVolbaHtml('pozItem',cur||[],true)}</div>`;
+}
+function pozUlozItem(item){
+  const el=document.getElementById('pozItem');if(!el)return;
+  const v=pozVybrane('pozItem');if(v.length)item.pozice=v;else delete item.pozice;
+}
+function pozSeznamChipy(item){return isTrener()&&item.pozice&&item.pozice.length?`<span class="poz-chipy">${item.pozice.map(z=>pozChip(z,true)).join('')}</span>`:'';}
 
 let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:"all",matches:[],tournaments:[],minihry:[]};
 const CH={};
@@ -1919,9 +2074,9 @@ function tBadgeLabel(t){
 // ═══ OVERALL (souhrnné hodnocení hráčky, styl "FIFA overall") ═══
 // Počítá se ze stejných T-skóre, co už kreslí pavoučí grafy (spiderData) — jen zprůměrované.
 // Chybějící metrika se do průměru vůbec nepočítá (na rozdíl od pavouka, kde chybí = 0 v grafu).
-function overallPhysRaw(sess,norms){
+function overallPhysRaw(sess,norms,p){
   if(!sess)return{vals:[],n:0,total:0};
-  const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
+  const physM=S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)&&m.spider!==false&&m.id!=="dosah_vyskoku");
   const total=physM.length+1; // +1 = dopočítaný výskok
   const vals=[];
   physM.forEach(m=>{const v=sess.physical?.[m.id];if(v!=null)vals.push(tRaw(v,norms[m.id]));});
@@ -1945,9 +2100,9 @@ function shrinkPct(rawPct,n,priorPct,k){
 }
 // Kolo 24: herní blok odděleně od fyzického (dřív appka obojí míchala plochým průměrem
 // v jedné funkci, viz výš) — stejná vstupní data, jen vlastní T-skórovaný průměr.
-function overallGameRaw(sess,norms){
+function overallGameRaw(sess,norms,p){
   if(!sess)return{vals:[],n:0,total:0};
-  const gaM=S.config.game.filter(m=>m.active!==false);
+  const gaM=S.config.game.filter(m=>m.active!==false&&metPlati(m,p));
   const vals=[];
   gaM.forEach(m=>{
     const gs=gameScore(sess.game,m.id);
@@ -2004,15 +2159,15 @@ function teamMaxCovered(players,norms){
   let max=0;
   players.forEach(p=>{
     const sess=lS(p);
-    const n=overallPhysRaw(sess,norms).n+overallGameRaw(sess,norms).n+overallMatchRaw(p,norms).n;
+    const n=overallPhysRaw(sess,norms,p).n+overallGameRaw(sess,norms,p).n+overallMatchRaw(p,norms).n;
     if(n>max)max=n;
   });
   return max;
 }
 function overallForPlayer(p,norms,maxCovered){
   const sess=lS(p);
-  const phys=overallPhysRaw(sess,norms);
-  const game=overallGameRaw(sess,norms);
+  const phys=overallPhysRaw(sess,norms,p);
+  const game=overallGameRaw(sess,norms,p);
   const match=overallMatchRaw(p,norms);
   const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
   const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
@@ -2028,7 +2183,9 @@ function overallForPlayer(p,norms,maxCovered){
   if(!blocks.length)return{score:null,tAvg:null,n,total,incomplete:true,physAvg:null,gameAvg:null,matchAvg:null,matchCount:match.matchCount};
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
   const tAvg=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum;
-  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered,physAvg,gameAvg,matchAvg,matchCount:match.matchCount};
+  // Kolo 78: metriky cizích pozic hráčka mít nemůže, proto se od týmového maxima odečtou.
+  const nep=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku"&&!metPlati(m,p)).length+S.config.game.filter(m=>m.active!==false&&!metPlati(m,p)).length;
+  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered-nep,physAvg,gameAvg,matchAvg,matchCount:match.matchCount};
 }
 // ═══ Kolo 23: rozpad Overallu po kliknutí + odznak zápasový/testovací typ ═══
 // Práh 10 bodů na SUROVÉM T-skóre (ne na přeškálovaném 40–99 zobrazení) je záměrně —
@@ -2342,7 +2499,14 @@ function offerUndo(snap,msg,onRestore){
     toast("Vráceno");
   }});
 }
-function openModal(html){document.getElementById("modalContent").innerHTML=html;document.getElementById("modal").style.display="flex";}
+function openModal(html){
+  const mc=document.getElementById("modalContent");mc.innerHTML=html;
+  if(isTrener()&&!mc.querySelector('.sk-close,.sk-confirm')){
+    const fn=html.includes('closeModalConfirm')?'closeModalConfirm()':'closeModal()';
+    mc.insertAdjacentHTML('afterbegin',`<button type="button" class="sk-close sk-close-roh" onclick="${fn}" aria-label="Zavřít" title="Zavřít"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>`);
+  }
+  document.getElementById("modal").style.display="flex";
+}
 function closeModal(){document.getElementById("modal").style.display="none";}
 // Modal closes only via explicit closeModal() call — clicking backdrop does nothing
 
@@ -2376,7 +2540,7 @@ function deletePlayer(){
 // ═══ BADGES ═══
 function openBadges(){
   const p=gP();if(!p)return;
-  const btns=S.config.badges.map(b0=>{
+  const btns=S.config.badges.filter(b0=>proPozice(b0,p)||p.badges.includes(b0.id)).map(b0=>{
     const b=badgeView(b0,p);
     const on=p.badges.includes(b.id);
     const style=on?`border-color:${b.color};background:${b.color}22;color:${b.color}`:"";
@@ -2401,6 +2565,7 @@ function prijimackaHranice(b){return b&&b.hranice>=30&&b.hranice<=95?b.hranice:P
 function prijemDost(r){return !!r&&r.zapasy>=PRIJIMACKA_MIN_ZAPASY&&r.n>=PRIJIMACKA_MIN_N;}
 function autoBadgeOk(p,b){
   if(b.auto!=='prijem')return false;
+  if(!proPozice(b,p))return false;
   const r=prijemSezona(p);
   return prijemDost(r)&&r.pct>=prijimackaHranice(b);
 }
@@ -2443,8 +2608,8 @@ function renderBRow(){
 
 // ═══ TEST ═══
 function openAddTest(){
-  const phA=S.config.physical.filter(m=>m.active!==false);
-  const gaA=S.config.game.filter(m=>m.active!==false);
+  const phA=S.config.physical.filter(m=>m.active!==false&&metPlati(m,gP()));
+  const gaA=S.config.game.filter(m=>m.active!==false&&metPlati(m,gP()));
   const phi=phA.map(m=>`<div class="fg"><label>${m.label} (${m.unit})${m.lowerBetter?" — nižší = lepší":m.id==="dosah_vyskoku"?" — výskok se dopočítá":""}</label><input type="number" id="ph_${m.id}" step="0.1" placeholder="–"></div>`).join("");
   // Game: score + attempts per test
   const gai=gaA.map(m=>`<div class="fg"><label>${m.label}</label><div class="fr"><div><label class="sk-11" style="font-size:0.62rem;color:var(--gm)">Úspěšné</label><input type="number" id="ga_s_${m.id}" min="0" step="1" placeholder="–"></div><div><label class="sk-11" style="font-size:0.62rem;color:var(--gm)">Počet pokusů (výchozí: ${m.defaultMax})</label><input type="number" id="ga_a_${m.id}" min="1" step="1" placeholder="${m.defaultMax}"></div></div></div>`).join("");
@@ -2459,9 +2624,9 @@ function openAddTest(){
 function saveTest(){
   const p=gP();if(!p)return;
   const date=document.getElementById("testDate").value;
-  const physical={};S.config.physical.filter(m=>m.active!==false).forEach(m=>{const v=parseFloat(document.getElementById("ph_"+m.id)?.value);if(!isNaN(v))physical[m.id]=v;});
+  const physical={};S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{const v=parseFloat(document.getElementById("ph_"+m.id)?.value);if(!isNaN(v))physical[m.id]=v;});
   const game={};
-  for(const m of S.config.game.filter(m=>m.active!==false)){
+  for(const m of S.config.game.filter(m=>m.active!==false&&metPlati(m,p))){
     const s=parseInt(document.getElementById("ga_s_"+m.id)?.value);
     const a=parseInt(document.getElementById("ga_a_"+m.id)?.value)||m.defaultMax;
     if(isNaN(s))continue;
@@ -2679,7 +2844,7 @@ function openDataHub(){
 function openPhysEd(){
   const list=S.config.physical.map((m,i)=>`<div class="ed-item">
     <button class="tog ${m.active!==false?"on":""}" onclick="toggleActive('physical',${i})"></button>
-    <div class="ed-lbl">${m.label} <small>${m.unit} ${m.lowerBetter?"(↓)":""} 🕸${m.spider!==false?"✓":"✗"} 📊${m.showGraph!==false?"✓":"✗"}</small></div>
+    <div class="ed-lbl">${m.label} <small>${m.unit} ${m.lowerBetter?"(↓)":""} 🕸${m.spider!==false?"✓":"✗"} 📊${m.showGraph!==false?"✓":"✗"}</small>${pozSeznamChipy(m)}</div>
     <button class="btn btn-o sm" onclick="editPhys(${i})">✎</button>
     <button class="btn btn-d sm" onclick="delM('physical',${i})">✕</button>
   </div>`).join("");
@@ -2696,7 +2861,7 @@ function openPhysEd(){
 function openGameEd(){
   const list=S.config.game.map((m,i)=>`<div class="ed-item">
     <button class="tog ${m.active!==false?"on":""}" onclick="toggleActive('game',${i})"></button>
-    <div class="ed-lbl">${m.label} <small>výchozí pokusů: ${m.defaultMax}</small></div>
+    <div class="ed-lbl">${m.label} <small>výchozí pokusů: ${m.defaultMax}</small>${pozSeznamChipy(m)}</div>
     <button class="btn btn-o sm" onclick="editGame(${i})">✎</button>
     <button class="btn btn-d sm" onclick="delM('game',${i})">✕</button>
   </div>`).join("");
@@ -2708,19 +2873,20 @@ function openGameEd(){
 function openMilEd(){
   const list=S.config.milestones.map((m,i)=>`<div class="ed-item">
     <button class="tog ${m.active!==false?"on":""}" onclick="toggleActive('milestones',${i})"></button>
-    <div class="ed-lbl">${m.label}</div>
+    <div class="ed-lbl">${m.label}${pozSeznamChipy(m)}</div>
     <button class="btn btn-o sm" onclick="editMil(${i})">✎</button>
     <button class="btn btn-d sm" onclick="delM('milestones',${i})">✕</button>
   </div>`).join("");
   openModal(`<h2>🎖 Milníky</h2><div>${list}</div><hr class="sep">
     <div class="fg"><label>Nový milník</label><input id="nl" type="text" placeholder="Název"></div>
+    ${pozPoleHtml([])}
     <div class="ma"><button class="btn btn-o" onclick="openEditor()">← Zpět</button><button class="btn btn-p" onclick="addMil()">+ Přidat</button></div>`);
 }
 function openBadgeEd(){
   const list=S.config.badges.map((b,i)=>`<div class="ed-item">
     <span style="font-size:1.2rem;flex-shrink:0">${badgeIco(b)}</span>
     <div style="width:14px;height:14px;border-radius:50%;background:${b.color||CGREEN};flex-shrink:0;border:2px solid rgba(255,255,255,.3)"></div>
-    <div class="ed-lbl">${b.label}${b.special?' <span style="color:var(--acc);font-size:0.68rem">★</span>':""}</div>
+    <div class="ed-lbl">${b.label}${b.special?' <span style="color:var(--acc);font-size:0.68rem">★</span>':""}${pozSeznamChipy(b)}</div>
     <button class="btn btn-o sm" onclick="editBadge(${i})">✎</button>
     <button class="btn btn-d sm" onclick="delBadge(${i})">✕</button>
   </div>`).join("");
@@ -2729,6 +2895,7 @@ function openBadgeEd(){
     ${faPickHtml('nfa','')}
     <div class="fg"><label>Barva rámečku</label><div class="swatch-row" id="newSwatches">${BADGE_COLORS.map((c,i)=>`<div class="swatch ${i===0?"sel":""}" style="background:${c}" onclick="selSwatch(this,'newBadgeColor','${c}')"></div>`).join("")}</div><input type="hidden" id="newBadgeColor" value="${BADGE_COLORS[0]}"></div>
     <div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem"><input type="checkbox" id="nsp2" style="width:auto"> Speciální (zlatý shimmer efekt)</label></div>
+    ${pozPoleHtml([])}
     <div class="ma"><button class="btn btn-o" onclick="openEditor()">← Zpět</button><button class="btn btn-p" onclick="addBadge()">+ Přidat</button></div>`);
 }
 function selSwatch(el,inputId,color){el.closest('.swatch-row').querySelectorAll('.swatch').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');document.getElementById(inputId).value=color;}
@@ -2760,19 +2927,21 @@ function editPhys(i){
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="esp3" style="width:auto" ${m.spider!==false?"checked":""}> 🕸 pavouk</label>
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="esg" style="width:auto" ${m.showGraph!==false?"checked":""}> 📊 graf</label>
     </div>
+    ${pozPoleHtml(m.pozice)}
     <div class="ma"><button class="btn btn-o" onclick="openPhysEd()">← Zpět</button><button class="btn btn-p" onclick="savePhys(${i})">Uložit</button></div>`);
 }
-function savePhys(i){const m=S.config.physical[i];m.label=document.getElementById("el").value.trim()||m.label;m.unit=document.getElementById("eu").value;m.hint=document.getElementById("eh").value;m.lowerBetter=document.getElementById("elb").checked;m.spider=document.getElementById("esp3").checked;m.showGraph=document.getElementById("esg").checked;save();toast("Uloženo ✓");openPhysEd();if(S.activeId)renderDetail();}
+function savePhys(i){const m=S.config.physical[i];m.label=document.getElementById("el").value.trim()||m.label;m.unit=document.getElementById("eu").value;m.hint=document.getElementById("eh").value;m.lowerBetter=document.getElementById("elb").checked;m.spider=document.getElementById("esp3").checked;m.showGraph=document.getElementById("esg").checked;pozUlozItem(m);save();toast("Uloženo ✓");openPhysEd();if(S.activeId)renderDetail();}
 function editGame(i){
   const m=S.config.game[i];
   openModal(`<h2>✎ Herní metrika</h2>
     <div class="fg"><label>Název</label><input id="el" value="${m.label}"></div>
     <div class="fg"><label>Výchozí počet pokusů</label><input id="emax" type="number" value="${m.defaultMax||15}"></div>
+    ${pozPoleHtml(m.pozice)}
     <div class="ma"><button class="btn btn-o" onclick="openGameEd()">← Zpět</button><button class="btn btn-p" onclick="saveGame(${i})">Uložit</button></div>`);
 }
-function saveGame(i){const m=S.config.game[i];m.label=document.getElementById("el").value.trim()||m.label;m.defaultMax=parseInt(document.getElementById("emax").value)||15;save();toast("Uloženo ✓");openGameEd();if(S.activeId)renderDetail();}
-function editMil(i){const m=S.config.milestones[i];openModal(`<h2>✎ Milník</h2><div class="fg"><label>Název</label><input id="el" value="${m.label}"></div><div class="ma"><button class="btn btn-o" onclick="openMilEd()">← Zpět</button><button class="btn btn-p" onclick="saveMil(${i})">Uložit</button></div>`);}
-function saveMil(i){const m=S.config.milestones[i];m.label=document.getElementById("el").value.trim()||m.label;save();toast("Uloženo ✓");openMilEd();if(S.activeId)renderDetail();}
+function saveGame(i){const m=S.config.game[i];m.label=document.getElementById("el").value.trim()||m.label;m.defaultMax=parseInt(document.getElementById("emax").value)||15;pozUlozItem(m);save();toast("Uloženo ✓");openGameEd();if(S.activeId)renderDetail();}
+function editMil(i){const m=S.config.milestones[i];openModal(`<h2>✎ Milník</h2><div class="fg"><label>Název</label><input id="el" value="${m.label}"></div>${pozPoleHtml(m.pozice)}<div class="ma"><button class="btn btn-o" onclick="openMilEd()">← Zpět</button><button class="btn btn-p" onclick="saveMil(${i})">Uložit</button></div>`);}
+function saveMil(i){const m=S.config.milestones[i];m.label=document.getElementById("el").value.trim()||m.label;pozUlozItem(m);save();toast("Uloženo ✓");openMilEd();if(S.activeId)renderDetail();}
 function editBadge(i){
   const b=S.config.badges[i];const curColor=b.color||CGREEN;
   openModal(`<h2>✎ Odznak</h2>
@@ -2781,6 +2950,7 @@ function editBadge(i){
     ${b.auto==='prijem'?prijimackaPoleHtml(b):''}
     <div class="fg"><label>Barva rámečku</label><div class="swatch-row">${BADGE_COLORS.map(c=>`<div class="swatch ${c===curColor?"sel":""}" style="background:${c}" onclick="selSwatch(this,'editBadgeColor','${c}')"></div>`).join("")}</div><input type="hidden" id="editBadgeColor" value="${curColor}"></div>
     <div class="fg"><label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:0.82rem"><input type="checkbox" id="esp" style="width:auto" ${b.special?"checked":""}> Speciální (zlatý shimmer)</label></div>
+    ${pozPoleHtml(b.pozice)}
     <div class="ma"><button class="btn btn-o" onclick="openBadgeEd()">← Zpět</button><button class="btn btn-p" onclick="saveBadge(${i})">Uložit</button></div>`);
 }
 // Kolo 58: výběr ikony Font Awesome k odznaku (jen ve vzhledu Trenéra; v klasiku se nevykreslí).
@@ -2817,14 +2987,20 @@ function prijimackaNahledHtml(h){
 }
 function prijimackaNahled(){const el=document.getElementById('prhNahled'),sel=document.getElementById('eprh');if(el&&sel)el.innerHTML=prijimackaNahledHtml(parseInt(sel.value));}
 function prijimackaNastav(v){const sel=document.getElementById('eprh');if(sel){sel.value=String(v);prijimackaNahled();}}
-function saveBadge(i){const b=S.config.badges[i];const fa=document.getElementById("efa");if(fa)b.fa=fa.value||'';const prh=document.getElementById("eprh");if(prh&&b.auto==='prijem'){b.hranice=parseInt(prh.value)||PRIJIMACKA_PCT;}b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;save();toast("Uloženo ✓");openBadgeEd();if(prh)render();else renderPL();}
+function saveBadge(i){const b=S.config.badges[i];const fa=document.getElementById("efa");if(fa)b.fa=fa.value||'';const prh=document.getElementById("eprh");if(prh&&b.auto==='prijem'){b.hranice=parseInt(prh.value)||PRIJIMACKA_PCT;}b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;pozUlozItem(b);syncAutoBadges();save();toast("Uloženo ✓");openBadgeEd();if(prh)render();else renderPL();}
 function addPhys(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.physical.push({id:"m_"+Date.now(),label,unit:document.getElementById("nu")?.value.trim()||"",lowerBetter:document.getElementById("nlb")?.checked||false,spider:document.getElementById("nsp")?.checked!==false,showGraph:document.getElementById("nsg")?.checked!==false,active:true});save();toast("Přidáno ✓");openPhysEd();}
 function addGame(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.game.push({id:"m_"+Date.now(),label,defaultMax:parseInt(document.getElementById("nmax")?.value)||15,active:true});save();toast("Přidáno ✓");openGameEd();}
-function addMil(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}S.config.milestones.push({id:"m_"+Date.now(),label,active:true});save();toast("Přidáno ✓");openMilEd();}
-function addBadge(){const fa=document.getElementById("nfa")?.value||'';let icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if((!icon&&!fa)||!label){toast("Zadej ikonu i název!","err");return;}if(!icon)icon="🏅";S.config.badges.push({id:"b_"+Date.now(),label,icon,fa,color:document.getElementById("newBadgeColor")?.value||CGREEN,special:document.getElementById("nsp2")?.checked||false});save();toast("Přidán ✓");openBadgeEd();}
+function addMil(){const label=document.getElementById("nl")?.value.trim();if(!label){toast("Zadej název!","err");return;}const nm={id:"m_"+Date.now(),label,active:true};pozUlozItem(nm);S.config.milestones.push(nm);save();toast("Přidáno ✓");openMilEd();}
+function addBadge(){const fa=document.getElementById("nfa")?.value||'';let icon=document.getElementById("ni")?.value.trim();const label=document.getElementById("nb")?.value.trim();if((!icon&&!fa)||!label){toast("Zadej ikonu i název!","err");return;}if(!icon)icon="🏅";const nb={id:"b_"+Date.now(),label,icon,fa,color:document.getElementById("newBadgeColor")?.value||CGREEN,special:document.getElementById("nsp2")?.checked||false};pozUlozItem(nb);S.config.badges.push(nb);save();toast("Přidán ✓");openBadgeEd();}
 
 // ═══ COMPARE ═══
 function toggleCmp(){S.cmpMode=!S.cmpMode;if(S.cmpMode)setNavActive('cmp');else document.getElementById("cmpBtn").className="btn btn-o sm";const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none"){ov.style.display="none";document.getElementById("ovBtn").className="btn btn-o sm";}render();}
+// Kolo 78: klepnutí na pozici vybere do Srovnání všechny hráčky s tou pozicí (hlavní i vedlejší),
+// druhé klepnutí výběr zruší.
+function cmpPozHracky(z){return getActiveP().filter(p=>pozHracky(p).includes(z)).map(p=>p.id);}
+let cmpPozVolba=null;
+function cmpPozAkt(){return cmpPozVolba&&S.cmpIds.length&&[...S.cmpIds].sort().join()===cmpPozHracky(cmpPozVolba).sort().join()?cmpPozVolba:null;}
+function cmpPoz(z){if(cmpPozAkt()===z){S.cmpIds=[];cmpPozVolba=null;}else{S.cmpIds=cmpPozHracky(z);cmpPozVolba=z;}save();renderCmp();renderPL();}
 function toggleCmpP(id){if(S.cmpIds.includes(id))S.cmpIds=S.cmpIds.filter(x=>x!==id);else S.cmpIds.push(id);save();renderCmp();renderPL();}
 
 // ═══ RENDER ═══
@@ -2944,6 +3120,33 @@ function updateNavButtons(){
 // zbytek appky: skutečná data přes overallForPlayer()/activeNorms(), žádná zvlášť
 // počítaná logika. Prázdný tým (0 aktivních hráček) dostane zpátky původní statickou
 // zprávu "Vyber nebo přidej hráčku".
+// Kolo 78 (Mek 28. 10.): řazení karet na Domů. Fyzické/Herní = průměr T-skóre bloku ve stejné škále jako Overall,
+// Příjem = průměrná kvalita příjmu a Body = součet bodů v zápasech aktuální sezóny (jako tabulka Zápasy).
+const DOMU_RAZENI=[['ov','Overall'],['body','Body'],['pri','Příjem'],['forma','Forma'],['fyz','Fyzické'],['her','Herní']];
+let domuRazeni=(()=>{try{const v=localStorage.getItem('bombito_domu_razeni');return DOMU_RAZENI.some(x=>x[0]===v)?v:'ov';}catch(e){return'ov';}})();
+function domuRazeniNastav(k){domuRazeni=k;try{localStorage.setItem('bombito_domu_razeni',k);}catch(e){}renderHome();renderPL();}
+// Hráčky seřazené podle volby na Domů (karty i seznam vlevo). ovs = [{p,ov}].
+function domuSerad(ovs){
+  const ms=seasonRealMatches(),tid=posledniTurnajSezony();
+  return ovs.map(x=>({...x,dh:domuHodnota(x.p,x.ov,ms,tid)})).sort((a,b)=>(a.dh==null)-(b.dh==null)||(b.dh&&a.dh?b.dh.v-a.dh.v:0));
+}
+function domuHodnota(p,ov,ms,tid){
+  const k=domuRazeni;
+  if(k==='forma'){
+    // Forma z posledního turnaje: 🔥 = +1, ❄️ = -1 za body i příjem; normální forma = 0.
+    const fo=tid?computePlayerForma(p,tid):null;const bs=fo?[fo.body?.badge,fo.recv?.badge].filter(Boolean):[];if(!bs.length)return{v:0,txt:"–",c:"var(--gm)"};
+    const v=bs.reduce((a,b)=>a+(b==='up'?1:b==='down'?-1:0),0);
+    const ik=bs.filter(b=>b==='up'||b==='down').map(b=>`<i class="fa-solid fa-${b==='up'?'fire':'snowflake'}" style="font-size:.8em;color:${b==='up'?'#E8590C':'#3B82F6'}" aria-hidden="true"></i>`).join(' ');
+    return{v,txt:ik||'<i class="fa-solid fa-minus" style="font-size:.7em" aria-hidden="true"></i>',c:'var(--gm)'};
+  }
+  if(k==='fyz'||k==='her'){const t=k==='fyz'?ov.physAvg:ov.gameAvg;return t==null?null:{v:t,txt:overallDisplay(t),c:overallColor(t)};}
+  if(k==='pri'){const pool=playerReceptionPool(p,ms);return pool?{v:pool.avg,txt:pool.avg+' %',c:zapRecvBarva(pool.avg)}:null;}
+  if(k==='body'){const bv=ms.map(m=>playerMatchMetric(p,m,'body')).filter(v=>v!=null);if(!bv.length)return null;const v=bv.reduce((a,b)=>a+b,0);return{v,txt:(v>0?'+':'')+v,c:v>0?'var(--gl)':v<0?'var(--red)':'var(--gm)'};}
+  return ov.score==null?null:{v:ov.tAvg,txt:ov.score,c:overallColor(ov.tAvg)};
+}
+function domuRazeniHtml(){
+  return`<div class="domu-razeni" role="group" aria-label="Řadit podle">${DOMU_RAZENI.map(([k,t])=>`<button type="button" class="poz-b vse${domuRazeni===k?' sel':''}" aria-pressed="${domuRazeni===k}" onclick="domuRazeniNastav('${k}')">${t}</button>`).join('')}</div>`;
+}
 function renderHome(){
   const el=document.getElementById('emptyState');if(!el)return;
   const active=getActiveP();
@@ -2960,18 +3163,20 @@ function renderHome(){
   const dates=active.flatMap(p=>(p.testSessions||[]).map(s=>s.date));
   const lastTested=dates.length?fmtDate(dates.sort().slice(-1)[0]):null;
 
-  const cards=ovs.map(({p,ov})=>{
+  const posledniTurnaj=isTrener()?posledniTurnajSezony():null;
+  const razene=isTrener()?domuSerad(ovs):ovs;
+  const cards=razene.map(({p,ov,dh})=>{
     const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     const hasData=ov.score!=null;
     const badges=p.badges.map(id=>{const b=S.config.badges.find(x=>x.id===id);if(!b)return"";return`<span title="${b.label}">${b.icon}</span>`;}).join(" ");
     const star=hasData&&ov.incomplete?`<sup style="color:var(--acc);font-size:0.6rem" title="Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})">*</sup>`:"";
     // Kolo 54: ve vzhledu Trenéra koláž dovedností místo iniciál; odznaky jsou v ní, řádek pod číslem odpadá.
-    const av=isTrener()?collageHtml(p,44,norms):`<div class="pav" style="width:44px;height:44px;font-size:1rem">${ini}</div>`;
-    return`<div class="home-card${hasData?"":" home-card-nodata"}" onclick="selectPlayer('${p.id}')">
+    const av=isTrener()?collageHtml(p,54,norms,null,true):`<div class="pav" style="width:44px;height:44px;font-size:1rem">${ini}</div>`;
+    return`<div class="home-card${hasData?"":" home-card-nodata"}${isTrener()&&hasKap(p)?" home-kap":""}" onclick="selectPlayer('${p.id}')">
       ${av}
       <div style="font-size:0.84rem;font-weight:600;color:var(--w);display:flex;align-items:center;gap:1px">${p.name}${staleDot(p)}</div>
-      <div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}</div>
-      ${badges&&!isTrener()?`<div style="font-size:0.85rem">${badges}</div>`:""}
+      ${isTrener()&&domuRazeni!=='ov'?`<div class="mv" style="font-size:1.9rem;color:${dh?dh.c:"var(--gm)"}">${dh?dh.txt:"–"}</div>`:`<div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}</div>`}
+      ${badges&&!isTrener()?`<div style="font-size:0.85rem">${badges}</div>`:""}${pozRoh(p)}${kapRoh(p)}${formaRoh(p,posledniTurnaj)}${odznakyRoh(p)}
     </div>`;
   }).join("");
 
@@ -2983,8 +3188,9 @@ function renderHome(){
       </div>
       <div style="width:1px;align-self:stretch;background:var(--brd)"></div>
       <div style="display:flex;flex-direction:column;gap:5px;font-size:0.78rem;color:var(--gm)">
-        <div><span style="color:var(--w);font-weight:600">${active.length}</span>&nbsp;hráček v týmu</div>
+        ${isTrener()?"":`<div><span style="color:var(--w);font-weight:600">${active.length}</span>&nbsp;hráček v týmu</div>`}
         ${lastTested?`<div>naposledy testováno <span style="color:var(--w)">${lastTested}</span></div>`:""}
+        ${isTrener()?domuRazeniHtml():''}
       </div>
     </div>
     <div class="home-grid">${cards}</div>
@@ -3001,11 +3207,13 @@ function setNavActive(which){
   if(which&&map[which]){const btn=document.getElementById(map[which]);if(btn)btn.className='btn btn-a sm';}
 }
 function renderPL(){
-  document.getElementById("playerList").innerHTML=getActiveP().map(p=>{
+  const akt=getActiveP();
+  const poradi=isTrener()?(()=>{const n=activeNorms(),mx=teamMaxCovered(akt,n);return domuSerad(akt.map(p=>({p,ov:overallForPlayer(p,n,mx)}))).map(x=>x.p);})():akt;
+  document.getElementById("playerList").innerHTML=poradi.map(p=>{
     const b=p.badges.map(id=>{const bd=badgeView(S.config.badges.find(x=>x.id===id),p);if(!bd)return"";const st=bd.special?"":badgeTagStyle(bd.color,'bc');return`<span class="bc ${bd.special?"sp":""}" style="${st}">${badgeIco(bd)}</span>`;}).join("");
     const kap=hasKap(p);
     const cls=["pc",kap?"has-kap":"",S.cmpMode?(S.cmpIds.includes(p.id)?"cmp-sel":""):(p.id===S.activeId?"active":"")].filter(Boolean).join(" ");
-    return`<div class="${cls}" onclick="${S.cmpMode?"toggleCmpP":"selectPlayer"}('${p.id}')"><div class="pc-name">${p.name}${staleDot(p)}</div><div class="pc-b">${b||''}</div></div>`;
+    return`<div class="${cls}" onclick="${S.cmpMode?"toggleCmpP":"selectPlayer"}('${p.id}')">${pozRoh(p)}<div class="pc-name">${p.name}${staleDot(p)}</div><div class="pc-b">${b||''}</div></div>`;
   }).join("");
 }
 // Záložky ve vzhledu Trenéra: Přehled/Porovnání jen otevřou, když už otevřené jsou, nic.
@@ -3083,7 +3291,7 @@ function renderDetail(){
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
   const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
-  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2><p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
+  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2>${pozKartaHtml(p)}<p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -3128,7 +3336,7 @@ function renderTab(){
 function buildPhys(){
   const s=lS(),pv=pS(),tMap=strengthTMap(gP());
   const activeRows=[],inactiveRows=[];
-  S.config.physical.forEach(m=>{
+  S.config.physical.forEach(m=>{if(!metPlati(m,gP()))return;
     const isA=m.active!==false;
     const ntitle=m.note?'Poznámka: '+m.note.slice(0,40):'Přidat poznámku';
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'physical\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
@@ -3152,7 +3360,7 @@ function buildPhys(){
   // rozdíl). Stejný princip appka už měla v PDF exportu (`renderPDFCharts`), jen tady
   // v appce chyběl — vedlejší oprava, Kolo 17.
   const vysCard=`<div class="card"><h3>Výskok — dopočítaný (cm)</h3><div class="cw"><canvas id="ch_vys"></canvas></div></div>`;
-  const chs=vysCard+S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false).map(m=>
+  const chs=vysCard+S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false&&metPlati(m,gP())).map(m=>
     `<div class="card"><h3>${m.label} (${m.unit})</h3><div class="cw"><canvas id="ch_ph_${m.id}"></canvas></div></div>`
   ).join("");
   const hasG=true; // Výskok karta je teď vždy přítomna, takže grafový sloupec je vždy neprázdný.
@@ -3165,7 +3373,7 @@ function buildPhys(){
     </div>`;
   }).join(''):'<div class="no-data">Žádné testy</div>';
   return`<div class="${hasG?"g2":""}"><div>
-    <div class="card"><h3>Poslední hodnoty &nbsp;<span style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${lS()?.note?`<div style="font-size:0.78rem;color:var(--acc);margin-bottom:10px;padding:6px 10px;background:var(--x-acc-bg3);border-radius:6px;border-left:3px solid var(--acc)">📝 ${lS().note}</div>`:""}${rows||'<div class="no-data">Přidej první test</div>'}</div>
+    <div class="card"><h3>Poslední hodnoty &nbsp;<span class="sk-vysv" style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${lS()?.note?`<div style="font-size:0.78rem;color:var(--acc);margin-bottom:10px;padding:6px 10px;background:var(--x-acc-bg3);border-radius:6px;border-left:3px solid var(--acc)">📝 ${lS().note}</div>`:""}${rows||'<div class="no-data">Přidej první test</div>'}</div>
     <div class="card"><h3>Historie &nbsp;<span style="font-weight:400;color:var(--gm)">✎ upravit · ✕ smazat</span></h3>${sessList}</div>
   </div>${hasG?`<div>${chs}</div>`:""}</div>`;
 }
@@ -3229,7 +3437,7 @@ function drawPhys(){
       CH.vys=new Chart(cvVys,lineC(sess.map(s=>fmtDate(s.date,true)),vals,false,'cm',mean(vals),swing));
     } else cvVys.parentElement.innerHTML='<div class="no-data">Žádná data</div>';
   }
-  S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false).forEach(m=>{
+  S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false&&metPlati(m,gP())).forEach(m=>{
     const cv=document.getElementById("ch_ph_"+m.id);if(!cv)return;
     const sess=p.testSessions?.filter(s=>s.physical?.[m.id]!=null)||[];
     if(!sess.length){cv.parentElement.innerHTML='<div class="no-data">Žádná data</div>';return;}
@@ -3245,7 +3453,7 @@ function buildGame(){
   const s=lS(),pv=pS(),tMap=strengthTMap(gP());
   const p=gP();const attackMerged=!!p?.attackHarderSince;
   const activeRows=[],inactiveRows=[];
-  S.config.game.forEach(m=>{
+  S.config.game.forEach(m=>{if(!metPlati(m,gP()))return;
     // Útok na cíl / Útok do pole: hráčka je vždy jen na JEDNÉ variantě (viz
     // activeAttackMetricId) — řádek té druhé se tu vůbec neukazuje, ani ztlumený
     // pod "Vypnuté metriky" (to je pro jinou věc — vypnuté v nastavení appky).
@@ -3266,7 +3474,7 @@ function buildGame(){
   // Dokud nemá nastavený přechod, je to karta "Útok do pole" (s tlačítkem na
   // označení přechodu); od data přechodu ji nahradí sloučená karta "Útok na cíl"
   // s jedním grafem (viz drawAttackMerged).
-  const chs=S.config.game.filter(m=>m.active!==false).map(m=>{
+  const chs=S.config.game.filter(m=>m.active!==false&&metPlati(m,gP())).map(m=>{
     if(m.id==="utok_pole"){
       if(attackMerged)return"";
       return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_utok_pole"></canvas></div><div style="text-align:right;margin-top:6px"><button class="btn btn-o sm" onclick="openAttackTransition()">🎯 Označit přechod na těžší variantu</button></div></div>`;
@@ -3277,12 +3485,12 @@ function buildGame(){
     }
     return`<div class="card"><h3>${m.label} (%)</h3><div class="cw"><canvas id="ch_ga_${m.id}"></canvas></div></div>`;
   }).join("");
-  return`<div class="g2"><div><div class="card"><h3>Poslední výsledky &nbsp;<span style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
+  return`<div class="g2"><div><div class="card"><h3>Poslední výsledky &nbsp;<span class="sk-vysv" style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
 }
 function drawGame(){
   const p=gP();if(!p)return;
   const norms=activeNorms();
-  S.config.game.filter(m=>m.active!==false).forEach(m=>{
+  S.config.game.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{
     const cv=document.getElementById("ch_ga_"+m.id);if(!cv)return;
     if(m.id==="utok_cil"&&p.attackHarderSince){drawAttackMerged(cv,p,norms);return;}
     const sess=p.testSessions?.filter(s=>gamePct(gameScore(s.game,m.id))!=null)||[];
@@ -3384,12 +3592,12 @@ function clearAttackTransition(){
 // ═══ SPIDER ═══
 function buildSpider(){
   const norms=activeNorms();const p=gP();const s=lS();
-  const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
+  const physM=S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)&&m.spider!==false&&m.id!=="dosah_vyskoku");
   const vysVal=calcVys(s);
   const tRows=[
     ...physM.map(m=>{const val=s?.physical?.[m.id];const t=tRaw(val,norms[m.id]);return`<div class="me"><div class="ml">${m.label}</div>${val!=null?`<span class="mv" style="font-size:1rem">${val}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${t!=null?`<span class="ts-badge ${tBadgeCls(t)}">T=${t} ${tBadgeLabel(t)}</span>`:'<span style="color:var(--gm);font-size:0.73rem">N/A</span>'}</div>`;}),
     (()=>{const t=tRaw(vysVal,norms["vyskok"]);return`<div class="me"><div class="ml">Výskok ↳ cm</div>${vysVal!=null?`<span class="mv calc">${vysVal}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${t!=null?`<span class="ts-badge ${tBadgeCls(t)}">T=${t} ${tBadgeLabel(t)}</span>`:'<span style="color:var(--gm);font-size:0.73rem">N/A</span>'}</div>`})(),
-    ...S.config.game.filter(m=>m.active!==false).map(m=>{const gs=gameScore(s?.game,m.id);const pct=gamePct(gs);const t=tRaw(pct,norms[m.id]);return`<div class="me"><div class="ml">${m.label}</div>${gs!=null?`<span class="mv" style="font-size:1rem">${gs.score}/${gs.attempts}</span><span class="mu">${Math.round(pct*100)}%</span>`:'<span style="color:var(--gm)">–</span>'}${t!=null?`<span class="ts-badge ${tBadgeCls(t)}">T=${t} ${tBadgeLabel(t)}</span>`:'<span style="color:var(--gm);font-size:0.73rem">N/A</span>'}</div>`;}),
+    ...S.config.game.filter(m=>m.active!==false&&metPlati(m,p)).map(m=>{const gs=gameScore(s?.game,m.id);const pct=gamePct(gs);const t=tRaw(pct,norms[m.id]);return`<div class="me"><div class="ml">${m.label}</div>${gs!=null?`<span class="mv" style="font-size:1rem">${gs.score}/${gs.attempts}</span><span class="mu">${Math.round(pct*100)}%</span>`:'<span style="color:var(--gm)">–</span>'}${t!=null?`<span class="ts-badge ${tBadgeCls(t)}">T=${t} ${tBadgeLabel(t)}</span>`:'<span style="color:var(--gm);font-size:0.73rem">N/A</span>'}</div>`;}),
   ].join("");
   const legend=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:0.73rem">
     <span class="ts-badge ts-legend">★ Legenda T≥75</span>
@@ -3429,7 +3637,7 @@ function sessionAttackMetric(sess,p){
 function spiderData(sess,norms,p){
   if(!sess)return null;
   const vys=calcVys(sess)||0;
-  const physM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku");
+  const physM=S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)&&m.spider!==false&&m.id!=="dosah_vyskoku");
   const pL=[...physM.map(m=>m.label),"Výskok"],pI=[...physM.map(m=>m.id),"vyskok"];
   const pD=[...physM.map(m=>tScore(sess.physical?.[m.id],norms[m.id])),tScore(vys,norms["vyskok"])];
   // Kolo 21 — Útok jako jedna sloučená osa "Útok" (nahrazuje Kolo 20 řešení,
@@ -3442,7 +3650,7 @@ function spiderData(sess,norms,p){
   const isAtk=id=>id==="utok_cil"||id==="utok_pole";
   const gm=[];
   let atkSeen=false;
-  S.config.game.filter(m=>m.active!==false).forEach(m=>{
+  S.config.game.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{
     if(isAtk(m.id)){if(!atkSeen){gm.push({id:"utok_merged",label:"Útok"});atkSeen=true;}}
     else gm.push(m);
   });
@@ -3510,14 +3718,19 @@ function drawSpider(){
 // ═══ MILESTONES ═══
 function buildMil(){
   const p=gP();
-  const act=S.config.milestones.filter(m=>m.active!==false);
-  const inact=S.config.milestones.filter(m=>m.active===false);
+  // Kolo 78: jen společné milníky a milníky hráččiných pozic; ve vzhledu Trenéra po oddílech.
+  const mp=pozHracky(p),poradi=m=>{if(!m.pozice||!m.pozice.length)return -1;const i=mp.findIndex(z=>m.pozice.includes(z));return i<0?99:i;};
+  const act=milAktivni(p).map((m,i)=>({m,i})).sort((a,b)=>poradi(a.m)-poradi(b.m)||a.i-b.i).map(x=>x.m);
+  const inact=S.config.milestones.filter(m=>m.active===false&&proPozice(m,p));
   const c1=act.filter(m=>milStage(p,m.id)===1).length;
   const c2=act.filter(m=>milStage(p,m.id)===2).length;
   const c3=act.filter(m=>milStage(p,m.id)===3).length;
   const c0=act.length-c1-c2-c3;
+  let skup=null;
   const rows=[...act,...inact].map(m=>{
     const isA=m.active!==false,cur=isA?milStage(p,m.id):0,dt=p.milestones?.[m.id]?.date||"";
+    let hlav='';
+    if(isTrener()&&isA&&mp.length){const g=poradi(m);if(g!==skup){skup=g;const z=mp[g];hlav=g<0?(act.some(x=>poradi(x)>=0)?'<div class="mil-poz-h">Společné</div>':''):`<div class="mil-poz-h">${pozChip(z,true)}${pozDef(z)?.label||''}</div>`;}}
     // Kolo 56 (Mek 27. 10.): poznámka k milníku patří konkrétní hráčce (p.milNotes), ne celému týmu.
     const pn=p.milNotes?.[m.id]||'';
     const ntitle=pn?'Poznámka: '+pn.slice(0,40):'Přidat poznámku';
@@ -3525,19 +3738,19 @@ function buildMil(){
     const stagesHtml=MIL_STAGES.map(s=>{
       const cls=s.n<=cur?"mst done":s.n===cur+1?"mst next":"mst locked";
       const click=(isA&&s.n===cur+1)?' onclick="advanceMil(\''+m.id+'\')"':'';
-      return `<div class="${cls}"${click} title="${s.emoji} ${s.full}">${s.emoji}</div>`;
+      return `<div class="${cls}"${click} title="${s.emoji} ${s.full}">${milIco(s.n)}</div>`;
     }).join("");
-    const statusHtml=cur>0?`${MIL_STAGES[cur-1].emoji} od ${fmtDate(dt)}`:'<span style="color:var(--x-faint)">zatím nezačato</span>';
+    const statusHtml=cur>0?`${milIco(cur)} od ${fmtDate(dt)}`:'<span style="color:var(--x-faint)">zatím nezačato</span>';
     const backBtn=(isA&&cur>0)?'<button class="mil-back" onclick="revertMil(\''+m.id+'\')" title="Vrátit o fázi zpět">↩</button>':'';
-    return`<div class="mi ${isA?"":"inactive"}">
+    return`${hlav}<div class="mi ${isA?"":"inactive"}">
       <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}${pn?`<div class="mi-note">${pn}</div>`:""}</div>${nb}</div>
       <div class="mi-bot"><div class="mstages">${stagesHtml}</div><div class="md2">${statusHtml}</div>${backBtn}</div>
     </div>`;
   }).join("");
-  const summary=`🌱 ${c1} &nbsp;·&nbsp; 🌿 ${c2} &nbsp;·&nbsp; 🌳 ${c3}${c0?` &nbsp;·&nbsp; ${c0} zatím nezačato`:""}`;
+  const summary=`${milIco(1)} ${c1} &nbsp;·&nbsp; ${milIco(2)} ${c2} &nbsp;·&nbsp; ${milIco(3)} ${c3}${c0?` &nbsp;·&nbsp; ${c0} zatím nezačato`:""}`;
   // Kolo 49: vysvětlení emoji fází dřív nikde nebylo — teď je schované v klepacím
   // souhrnném řádku (varianta C z mock-upu), ať nezabírá trvalé místo v kartě.
-  const legend=MIL_STAGES.map(s=>`<div>${s.emoji} ${s.full}</div>`).join("");
+  const legend=MIL_STAGES.map(s=>`<div>${milIco(s.n)} ${s.full}</div>`).join("");
   return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><details class="mil-summary"><summary>${summary}</summary><div class="mil-leg">${legend}</div></details>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
 }
 // Kolo 47: appka dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
@@ -3628,7 +3841,7 @@ function lepikPosledni(p){const ns=[...(p.notes||[])].sort((a,b)=>a.date.localeC
 function lepikKartaHtml(p){
   const n=(p.notes||[]).length,posl=lepikPosledni(p),dnes=posl&&posl.date===today();
   return lepikHtml({key:'k:'+p.id,
-    hlava:n?`${n} ${poznamekTvar(n)} · naposledy ${fmtDate(posl.date)}`:'Poznámky k hráčce',
+    hlava:n?`${n} ${poznamekTvar(n)} · poslední ${fmtDate(posl.date)}`:'Poznámky k hráčce',
     hlavaLabel:'Všechny poznámky k hráčce v Deníčku',
     text:posl?dkText(posl.text):'',stary:posl&&!dnes?posl.date:'',prazdny:!posl,placeholder:'Poznámka k hráčce…'});
 }
@@ -3737,7 +3950,8 @@ window.matchMedia('(min-width: 860px)').addEventListener('change',()=>{if(isTren
 // ═══ COMPARE ═══
 function renderCmp(){
   const el=document.getElementById("cmpView");if(!el)return;killCH();
-  const chips=getActiveP().map(p=>`<span class="cmp-chip ${S.cmpIds.includes(p.id)?"sel":""}" onclick="toggleCmpP('${p.id}')">${p.name}</span>`).join("");
+  const pozOn=isTrener()&&getActiveP().some(p=>pozHracky(p).length);
+  const chips=(pozOn?pozFiltrHtml(cmpPozAkt(),'cmpPoz',false):'')+getActiveP().map(p=>`<span class="cmp-chip ${S.cmpIds.includes(p.id)?"sel":""}" onclick="toggleCmpP('${p.id}')">${p.name}${pozRoh(p)}</span>`).join("");
   const sel=getActiveP().filter(p=>S.cmpIds.includes(p.id));
   if(!sel.length){el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ ${isTrener()?'Srovnání':'Porovnání'}</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:12px">Vyber hráčky:</p><div style="margin-bottom:20px">${chips}</div><div class="empty" style="height:25vh"><div class="ei" style="font-size:2rem">👆</div><div>Vyber alespoň 2 hráčky</div></div>`;return;}
   const norms=activeNorms();
@@ -3755,18 +3969,18 @@ function renderCmp(){
   const gaChs=gaAct.map(m=>`<div class="card"><h3>${metricHeadIco(m.id)}${m.label} (%)</h3><div class="cw"><canvas id="c_ga_${m.id}"></canvas></div></div>`).join("");
   const milTbl=milAct.length?`<div class="card"><div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="mil-cmp-tbl" style="width:100%;border-collapse:collapse">
     <tr><th style="text-align:left;padding-bottom:8px;font-size:0.6rem;letter-spacing:1px;color:var(--gm)">MILNÍK</th>${sel.map((p,i)=>`<th style="text-align:center;padding-bottom:8px;font-size:0.71rem;color:${COLORS[i%COLORS.length]}">${playerLabel(p)}</th>`).join("")}</tr>
-    ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid var(--x-row)">${m.label}</td>${sel.map(p=>{const cur=milStage(p,m.id);return `<td style="text-align:center;border-bottom:1px solid var(--x-row);padding:6px 4px">${cur?`<span style="color:var(--gl)">${MIL_STAGES[cur-1].emoji}</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id].date)}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`;}).join("")}</tr>`).join("")}
+    ${milAct.filter(m=>sel.some(p=>proPozice(m,p))).map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid var(--x-row)">${m.label}${pozSeznamChipy(m)}</td>${sel.map(p=>{if(!proPozice(m,p))return'<td style="text-align:center;border-bottom:1px solid var(--x-row);padding:6px 4px;color:var(--gm)">–</td>';const cur=milStage(p,m.id);return `<td style="text-align:center;border-bottom:1px solid var(--x-row);padding:6px 4px">${cur?`<span style="color:var(--gl)">${milIco(cur)}</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id].date)}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`;}).join("")}</tr>`).join("")}
   </table></div></div>`:"";
   const battleH=Math.max(175,sel.length*26);
   el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ ${isTrener()?'Srovnání':'Porovnání'}</h2>
     <div style="margin-bottom:10px">${chips}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${legend}</div>
     <div class="g2"><div class="card"><h3>💪 Fyzický pavouk (T-score)</h3><div class="rw"><canvas id="cRPh"></canvas></div></div><div class="card"><h3>🎯 Herní pavouk (T-score)</h3><div class="rw"><canvas id="cRGa"></canvas></div></div></div>
-    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">💪 Fyzické metriky</h3>
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">${skIkona('💪')}Fyzické metriky</h3>
     <div class="g2">${phChs}<div class="card"><h3>${metricHeadIco('vyskok')}Výskok (cm)</h3><div class="cw"><canvas id="c_vys"></canvas></div></div></div>
-    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🎯 Herní metriky</h3><div class="g2">${gaChs}</div>
-    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🎖 Milníky</h3>${milTbl}
-    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">🏐 Zápasové statistiky</h3>
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">${skIkona('🎯')}Herní metriky</h3><div class="g2">${gaChs}</div>
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">${skIkona('🎖')}Milníky</h3>${milTbl}
+    <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;margin:14px 0 10px">${skIkona('🏐')}Zápasové statistiky</h3>
     <div class="g2">
       <div class="card"><h3>${metricHeadIco('body_zapas')}Celkové body</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_body"></canvas></div></div>
       <div class="card"><h3>${metricHeadIco('prijem_zapas')}Průměrný příjem (%)</h3><div class="cw" style="height:${battleH}px"><canvas id="cmp_match_recv"></canvas></div></div>
@@ -4009,7 +4223,7 @@ function pdfCardHtml(label,unit,series,opts){
 }
 function pdfPhysCardsHtml(p,norms){
   const cards=[];
-  S.config.physical.filter(m=>m.active!==false).forEach(m=>{
+  S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{
     if(m.id==='dosah_vyskoku'){
       const series=pdfCardSeries(p,ss=>ss.physical?.[m.id],false);
       cards.push(pdfCardHtml(m.label,m.unit,series,{decimals:pdfMetricDecimals(p,m.id),lowerBetter:false,color:PDF_CG,tNorm:null,trailingNote:'tady zrovna nevede'}));
@@ -4025,7 +4239,7 @@ function pdfPhysCardsHtml(p,norms){
 function pdfGameCardsHtml(p,norms){
   const attackId=activeAttackMetricId(p);
   const cards=[];
-  S.config.game.filter(m=>m.active!==false).forEach(m=>{
+  S.config.game.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{
     if(m.id==='utok_pole'&&attackId!=='utok_pole')return;
     if(m.id==='utok_cil'&&attackId!=='utok_cil')return;
     const isAttack=m.id==='utok_cil'||m.id==='utok_pole';
@@ -4183,7 +4397,7 @@ function exportPDF(){
   // Kolo 48: milníky mají teď 3 fáze — do PDF jde ikonka aktuální fáze (místo
   // dřívějšího ✓) a k datu i název fáze, ať je report čitelný i bez barevného
   // rozlišení kroužků z karty hráčky.
-  const milHtml=S.config.milestones.filter(m=>m.active!==false).map(m=>{
+  const milHtml=milAktivni(p).map(m=>{
     const cur=milStage(p,m.id);const done=cur>0;const dt=p.milestones?.[m.id]?.date||'';
     return`<div class="pdf-mil-row"><div class="pdf-dot" style="background:${done?PDF_CG:'none'};border:2px solid ${done?PDF_CG:'#ccc'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.65rem">${done?MIL_STAGES[cur-1].emoji:''}</div><div style="flex:1">${m.label}</div>${done?`<div style="font-size:0.73rem;color:#666">${MIL_STAGES[cur-1].label} · ${fmtDate(dt)}</div>`:''}</div>`;
   }).join('');
@@ -4486,8 +4700,8 @@ function overallMatchRawAt(p,norms,cutoff){
 }
 function overallAt(p,norms,cutoff){
   const sess=sessionAtOrBefore(p,cutoff);
-  const phys=overallPhysRaw(sess,norms);
-  const game=overallGameRaw(sess,norms);
+  const phys=overallPhysRaw(sess,norms,p);
+  const game=overallGameRaw(sess,norms,p);
   const match=overallMatchRawAt(p,norms,cutoff);
   const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
   const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
@@ -4529,8 +4743,8 @@ function overallMatchRawAtSeason(p,norms,cutoff){
 }
 function overallAtSeason(p,norms,cutoff){
   const sess=sessionAtOrBefore(p,cutoff);
-  const phys=overallPhysRaw(sess,norms);
-  const game=overallGameRaw(sess,norms);
+  const phys=overallPhysRaw(sess,norms,p);
+  const game=overallGameRaw(sess,norms,p);
   const match=overallMatchRawAtSeason(p,norms,cutoff);
   const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
   const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
@@ -5009,9 +5223,9 @@ function strengthTs(p,norms){
   const out=[],sess=lS(p);
   const add=(id,label,val,nm)=>{if(val==null||!nm||!(nm.n>=5)||!nm.sigma)return;const t=tRaw(val,nm);if(t!=null)out.push({id,label,t});};
   if(sess){
-    S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku").forEach(m=>add(m.id,m.label,sess.physical?.[m.id],norms[m.id]));
+    S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)&&m.spider!==false&&m.id!=="dosah_vyskoku").forEach(m=>add(m.id,m.label,sess.physical?.[m.id],norms[m.id]));
     add('vyskok','Výskok',calcVys(sess),norms.vyskok);
-    S.config.game.filter(m=>m.active!==false).forEach(m=>{const gs=gameScore(sess.game,m.id),pct=gamePct(gs);if(pct!=null)add(m.id,m.label,shrinkPct(pct,gs.attempts,norms[m.id]?.mu,SHRINK_K_GAME),norms[m.id]);});
+    S.config.game.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{const gs=gameScore(sess.game,m.id),pct=gamePct(gs);if(pct!=null)add(m.id,m.label,shrinkPct(pct,gs.attempts,norms[m.id]?.mu,SHRINK_K_GAME),norms[m.id]);});
   }
   const mr=overallMatchRaw(p,norms);
   if(mr.matchCount>=OVERALL_GAP_MIN_MATCHES){
@@ -5031,10 +5245,10 @@ function playerBadgesOrdered(p){
 // nejlepší metriku, když má aspoň T NEJLEPSI_T (průměr týmu). Pod průměrem ne: „nejlepší“
 // vlastnost by vyzněla jako slabina. Pořadí: silná stránka › odznak › tlumená nejlepší › milník.
 const NEJLEPSI_T=50;
-function collageData(p,norms){
-  const mils=S.config.milestones.filter(m=>m.active!==false),str=playerStrengths(p,norms);
+function collageData(p,norms,bezKap){
+  const mils=milAktivni(p),str=playerStrengths(p,norms);
   const best=str.length?null:strengthTs(p,norms).filter(x=>x.t>=NEJLEPSI_T).sort((a,b)=>b.t-a.t)[0]||null;
-  return{str,best,badges:playerBadgesOrdered(p),mils,stages:mils.map(m=>milStage(p,m.id))};
+  return{str,best,badges:bezKap?[]:playerBadgesOrdered(p),mils,stages:mils.map(m=>milStage(p,m.id))};
 }
 function milStageColor(st){return`var(--kol-m${Math.max(0,Math.min(3,st||0))})`;}
 function collageTip(d){
@@ -5046,8 +5260,8 @@ function collageTip(d){
   ].filter(Boolean).join('\n');
 }
 // size 44 (Domů) nebo 72 (karta hráčky). Bez jakýchkoli dat zůstává kolečko s iniciálami.
-function collageHtml(p,size,norms,onclick){
-  const d=collageData(p,norms),best=Math.max(0,...d.stages);
+function collageHtml(p,size,norms,onclick,bezKap){
+  const d=collageData(p,norms,bezKap),best=Math.max(0,...d.stages);
   if(!d.str.length&&!d.badges.length&&!best&&!d.best){
     const ini=p.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     return`<div class="pav">${ini}</div>`;
@@ -5059,7 +5273,7 @@ function collageHtml(p,size,norms,onclick){
   if(d.str[0])main=`<i class="fa-solid fa-${metricFa(d.str[0].id)}" aria-hidden="true"></i>`;
   else if(badges[0]){const t=badgeTint(badges[0]);main=`<span class="kol-em${badges[0].special&&isTrener()&&badges[0].fa?' kol-sp':''}"${t?` style="color:${t.ink}"`:''}>${badgeIco(badges[0])}</span>`;badges=badges.slice(1);}
   else if(d.best)main=`<i class="fa-solid fa-${metricFa(d.best.id)}" aria-hidden="true"></i>`;
-  else main=`<span class="kol-em">${MIL_STAGES[best-1].emoji}</span>`;
+  else main=isTrener()?milIco(best):`<span class="kol-em">${MIL_STAGES[best-1].emoji}</span>`;
   const tlum=!d.str.length&&!d.badges.length&&!!d.best;
   const rr=R-(big?2:1),cw=big?24:17;
   const at=deg=>{const r=deg*Math.PI/180;return`left:${Math.round(R+rr*Math.cos(r)-cw/2)}px;top:${Math.round(R+rr*Math.sin(r)-cw/2)}px`;};
@@ -5090,7 +5304,7 @@ function openCollage(pid){
   const strRows=d.str.length?d.str.map(x=>`<div class="kol-row"><span class="m-ic on"><i class="fa-solid fa-${metricFa(x.id)}" aria-hidden="true"></i></span><span class="kol-l">${x.label}</span><span class="m-t">T ${x.t}</span></div>`).join('')
     :`<div class="kol-none">Zatím žádná metrika s T aspoň ${STRENGTH_T}</div>`+(d.best?`<div class="kol-row"><span class="m-ic"><i class="fa-solid fa-${metricFa(d.best.id)}" aria-hidden="true"></i></span><span class="kol-l">Nejlépe: ${d.best.label}</span><span class="m-t kol-t-tlum">T ${d.best.t}</span></div>`:'');
   const bRow=d.badges.length?`<div class="brow">${d.badges.map(b=>`<span class="ba ${b.special?"sp":""}" style="${b.special?"":badgeTagStyle(b.color,'ba')}">${badgeIco(b)} ${b.label}</span>`).join('')}</div>`:`<div class="kol-none">Žádné odznaky</div>`;
-  const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st">${st?MIL_STAGES[st-1].emoji+' '+MIL_STAGES[st-1].label:'—'}</span></div>`;}).join('');
+  const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st">${st?milIco(st)+' '+MIL_STAGES[st-1].label:'—'}</span></div>`;}).join('');
   openModal(`<div class="kol-hd">${collageHtml(p,72,activeNorms())}<h2>${p.name}</h2></div>
     <div class="kol-sec"><h3>Vyniká</h3>${strRows}</div>
     <div class="kol-sec"><h3>Odznaky</h3>${bRow}</div>
@@ -5107,6 +5321,8 @@ function openRenamePlayer(){
     <div class="fg"><label>Jméno a příjmení</label><input id="newName" type="text" value="${p.name}"></div>
     <div class="fg"><label>Přezdívka (volitelně) — zobrazuje se v grafech a živém zápase</label><input id="newNick" type="text" value="${p.nickname||''}" placeholder="Např: Natka, Eliška B..."></div>
     <div class="fg"><label>Rok narození</label><input id="newYear" type="number" value="${p.birthYear}" min="2000" max="${new Date().getFullYear()-4}"></div>
+    ${isTrener()?`<div class="fg"><label>Hlavní pozice</label>${pozVolbaHtml('pozHl',p.pozice?.hlavni?[p.pozice.hlavni]:[],false)}</div>
+    <div class="fg"><label>Vedlejší pozice</label>${pozVolbaHtml('pozVed',p.pozice?.vedlejsi||[],true,p.pozice?.hlavni)}</div>`:''}
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="renamePlayer()">Uložit</button></div>`);
   setTimeout(()=>{const el=document.getElementById('newName');el?.focus();el?.select();},80);
 }
@@ -5123,6 +5339,11 @@ function renamePlayer(){
   p.birthYear=parseInt(document.getElementById('newYear')?.value)||p.birthYear;
   const nick=document.getElementById('newNick')?.value.trim();
   if(nick)p.nickname=nick;else delete p.nickname;
+  if(document.getElementById('pozHl')){
+    const hl=pozVybrane('pozHl')[0]||null,ved=pozVybrane('pozVed').filter(z=>z!==hl);
+    if(hl||ved.length)p.pozice={hlavni:hl,vedlejsi:ved};else delete p.pozice;
+  }
+  if(syncAutoBadges()){}
   save();closeModal();renderDetail();renderPL();toast('Uloženo ✓');
 }
 
@@ -5151,6 +5372,7 @@ function copyPlayer(){
     birthYear:parseInt(document.getElementById('copyYear')?.value)||p.birthYear,
     badges:[...p.badges],
     milestones:{...p.milestones},
+    ...(p.pozice?{pozice:{hlavni:p.pozice.hlavni,vedlejsi:[...(p.pozice.vedlejsi||[])]}}:{}),
     testSessions:[],
     notes:[],
   };
@@ -5174,8 +5396,8 @@ function openGroupTest(){
   const gaHeads=gaA.map(m=>`<th title="${m.label}">${gameAbbr(m)}<br><small style="font-weight:400;text-transform:none">počet</small></th>`).join('');
   // Player rows
   const rows=active.map(p=>{
-    const phInputs=phA.map(m=>`<td><input type="number" id="g_ph_${p.id}_${m.id}" step="0.1" placeholder="–"></td>`).join('');
-    const gaInputs=gaA.map(m=>`<td><input type="number" id="g_ga_${p.id}_${m.id}" min="0" max="99" step="1" placeholder="–"></td>`).join('');
+    const phInputs=phA.map(m=>`<td><input type="number" id="g_ph_${p.id}_${m.id}" step="0.1" placeholder="–"${metPlati(m,p)?'':' disabled aria-label="Neplatí pro pozici hráčky"'}></td>`).join('');
+    const gaInputs=gaA.map(m=>`<td><input type="number" id="g_ga_${p.id}_${m.id}" min="0" max="99" step="1" placeholder="–"${metPlati(m,p)?'':' disabled aria-label="Neplatí pro pozici hráčky"'}></td>`).join('');
     return `<tr><td>${playerLabel(p)}</td>${phInputs}${gaInputs}</tr>`;
   }).join('');
   openModal(`<h2>⚡ Skupinový test</h2>
@@ -5201,9 +5423,9 @@ function saveGroupTest(){
   let saved=0;
   getActiveP().forEach(p=>{
     const physical={};
-    phA.forEach(m=>{const v=parseFloat(document.getElementById(`g_ph_${p.id}_${m.id}`)?.value);if(!isNaN(v))physical[m.id]=v;});
+    phA.forEach(m=>{if(!metPlati(m,p))return;const v=parseFloat(document.getElementById(`g_ph_${p.id}_${m.id}`)?.value);if(!isNaN(v))physical[m.id]=v;});
     const game={};
-    gaA.forEach(m=>{const v=parseInt(document.getElementById(`g_ga_${p.id}_${m.id}`)?.value);if(!isNaN(v))game[m.id]={score:v,attempts};});
+    gaA.forEach(m=>{if(!metPlati(m,p))return;const v=parseInt(document.getElementById(`g_ga_${p.id}_${m.id}`)?.value);if(!isNaN(v))game[m.id]={score:v,attempts};});
     if(!Object.keys(physical).length&&!Object.keys(game).length) return;
     if(!p.testSessions)p.testSessions=[];
     p.testSessions=p.testSessions.filter(s=>s.date!==date);
@@ -5244,8 +5466,17 @@ function toggleOverview(){
   }
 }
 
+// Kolo 78: filtr pozic v Testech (jen vzhled Trenéra, jen když má aspoň jedna hráčka pozici).
+// Normy a T-skóre se dál počítají z celého týmu, filtr jen schová řádky.
+let ovPoz=null;
+function pozFiltrHtml(akt,fn,sVse){
+  return`<div class="poz-filtr" role="group" aria-label="Pozice">${sVse?`<button type="button" class="poz-b vse${akt?'':' sel'}" aria-pressed="${!akt}" onclick="${fn}(null)">Vše</button>`:''}${POZICE.filter(d=>getActiveP().some(p=>pozHracky(p).includes(d.id))).map(d=>`<button type="button" class="poz-b${akt===d.id?' sel':''}" aria-pressed="${akt===d.id}" onclick="${fn}('${d.id}')">${pozChip(d.id,true)}${d.label}</button>`).join('')}</div>`;
+}
+function ovPozNastav(z){ovPoz=ovPoz===z?null:z;renderOverview();if(document.getElementById('zapView')?.style.display!=='none')renderZapasy();}
 function renderOverview(){
   const el=document.getElementById('ovView');if(!el)return;
+  const pozOn=isTrener()&&getActiveP().some(p=>pozHracky(p).length);
+  if(!pozOn)ovPoz=null;
   const active=getActiveP();
   const norms=activeNorms();
   const phA=S.config.physical.filter(m=>m.active!==false&&m.id!=='dosah_vyskoku');
@@ -5269,6 +5500,7 @@ function renderOverview(){
       id:'ph_'+m.id,
       label:metricHeadIco(m.id,'m-hi')+m.label.split(' ')[0]+'<br><small>'+m.unit+'</small>',
       get:p=>{
+        if(!metPlati(m,p))return null;
         if(m.id==='dosah'){const s=lS(p);return calcVys(s);}
         return lS(p)?.physical?.[m.id]??null;
       },
@@ -5292,7 +5524,7 @@ function renderOverview(){
     ...gaA.filter(m=>m.id!=='utok_cil'&&m.id!=='utok_pole').map(m=>({
       id:'ga_'+m.id,
       label:metricHeadIco(m.id,'m-hi')+gameAbbr(m)+'<br><small>%</small>',
-      get:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs);},
+      get:p=>{if(!metPlati(m,p))return null;const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs);},
       display:(p,v)=>{if(v==null)return'<span style="color:var(--gm)">–</span>';const pct=Math.round(v*100);const t=tRaw(v,norms[m.id]);const r=rankIn(active,pp=>{const gs=gameScore(lS(pp)?.game,m.id);return gamePct(gs);},false)(p);return `${pct}%<span class="ov-rank">${r?'#'+r:''}</span>${t!=null?`<span class="ts-badge ${tBadgeCls(t)}" style="font-size:0.6rem;padding:1px 4px;margin-left:3px">T=${t}</span>`:''}`;},
       sortVal:p=>{const gs=gameScore(lS(p)?.game,m.id);return gamePct(gs)??-Infinity;},lowerBetter:false})),
     // Útok na cíl / Útok do pole: sloučeno do jednoho sloupce (activeAttackMetricId) —
@@ -5318,9 +5550,9 @@ function renderOverview(){
     // takže se sama zalomí do dalších řádků i při jiném počtu aktivních milníků
     // než 9 (přidání/ubrání milníku v Nastavení).
     {id:'milestones',label:'Milníky',
-      get:p=>S.config.milestones.filter(m=>m.active!==false&&milStage(p,m.id)>=3).length,
+      get:p=>milAktivni(p).filter(m=>milStage(p,m.id)>=3).length,
       display:(p,v)=>{
-        const actM=S.config.milestones.filter(m=>m.active!==false);
+        const actM=milAktivni(p);
         const tot=actM.length;
         const cells=actM.map(m=>{
           const st=milStage(p,m.id);
@@ -5331,7 +5563,7 @@ function renderOverview(){
         }).join('');
         return `<div style="display:flex;align-items:center;gap:7px"><div style="display:flex;flex-wrap:wrap;gap:2px;width:28px">${cells}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--x-muted)">${v}/${tot}</span></div>`;
       },
-      sortVal:p=>S.config.milestones.filter(m=>m.active!==false&&milStage(p,m.id)>=3).length,
+      sortVal:p=>milAktivni(p).filter(m=>milStage(p,m.id)>=3).length,
       lowerBetter:false},
     {id:'last_test',label:'Poslední<br><small>test</small>',
       get:p=>lS(p)?.date,
@@ -5340,7 +5572,7 @@ function renderOverview(){
   ];
 
   // Sort
-  let rows=[...active];
+  let rows=ovPoz?active.filter(p=>pozHracky(p).includes(ovPoz)):[...active];
   if(ovSort.col){
     const col=cols.find(c=>c.id===ovSort.col);
     if(col&&typeof col.sortVal==='function'){rows.sort((a,b)=>{const va=col.sortVal(a),vb=col.sortVal(b);if(va===vb)return 0;const r=va<vb?-1:1;return ovSort.asc?r:-r;});}
@@ -5368,7 +5600,8 @@ function renderOverview(){
   el.innerHTML=`
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 ${isTrener()?'Testy':'Přehled týmu'}</h2>
     ${isTrener()?`<div class="sk-norm-row"><i class="fa-solid fa-users" aria-hidden="true"></i><span id="skNormLbl">Norma</span><div class="sk-kapsle" role="group" aria-labelledby="skNormLbl"><button type="button" aria-pressed="${S.normScope==="current"}" onclick="if(S.normScope!=='current')toggleNormScope()">Aktuální tým</button><button type="button" aria-pressed="${S.normScope!=="current"}" onclick="if(S.normScope==='current')toggleNormScope()">Celá databáze</button></div><span class="sk-norm-n">${normPlayers().length} hráček</span></div>`:`<p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>`}
-    <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
+    ${pozOn?pozFiltrHtml(ovPoz,'ovPozNastav',true):''}
+    <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows||`<tr><td colspan="${cols.length}" style="color:var(--gm)">Žádná hráčka s touhle pozicí</td></tr>`}</tbody></table></div>`;
 }
 
 // ═══ Kolo 67: ZÁPASY — statistiky týmu ze zápasů aktuální sezóny (Mek 27. 10.) ═══
@@ -5388,7 +5621,9 @@ function renderZapasy(){
   const recv=rv.length?recvPct(rv.reduce((x,a)=>x+a.value,0)/rv.length):null;
   const tids=[...new Set(ms.map(m=>m.tournamentId).filter(t=>t&&(S.tournaments||[]).some(x=>x.id===t)))];
   const posledniT=tids[0]||null;
-  const hrac=getActiveP().map(p=>{
+  const pozOn=isTrener()&&getActiveP().some(p=>pozHracky(p).length);
+  if(!pozOn)ovPoz=null;
+  const hrac=getActiveP().filter(p=>!ovPoz||pozHracky(p).includes(ovPoz)).map(p=>{
     const pm=ms.filter(m=>m.sets.some(st=>st.actions.some(a=>a.pid===p.id)));
     const bv=pm.map(m=>playerMatchMetric(p,m,'body')).filter(v=>v!=null);
     const pool=playerReceptionPool(p,ms);
@@ -5416,7 +5651,8 @@ function renderZapasy(){
   el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:8px">🏆 Zápasy</h2>
     <div class="zap-odkazy"><button class="btn btn-o sm" onclick="openAllMatchesLibrary()"><i class="fa-solid fa-list" aria-hidden="true"></i> Záznamy zápasů</button><button class="btn btn-o sm" onclick="openTournaments()"><i class="fa-solid fa-trophy" aria-hidden="true"></i> Turnaje</button></div>
     ${ms.length?`<div class="zap-sum">${dlazdice(ms.length,ms.length===1?'zápas v sezóně':ms.length<5?'zápasy v sezóně':'zápasů v sezóně')}${dlazdice((body>0?'+':'')+body,'body týmu',body>0?'var(--gl)':body<0?'var(--red)':null)}${dlazdice(recv==null?'–':recv+' %','kvalita příjmu',zapRecvBarva(recv))}${dlazdice(tids.length,tids.length===1?'turnaj':tids.length>1&&tids.length<5?'turnaje':'turnajů')}</div>
-    <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${th('name','Hráčka')}${th('z','Zápasy')}${th('body','Body','body_zapas')}${th('prum','Body/zápas','body_zapas')}${th('recv','Příjem','prijem_zapas')}${th('n','Příjmů','prijem_zapas')}${posledniT?'<th style="cursor:default">Forma</th>':''}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${pozOn?pozFiltrHtml(ovPoz,'ovPozNastav',true):''}
+    <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${th('name','Hráčka')}${th('z','Zápasy')}${th('body','Body','body_zapas')}${th('prum','Body/zápas','body_zapas')}${th('recv','Příjem','prijem_zapas')}${th('n','Příjmů','prijem_zapas')}${posledniT?'<th style="cursor:default">Forma</th>':''}</tr></thead><tbody>${rows||'<tr><td colspan="9" style="color:var(--gm)">Žádná hráčka s touhle pozicí</td></tr>'}</tbody></table></div>
     <div class="g2" style="margin-top:14px"><div><div class="sk-grp">Poslední zápasy</div>${ms.slice(0,5).map(zapKarta).join('')}</div>${tids.length?`<div><div class="sk-grp">Turnaje</div>${tids.slice(0,3).map(turKarta).join('')}</div>`:''}</div>`
     :'<div class="empty" style="height:30vh"><div class="ei"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div><div>V této sezóně zatím žádný zápas</div></div>'}`;
 }
@@ -5443,8 +5679,8 @@ function rankIn(players,getVal,lowerBetter){
 function buildTsTimeline(p,norms){
   const sessions=p.testSessions||[];
   if(sessions.length<2)return'';
-  const phM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=='dosah_vyskoku');
-  const gaM=S.config.game.filter(m=>m.active!==false);
+  const phM=S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)&&m.spider!==false&&m.id!=='dosah_vyskoku');
+  const gaM=S.config.game.filter(m=>m.active!==false&&metPlati(m,p));
   const labels=sessions.map(s=>fmtDate(s.date,true));
   const datasets=[
     ...phM.map((m,i)=>({
@@ -5473,8 +5709,8 @@ function drawTsTimeline(p,norms){
   const cv=document.getElementById('tsTimelineC');if(!cv)return;
   const sessions=p.testSessions||[];
   if(sessions.length<2)return;
-  const phM=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=='dosah_vyskoku');
-  const gaM=S.config.game.filter(m=>m.active!==false);
+  const phM=S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)&&m.spider!==false&&m.id!=='dosah_vyskoku');
+  const gaM=S.config.game.filter(m=>m.active!==false&&metPlati(m,p));
   const labels=sessions.map(s=>fmtDate(s.date,true));
   const datasets=[
     ...phM.map((m,i)=>({
@@ -6787,8 +7023,8 @@ function deleteTest(idx){
 function openEditTest(idx){
   const p=gP();if(!p)return;
   const sess=p.testSessions[idx];if(!sess)return;
-  const phA=S.config.physical.filter(m=>m.active!==false);
-  const gaA=S.config.game.filter(m=>m.active!==false);
+  const phA=S.config.physical.filter(m=>m.active!==false&&metPlati(m,p));
+  const gaA=S.config.game.filter(m=>m.active!==false&&metPlati(m,p));
   const phi=phA.map(m=>{
     const v=sess.physical?.[m.id]??'';
     return`<div class="fg"><label>${m.label} (${m.unit})${m.lowerBetter?" — nižší = lepší":m.id==="dosah_vyskoku"?" — výskok se dopočítá":""}</label><input type="number" id="ep_${m.id}" step="0.1" value="${v}" placeholder="–"></div>`;
@@ -6812,11 +7048,11 @@ function saveEditTest(idx){
   const sess=p.testSessions[idx];if(!sess)return;
   const date=document.getElementById('ep_date').value;
   const physical={...sess.physical},game={...sess.game};
-  S.config.physical.filter(m=>m.active!==false).forEach(m=>{
+  S.config.physical.filter(m=>m.active!==false&&metPlati(m,p)).forEach(m=>{
     const v=parseFloat(document.getElementById('ep_'+m.id)?.value);
     if(!isNaN(v))physical[m.id]=v;else delete physical[m.id];
   });
-  for(const m of S.config.game.filter(m=>m.active!==false)){
+  for(const m of S.config.game.filter(m=>m.active!==false&&metPlati(m,p))){
     const s=parseInt(document.getElementById('eg_s_'+m.id)?.value);
     const a=parseInt(document.getElementById('eg_a_'+m.id)?.value)||m.defaultMax;
     if(isNaN(s)){delete game[m.id];continue;}
@@ -7573,7 +7809,7 @@ const HELP_DATA=[
  a:`Ikona ⋮ v hlavičce aplikace otevírá hlavní menu aplikace — najdeš tam úplně všechny akce, které aplikace umí a které nejsou vidět přímo na obrazovce: Přehled týmu, Porovnání, Minihry, zápasy a turnaje, přidání hráčky, sezónu a zálohy, nastavení, a úplně dole i tuhle Nápovědu. Když aplikace čeká na něco, o čem bys měl vědět (třeba neodehranou minihru), objeví se na ikoně ⋮ malá barevná tečka.`,
  kw:"tři tečky menu hlavní nabídka"},
 {q:`K čemu je ikona ☰ (postranní seznam hráček)?`,
- a:`Ikona ☰ (na užší obrazovce, třeba na mobilu) otevře nebo schová postranní seznam všech hráček týmu — z něj kliknutím otevřeš kartu konkrétní hráčky. Na širší obrazovce aplikace tenhle seznam nechá vidět pořád, takže ikonu ☰ ani nepotřebuješ.`,
+ a:`Ikona ☰ (na užší obrazovce, třeba na mobilu) otevře nebo schová postranní seznam všech hráček týmu — z něj kliknutím otevřeš kartu konkrétní hráčky. Na širší obrazovce aplikace tenhle seznam nechá vidět pořád, takže ikonu ☰ ani nepotřebuješ. Ve vzhledu Trenéra je seznam pod ☰ i na počítači, obsah má celou šířku a hráčky jsou seřazené stejně jako karty na Domů.`,
  kw:"sidebar postranní panel seznam hráček"},
 {q:`Co udělá tlačítko „🏠 Domů" / klik na nápis „Bombito"?`,
  a:`Obojí tě vrátí na domovskou obrazovku aplikace — mřížku karet všech aktivních hráček s jejich Overall skóre a průměrem týmu (viz blok „Domovská obrazovka"). Je to „výchozí bod" aplikace, na který se aplikace vrací i po každém novém otevření aplikace.`},
@@ -7588,6 +7824,24 @@ const HELP_DATA=[
 {q:`Co je ten štítek „👥 Tým" / „🗃 Databáze" nahoře v aplikaci?`,
  a:`Tohle je přepínač normy — jedno z nejdůležitějších, ale málo nápadných tlačítek v aplikaci, protože ovlivňuje skoro všechna čísla, která aplikace ukazuje (T-skóre, Overall, barvy v grafech...). Aplikace totiž hráččiny výkony vždycky poměřuje vůči nějaké skupině ostatních — a tenhle přepínač určuje, jestli je to jen aktuální aktivní tým („👥 Tým"), nebo úplně všechny hráčky, co kdy aplikace měřila, včetně archivovaných z minulých sezón („🗃 Databáze"). Podrobně a s příklady, kdy který použít, aplikace vysvětluje v bloku „T-skóre a normy" — tam je na to samostatná otázka.`,
  kw:"přepínač normscope scope norma tým databáze"},
+]},
+
+{title:"Pozice hráček",icon:"🧩",qa:[
+{q:`Jak hráčce nastavím pozici?`,
+ a:`Ve vzhledu Trenéra na kartě hráčky ⋮ → Upravit hráčku. Vybereš <b>hlavní pozici</b> (nejvýš jednu) a libovolně <b>vedlejších</b>: Smeč, Blok, Náhra, Účko, Libero. Pozice je nepovinná, hráčka bez ní má jen společné milníky a odznaky. Opětovným klepnutím volbu zrušíš.`,
+ kw:"pozice smeč blok náhra nahrávka účko univerzál libero hlavní vedlejší"},
+{q:`Co znamenají písmena v kroužku u jména?`,
+ a:`Pozice hráčky: S = Smeč, B = Blok, N = Náhra, U = Účko, L = Libero. Plný kroužek je hlavní pozice, kroužek jen s obrysem vedlejší. Na Domů a v seznamu hráček jsou kroužky v pravém horním rohu karty, ve Srovnání za jménem a na kartě hráčky jsou pozice i napsané.`,
+ kw:"kroužek písmeno S B N U L pozice ikona"},
+{q:`Jak udělám milník nebo odznak jen pro některou pozici?`,
+ a:`V Nastavení › Milníky (nebo Odznaky) otevři položku ✎ a v řádku <b>Jen pro pozice</b> vyber jednu nebo víc pozic. Když nevybereš žádnou, je milník nebo odznak společný pro všechny. Hráčka vidí společné milníky a milníky svých pozic (hlavní i vedlejších), na tabu Milníky po oddílech. Odznaky cizích pozic se jí v okně Odznaky nenabídnou, automatický odznak (Přijímačka) dostane jen hráčka s jeho pozicí. Počet „X/9“ u milníků se počítá z milníků, které pro hráčku platí. Ve Srovnání má hráčka u milníku cizí pozice pomlčku.`,
+ kw:"milník odznak pozice jen pro společný oddíl"},
+{q:`Jak udělám fyzický nebo herní test jen pro některou pozici?`,
+ a:`V Nastavení › Fyzické (nebo Herní) metriky otevři metriku ✎ a v řádku <b>Jen pro pozice</b> vyber pozice. Hráčka jiné pozice tu metriku nemá v Novém testu, na kartě, v pavoukovi ani v PDF, ve Skupinovém testu má zašedlé políčko a v Testech pomlčku. Overall se jí počítá jen z metrik, které pro ni platí, a hvězdička „neúplné“ se posuzuje vůči nim. Overall je průměr T-skóre (ne součet), takže hráčka s víc metrikami tím nemá vyšší Overall. Už naměřené hodnoty se nemažou; po vrácení na „pro všechny“ se zase ukážou. Normu metriky tvoří všechny naměřené hodnoty.`,
+ kw:"metrika test fyzický herní pozice jen pro overall"},
+{q:`Jak porovnám jen hráčky jedné pozice?`,
+ a:`Když má aspoň jedna hráčka pozici, je v Testech i v Zápasech nad tabulkou řádek <b>Vše · Smeč · Blok · Náhra · Účko · Libero</b>. Pozice schová ostatní hráčky (hlavní i vedlejší pozice se počítá). Volba platí v Testech i v Zápasech zároveň. T-skóre, normy a čísla týmu nahoře se ale dál počítají z celého týmu. Ve Srovnání klepnutí na pozici vybere všechny hráčky s tou pozicí najednou, druhé klepnutí výběr zruší.`,
+ kw:"filtr pozice testy srovnání porovnat blokaře"},
 ]},
 
 {title:"Hráčky",icon:"👤",qa:[
@@ -7616,6 +7870,9 @@ const HELP_DATA=[
 {group:"Testování a co čísla znamenají",blocks:[
 
 {title:"Testování — co to je a jak ho zapsat",icon:"📝",qa:[
+{q:`Co znamená ikona bubliny u metriky?`,
+ a:`Bublina vedle metriky (v Posledních hodnotách na kartě hráčky, Fyzické i Herní) otevře <b>podmínky testu</b>: poznámku k metrice, která platí pro všechna testování, třeba rozestavení kuželů, vzdálenost nebo terč. Plná bublina znamená, že podmínky jsou zapsané, prázdná, že zatím ne.`,
+ kw:"bublina podmínky poznámka metrika metodika rozestavení kužele"},
 {q:`Co aplikace myslí slovem „testování"?`,
  a:`„Testování" je v aplikaci označení pro jedno měření — den, kdy jsi hráčce (nebo celému týmu) naměřil fyzické a/nebo herní metriky (třeba výšku výskoku nebo úspěšnost přihrávky na cíl). Aplikace si testování ukládá jako „testovací relaci" s konkrétním datem — z řady takových relací v čase pak aplikace kreslí grafy vývoje.`},
 {q:`Jak zapíšu test jedné konkrétní hráčce?`,
@@ -7913,6 +8170,9 @@ const HELP_DATA=[
 ]},
 
 {title:"Domovská obrazovka",icon:"🏠",qa:[
+{q:`Jak seřadím karty hráček na Domů?`,
+ a:`Ve vzhledu Trenéra je nad kartami řádek <b>Overall · Body · Příjem · Forma · Fyzické · Herní</b>. Karty se seřadí od nejlepší a velké číslo na kartě ukáže hodnotu, podle které se řadí: Overall, průměr fyzických nebo herních testů (ve stejné škále jako Overall), průměrnou kvalitu příjmu v zápasech aktuální sezóny v procentech, součet bodů v zápasech sezóny, nebo formu z posledního turnaje (nahoře hráčky ve Formě 🔥, dole ve Špatence ❄️). Hráčky bez té hodnoty jsou na konci s pomlčkou. Ve stejném pořadí je i seznam hráček vlevo. Volbu si Bombito pamatuje v zařízení.`,
+ kw:"řazení seřadit pořadí domů karty overall fyzické herní příjem body forma nejlepší"},
 {q:`Co aplikace ukazuje po otevření?`,
  a:`Aplikace ukáže mřížku karet všech aktivních hráček (iniciály, jméno, Overall skóre, odznaky) a nahoře k tomu průměr celého týmu — je to „výchozí bod" aplikace po každém otevření aplikace, viz taky blok „Pohyb v aplikaci". Ve vzhledu Trenéra má každá karta místo iniciál koláž dovedností: prstenec milníků, uprostřed to, v čem hráčka vyniká, a kolem další silné stránky a odznaky. Proto pod číslem chybí samostatný řádek s odznaky. Co který symbol znamená, najdeš v Nápovědě „Vzhled Trenéra“ → „Co znamená kolečko u hráčky“.`,
  kw:"domů mřížka karty iniciály koláž kolečko odznaky"},
@@ -8003,7 +8263,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra je Deníček poslední záložka nahoře (oranžová ikona knihy). Je to stejný sešit jako Deníček v Trenérovi: linkovaný papír, datum a den na okraji, rukopis a listování. Zápisy jdou za sebou bez ohledu na měsíc a razítko nahoře ukazuje, které měsíce na stránce jsou (třeba „Leden – Květen 2026“).<br>• <b>Co v něm je:</b> poznámky k hráčkám (stejné jako na lepíku na kartě) a zápisy o celém týmu. Bez filtru vidíš od každé hráčky a od týmu jen <b>poslední zápis</b>. Tlačítkem s ikonou lidí nahoře (Všichni) vybereš Tým nebo jednu hráčku a uvidíš <b>všechny</b> jejich zápisy. Jméno je pak v nadpisu a na tlačítku zůstane jen ikona, klepnutím na ni vybereš jinou. Zpátky na všechny se vrátíš šipkou vlevo nahoře nebo systémovým Zpět.<br>• <b>Nový zápis:</b> tlačítko s plusem. Ve filtru hned píšeš k vybrané hráčce nebo týmu, jinak nejdřív vybereš komu. Zápis má dnešní datum.<br>• <b>Psaní:</b> ťukni na text zápisu a piš rovnou do sešitu. Nad textem je lišta: tučně, kurzíva, odrážky, číslovaný seznam a odsazení. Zápis se uloží sám, jakmile ťukneš jinam (s „Vrátit“). Esc psaní zruší, Ctrl+Enter uloží. Koš vpravo zápis smaže (s „Vrátit“). Zápis, ve kterém nic nenapíšeš, zmizí.<br>• <b>Datum</b> změníš ťuknutím na datum na okraji. Jméno hráčky otevře její kartu.<br>• <b>Listování:</b> šipky v rozích nahoře, přetažení prstem do strany, na počítači šipky na klávesnici. List se otočí ohnutým rohem a zašustí; při smazání je slyšet guma.<br>• <b>Vzhled sešitu</b> (ikona vpravo nahoře): papír tlumený nebo bílý, linky nebo čtverečky, rukopis (stejný jako u lepíků), velikost písma, rychlost listování a zvuky. Vzhled si pamatuje zařízení.<br>Zápisy jsou součástí dat Bombita, takže jsou i v záloze.`,
  kw:"deníček sešit poznámky tým zápis listování formátování tučně odrážky"},
 {q:`Jak fungují lepíky s poznámkami k hráčce?`,
- a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · naposledy …“ otevře Deníček jen s touto hráčkou, kde jsou všechny její poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem nebo s formátováním (tučně, odrážky…) napíšeš v Deníčku. Formátovanou dnešní poznámku lepík otevře rovnou v Deníčku, aby formátování nezmizelo.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
+ a:`Ve vzhledu Trenéra jsou Poznámky k hráčce žluté lepíky, stejné jako vzkaz pro příště v Trenérovi.<br>• <b>Lepík na kartě</b> (pod tlačítky, vidíš ho na každém tabu) ukazuje nejnovější poznámku. Když je starší než dnešní, je vybledlá s datem „z …“ a když na lepík začneš psát, vznikne nová dnešní poznámka. Když už dnešní poznámka existuje, upravuješ ji. Hlavička „N poznámek · poslední …“ otevře Deníček jen s touto hráčkou, kde jsou všechny její poznámky.<br>• <b>Psaní:</b> ťukni na text lepíku a piš rovnou na papír. Enter nebo ťuknutí mimo lepík uloží, Esc zruší. Poznámka má nejvýš 180 znaků v jednom odstavci; kolik zbývá, se ukáže, když je to 40 a méně. Když text celý vymažeš a uložíš, poznámka se smaže (dole se objeví „Vrátit“).<br>• <b>Sbalení:</b> delší lepík se šipkou vpravo dole sbalí na jeden řádek a zase rozbalí. Ťuknutí na sbalený lepík ho nejdřív rozbalí. Na telefonu jsou lepíky na začátku sbalené, na počítači rozbalené; jak sis je nechal, si pamatuje zařízení.<br>Poznámku s jiným datem nebo s formátováním (tučně, odrážky…) napíšeš v Deníčku. Formátovanou dnešní poznámku lepík otevře rovnou v Deníčku, aby formátování nezmizelo.<br><b>Rukopis</b> lepíků vybereš v Nastavení › Vzhled › Rukopis lepíků: Úhledný (výchozí), Rychlý, nebo Fixou, stejně jako ve Vzhledu Deníčku v Trenérovi. Volba platí pro tohle zařízení.`,
  kw:"lepík lepíky poznámka poznámky vzkaz psaní sbalit rozbalit 180 znaků trenér rukopis písmo"},
 {q:`Co znamená kolečko u hráčky (koláž dovedností)?`,
  a:`Ve vzhledu Trenéra má každá hráčka na Domů i na své kartě místo iniciál „koláž dovedností":<br>• <b>Prstenec</b> = milníky, jeden dílek na každý zapnutý milník. Světle zelený dílek je fáze 🌱 Trénink, středně zelený 🌿 Herní cvičení, plně zelený 🌳 Pravidelně v zápase, šedý = zatím nezačato.<br>• <b>Uprostřed</b> = v čem hráčka vyniká nejvíc: ikona metriky s nejvyšším T-skóre. Když žádná metrika nemá T aspoň 60, je uprostřed odznak (Kapitánka má přednost). Když nemá ani odznak, je uprostřed <b>šedě</b> její nejlepší metrika, pokud má aspoň T 50 (průměr): to není silná stránka, ale to, v čem je zatím nejlepší. Jinak je uprostřed nejvyšší dosažená fáze milníku. Iniciály zůstanou jen u hráčky, o které zatím nic není (žádný test nad 60, odznak ani milník).<br>• <b>Zelené kroužky nahoře</b> = další silné stránky.<br>• <b>Emoji dole</b> = odznaky.<br><br><b>Silná stránka</b> = T-skóre aspoň 60 (pásmo „výborná") v posledním testování, ve fyzických testech z pavouka, výskoku a herních testech, nebo v zápasech: body a příjem z posledních 12 zápasů aktuální sezóny, počítá se až od 3 zápasů. Výpočet je stejný jako u Overallu, včetně normy (tým/databáze). Na Domů se vejde jedna další silná stránka a pět odznaků, na kartě dvě až tři silné stránky.<br><br>Každá metrika má vlastní ikonu a ta je stejná všude: v koláži, v řádcích na tabech Fyzické a Herní (silné stránky mají zelenou ikonu a štítek „T 69") i v okně koláže, v záhlaví sloupců Přehledu týmu, v Porovnání (u popisků obou pavouků a v nadpisech grafů) a na tabu Zápas u Celkových bodů a Průměru příjmu. Klepnutím na koláž na kartě hráčky se otevře okno se všemi silnými stránkami i s T-skóre, s názvy odznaků a s fází každého milníku. Z okna se dostaneš rovnou do Odznaků nebo na tab Milníky. Na počítači stačí na koláž najet myší.<br><br>Ikony metrik: K-test = šipky křížem, 6m sprint = blesk, hod medicinbalem = činka, bloky s úkrokem = dlaň, wall toss = kruhové šipky, výskok = dvojitá šipka nahoru, sud→výskok = stopky, zdarma = míč, těžké balony v poli = běžec, servisy po zátěži = raketa, přihrávka na cíl = zaměřovač, útok na cíl = terč, útok do pole = výbuch, nahrávka na cíl = ukazující ruka, body v zápase = hvězda, příjem v zápase = štít.`,
@@ -8048,7 +8308,7 @@ function helpNorm(s){
   return out.toLowerCase();
 }
 // Kolo 74: ve vzhledu Trenéra místo emoji bloku ikona Font Awesome.
-const HELP_FA={'🏐':'volleyball','🧭':'compass','👤':'user','📝':'note-sticky','💪':'wave-square','🎯':'bullseye','🧮':'calculator','🔢':'hashtag','📈':'chart-line','🕸':'circle-nodes','🎖':'seedling','🏅':'medal','🏆':'stopwatch','🏟':'trophy','🎮':'gamepad','📊':'chart-simple','⚖':'scale-balanced','🏠':'house','📦':'box-archive','📄':'file-pdf','💾':'database','⚙':'gear','🎨':'palette','📋':'clipboard-list'};
+const HELP_FA={'🧩':'people-arrows','🏐':'volleyball','🧭':'compass','👤':'user','📝':'note-sticky','💪':'wave-square','🎯':'bullseye','🧮':'calculator','🔢':'hashtag','📈':'chart-line','🕸':'circle-nodes','🎖':'seedling','🏅':'medal','🏆':'stopwatch','🏟':'trophy','🎮':'gamepad','📊':'chart-simple','⚖':'scale-balanced','🏠':'house','📦':'box-archive','📄':'file-pdf','💾':'database','⚙':'gear','🎨':'palette','📋':'clipboard-list'};
 function helpIco(e){const fa=isTrener()&&HELP_FA[e];return fa?`<i class="fa-solid fa-${fa} help-ico" aria-hidden="true"></i>`:e+' ';}
 function helpQaHtml(qa,badge){
   return`<div class="help-qa"><details><summary>${qa.q}${badge?`<span class="help-badge">${badge}</span>`:""}</summary><div class="help-a">${qa.a}</div></details></div>`;
@@ -8222,6 +8482,8 @@ const SK_ICO={'✕':'xmark','✖':'xmark','←':'chevron-left','→':'chevron-ri
 const SK_ICO_LABEL={'✕':'Smazat','✎':'Upravit','↩':'Vrátit','📋':'Záznam akcí','💬':'Poznámka','📝':'Poznámka'};
 const SK_ICO_RE=new RegExp('^(\\s*)('+Object.keys(SK_ICO).map(k=>k.replace(/[+]/g,'\\+')).join('|')+')\\uFE0F?');
 const SK_ICO_SEL='h2,.card h3,.btn,.note-btn,.mil-back,#liveOverlay button,#liveOverlay>div:first-child>div>div:first-child';
+// Kolo 78: emoji nadpisu → ikona Font Awesome ve vzhledu Trenéra (podle SK_ICO), v klasiku emoji.
+function skIkona(e){const fa=SK_ICO[e];return isTrener()&&fa?`<i class="fa-solid fa-${fa}" style="color:var(--court-ink);margin-right:7px;font-size:.85em" aria-hidden="true"></i>`:e+' ';}
 function skIcoEl(fa){
   const i=document.createElement('i');
   const reg=fa.startsWith('r:');
