@@ -857,6 +857,10 @@ html.skin-dark .sesit{box-shadow:0 8px 20px rgba(0,0,0,.5);}
 /* Název je odkaz do editoru tréninku — schválně k nerozeznání od obyčejného názvu (Mek:
    „nenápadný, prakticky neviditelný“). Jediná stopa je kurzor ruky na počítači. */
 .sesit .dz-odkaz{cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.sesit .dz-tym{color:#2B6B2B;background-image:linear-gradient(rgba(76,160,76,.28),rgba(76,160,76,.28));}
+.sesit .dz-tym i{font-size:.72em;margin-right:6px;vertical-align:.08em;}
+#denikView .dh-radek h2 .dk-tym-ico{color:#2B6B2B;font-size:.8em;margin-right:8px;vertical-align:.06em;}
+html.skin-dark #denikView .dh-radek h2 .dk-tym-ico{color:#7BC47B;}
 .sesit .dz-odkaz:focus-visible{outline:2px solid var(--s-inkoust);outline-offset:2px;border-radius:3px;}
 .sesit .meta{display:flex;flex-wrap:wrap;column-gap:7px;font:500 calc(11.5px*var(--m)) var(--font-body);color:var(--s-tuzka);letter-spacing:.02em;break-after:avoid;}
 .sesit .meta span{display:inline-flex;align-items:center;gap:5px;height:var(--radek);white-space:nowrap;}
@@ -1329,8 +1333,8 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
   <button id="menuToggle" onclick="toggleMenu()" aria-label="Menu"><span class="i-em">⋮</span><i class="i-fa fa-solid fa-ellipsis-vertical" aria-hidden="true"></i><span class="stale-dot mh-dot" style="display:none"></span></button>
   <div class="menu-dropdown" id="menuDropdown">
     <button class="btn btn-o" onclick="goHome();closeMenu()"><span class="k-only">🏠 Domů</span><span class="t-only t-lbl"><i class="fa-solid fa-house" aria-hidden="true"></i>Domů</span></button>
-    <button class="btn btn-o" id="ovBtnM" onclick="toggleOverview();closeMenu()"><span class="k-only">📊 Přehled týmu</span><span class="t-only t-lbl"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Přehled týmu</span></button>
-    <button class="btn btn-o" id="cmpBtnM" onclick="toggleCmp();closeMenu()"><span class="k-only">⚖ Porovnání</span><span class="t-only t-lbl"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Porovnání</span></button>
+    <button class="btn btn-o" id="ovBtnM" onclick="toggleOverview();closeMenu()"><span class="k-only">📊 Přehled týmu</span><span class="t-only t-lbl"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Testy</span></button>
+    <button class="btn btn-o" id="cmpBtnM" onclick="toggleCmp();closeMenu()"><span class="k-only">⚖ Porovnání</span><span class="t-only t-lbl"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Srovnání</span></button>
     <button class="btn btn-o" onclick="openMinihry();closeMenu()"><span class="k-only">🎮 Minihry</span><span class="t-only t-lbl"><i class="fa-solid fa-gamepad" aria-hidden="true"></i>Minihry</span><span class="stale-dot mh-dot" style="display:none"></span></button>
     <hr class="sep-line"><div class="mnu-eyebrow">Zápasy</div>
     <button class="btn btn-p mn-start" onclick="openLiveMatch();closeMenu()"><span class="k-only">🏆 Spustit zápas</span><span class="t-only t-lbl"><i class="fa-solid fa-play" aria-hidden="true"></i>Spustit zápas</span></button>
@@ -1352,9 +1356,9 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
 </header>
 <nav class="sk-tabs t-only" id="skTabs" aria-label="Hlavní záložky">
   <button type="button" data-nav="home" onclick="skTab('home')"><i class="fa-solid fa-house" aria-hidden="true"></i>Domů</button>
-  <button type="button" data-nav="ov" onclick="skTab('ov')"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Přehled</button>
-  <button type="button" data-nav="cmp" onclick="skTab('cmp')"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Porovnání</button>
+  <button type="button" data-nav="cmp" onclick="skTab('cmp')"><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i>Srovnání</button>
   <button type="button" data-nav="zapasy" onclick="skTab('zapasy')"><i class="fa-solid fa-trophy" aria-hidden="true"></i>Zápasy</button>
+  <button type="button" data-nav="ov" onclick="skTab('ov')"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Testy</button>
   <button type="button" data-nav="denik" class="sk-tab-dk" onclick="skTab('denik')" aria-label="Deníček" title="Deníček"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>
 </nav>
 <div id="sidebarBackdrop" onclick="closeSidebar()"></div>
@@ -3735,7 +3739,7 @@ function renderCmp(){
   const el=document.getElementById("cmpView");if(!el)return;killCH();
   const chips=getActiveP().map(p=>`<span class="cmp-chip ${S.cmpIds.includes(p.id)?"sel":""}" onclick="toggleCmpP('${p.id}')">${p.name}</span>`).join("");
   const sel=getActiveP().filter(p=>S.cmpIds.includes(p.id));
-  if(!sel.length){el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ Porovnání</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:12px">Vyber hráčky:</p><div style="margin-bottom:20px">${chips}</div><div class="empty" style="height:25vh"><div class="ei" style="font-size:2rem">👆</div><div>Vyber alespoň 2 hráčky</div></div>`;return;}
+  if(!sel.length){el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ ${isTrener()?'Srovnání':'Porovnání'}</h2><p style="color:var(--gm);font-size:0.82rem;margin-bottom:12px">Vyber hráčky:</p><div style="margin-bottom:20px">${chips}</div><div class="empty" style="height:25vh"><div class="ei" style="font-size:2rem">👆</div><div>Vyber alespoň 2 hráčky</div></div>`;return;}
   const norms=activeNorms();
   const ovMax=teamMaxCovered(getActiveP(),norms);
   const legend=sel.map((p,i)=>{
@@ -3754,7 +3758,7 @@ function renderCmp(){
     ${milAct.map(m=>`<tr><td style="padding:7px 0;font-size:0.82rem;border-bottom:1px solid var(--x-row)">${m.label}</td>${sel.map(p=>{const cur=milStage(p,m.id);return `<td style="text-align:center;border-bottom:1px solid var(--x-row);padding:6px 4px">${cur?`<span style="color:var(--gl)">${MIL_STAGES[cur-1].emoji}</span><br><span style="font-size:0.62rem;color:var(--gm)">${fmtDate(p.milestones[m.id].date)}</span>`:'<span style="color:var(--gm)">–</span>'}</td>`;}).join("")}</tr>`).join("")}
   </table></div></div>`:"";
   const battleH=Math.max(175,sel.length*26);
-  el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ Porovnání</h2>
+  el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">⚖ ${isTrener()?'Srovnání':'Porovnání'}</h2>
     <div style="margin-bottom:10px">${chips}</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">${legend}</div>
     <div class="g2"><div class="card"><h3>💪 Fyzický pavouk (T-score)</h3><div class="rw"><canvas id="cRPh"></canvas></div></div><div class="card"><h3>🎯 Herní pavouk (T-score)</h3><div class="rw"><canvas id="cRGa"></canvas></div></div></div>
@@ -5362,7 +5366,7 @@ function renderOverview(){
   }).join('');
 
   el.innerHTML=`
-    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 Přehled týmu</h2>
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 ${isTrener()?'Testy':'Přehled týmu'}</h2>
     ${isTrener()?`<div class="sk-norm-row"><i class="fa-solid fa-users" aria-hidden="true"></i><span id="skNormLbl">Norma</span><div class="sk-kapsle" role="group" aria-labelledby="skNormLbl"><button type="button" aria-pressed="${S.normScope==="current"}" onclick="if(S.normScope!=='current')toggleNormScope()">Aktuální tým</button><button type="button" aria-pressed="${S.normScope!=="current"}" onclick="if(S.normScope==='current')toggleNormScope()">Celá databáze</button></div><span class="sk-norm-n">${normPlayers().length} hráček</span></div>`:`<p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>`}
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${heads}</tr></thead><tbody>${trows}</tbody></table></div>`;
 }
@@ -7885,7 +7889,7 @@ const HELP_DATA=[
 {group:"Přehledy",blocks:[
 
 {title:"Přehled týmu",icon:"📊",qa:[
-{q:`Co aplikace ukazuje v „Přehledu týmu"?`,
+{q:`Co aplikace ukazuje v „Přehledu týmu" (ve vzhledu Trenéra záložka Testy)?`,
  a:`Aplikace tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“: kapsle se dvěma díly „Aktuální tým“ a „Celá databáze“ (vybraný je zvýrazněný) a vedle počet hráček v normě. Klepnutím na druhý díl normu přepneš.`},
 {q:`Jak podle sloupce seřadím hráčky (třeba podle Overallu)?`,
  a:`Klikni přímo na název sloupce v záhlaví tabulky — aplikace podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně).`},
@@ -7900,7 +7904,8 @@ const HELP_DATA=[
 
 {title:"Porovnání",icon:"⚖",qa:[
 {q:`Co aplikace umí v „Porovnání"?`,
- a:`Aplikace vedle sebe postaví víc hráček najednou v pavoučích i sloupcových grafech, takže vidíš jejich profily přímo v kontrastu, místo abys je porovnával z paměti mezi jednotlivými kartami.`},
+ a:`Aplikace vedle sebe postaví víc hráček najednou v pavoučích i sloupcových grafech, takže vidíš jejich profily přímo v kontrastu, místo abys je porovnával z paměti mezi jednotlivými kartami. Ve vzhledu Trenéra se záložka jmenuje <b>Srovnání</b>.`,
+ kw:"srovnání porovnat záložka"},
 {q:`Jak vyberu, které hráčky chci porovnat?`,
  a:`V obrazovce Porovnání aplikace nabízí seznam všech aktivních hráček k zaškrtnutí — zaškrtneš, koho chceš vidět, aplikace grafy hned překreslí podle aktuálního výběru.`},
 {q:`Kolik hráček jde porovnat najednou?`,
@@ -7980,7 +7985,7 @@ const HELP_DATA=[
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
 {q:`Jak přepnu Bombito do vzhledu Trenéra a zpátky?`,
- a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Přehled · Porovnání · Zápasy</b> (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Tabulky (Přehled, Zápasy, Skupinový test, milníky v Porovnání) mají čísla uprostřed sloupců a sloupce oddělené jemnou linkou. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
+ a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Srovnání · Zápasy · Testy</b> (Testy = Přehled týmu, Srovnání = Porovnání) (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Tabulky (Přehled, Zápasy, Skupinový test, milníky v Porovnání) mají čísla uprostřed sloupců a sloupce oddělené jemnou linkou. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
  kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak tabulky sloupce linky zarovnání"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
  a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
@@ -8455,7 +8460,9 @@ function openDenik(filtr,upravit){
   if(upravit)dkSesitUprav(upravit);
 }
 function dkHlava(){
-  document.querySelector('#denikView .dh-radek h2').textContent=dkFiltr?dkKdoNazev(dkFiltr):'Deníček';
+  const h2=document.querySelector('#denikView .dh-radek h2');
+  h2.textContent=dkFiltr?dkKdoNazev(dkFiltr):'Deníček';
+  if(dkFiltr==='tym')h2.insertAdjacentHTML('afterbegin','<i class="fa-solid fa-users dk-tym-ico" aria-hidden="true"></i>');
   document.getElementById('denikZpetBtn').hidden=!dkFiltr;
   const f=document.getElementById('denikFiltrBtn');
   f.querySelector('span').textContent=dkFiltr?'':'Všichni';
@@ -8484,7 +8491,7 @@ function dkZapisHtml(z,tridy,mesic){
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(z.den),d=new Date(+m[1],+m[2]-1,+m[3]);
   const okraj=`<div class="okraj"><b>${+m[3]}. ${+m[2]}.</b><span>${DK_DNY[d.getDay()]}</span><input type="date" class="dz-datum" value="${z.den}" max="${today()}" aria-label="Změnit datum, teď ${dkDenText(z.den)}"></div>`;
   const tym=z.kdo==='tym',ma=dkMaObsah(z.pozn);
-  const nadpis=dkFiltr?'':`<h3><span class="dz-nazev${tym?' dz-tym':''}${tym?'':' dz-odkaz'}"${tym?'':` data-ds="otevrit" role="link" tabindex="0"`}>${lepikEsc(dkKdoNazev(z.kdo))}</span></h3>`;
+  const nadpis=dkFiltr?'':`<h3><span class="dz-nazev${tym?' dz-tym':''}${tym?'':' dz-odkaz'}"${tym?'':` data-ds="otevrit" role="link" tabindex="0"`}>${tym?'<i class="fa-solid fa-users" aria-hidden="true"></i>':''}${lepikEsc(dkKdoNazev(z.kdo))}</span></h3>`;
   const telo=dkUprava===z.id
     ?dkRtePole(z.pozn)+`<div class="upravy vpravo"><button type="button" class="kos" data-ds="smazat" aria-label="Smazat zápis" title="Smazat zápis"><i class="fa-solid fa-trash"></i></button></div>`
     :`<div class="pozn rte-display${ma?'':' prazdna'}" data-ds="upravit" tabindex="0" role="button" aria-label="Upravit zápis">${ma?dkRichHtml(z.pozn):'dopsat…'}</div>`;
