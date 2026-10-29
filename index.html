@@ -1368,6 +1368,47 @@ html.skin-trener [data-pid],html.skin-trener [data-pid] *,html.skin-trener #empt
 .pozv-k:not(.hl):not(.ved) .poz{border-color:var(--line);color:var(--ink-faint)}
 .pozv-k.ved .poz{border-width:2.5px}
 .pozv-k:hover{background:var(--line)}
+/* Kolo 85: číslo dresu (jen vzhled Trenéra) */
+.dres{font-family:'Bebas Neue',sans-serif;font-weight:400;letter-spacing:.02em;font-size:1.15em;line-height:1;color:var(--ink-soft);margin-right:5px}
+.pdi h2 .dres{color:var(--court-ink);margin-right:8px}
+/* Na Domů velké číslo na pozadí karty, zarovnané doleva (poslední prvek karty, ať nerozbije :nth-child). */
+html.skin-trener .home-card{position:relative;isolation:isolate}
+.home-card .dres-vz{display:flex;align-items:center;justify-content:flex-start;padding-left:8px;position:absolute;inset:0;overflow:hidden;border-radius:inherit;z-index:-1;font:400 110px/1 'Bebas Neue',sans-serif;color:var(--ink);opacity:.11;pointer-events:none}
+.live-name .dres{display:inline-block;min-width:1.4em;margin-right:8px;text-align:right;font-size:1.35rem;color:var(--ink);vertical-align:-2px}
+.pozv-r.s-dres{grid-template-columns:46px minmax(0,1fr) repeat(5,40px)}
+.pozv-d{width:40px;height:34px;padding:0;text-align:center;font:400 18px/1 'Bebas Neue',sans-serif;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);-moz-appearance:textfield;appearance:textfield}
+.pozv-d::-webkit-outer-spin-button,.pozv-d::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pozv-d:focus{outline:2px solid var(--court);outline-offset:1px}
+.pozv-d.chyba{border-color:var(--red)}
+.pozv-d.dup{border-color:var(--chalk);background:color-mix(in srgb,var(--chalk) 12%,var(--card))}
+.card h3.live-h3{display:flex;align-items:center;gap:8px;padding-top:4px;padding-bottom:4px}
+.live-raz{margin-left:auto;text-transform:none;letter-spacing:0}
+/* Telefon na výšku: jeden řádek jako na širokém displeji. Číslo nad jménem, % příjmu pod tlačítky 1 3 5. */
+@media(orientation:portrait){
+  html.skin-trener #liveContent>.card{padding-left:6px;padding-right:6px}
+  html.skin-trener #liveContent>.card>h3{margin-left:4px;margin-right:4px}
+  html.skin-trener .live-row{display:grid;align-items:center;column-gap:5px;row-gap:3px;padding:8px 8px}
+  html.skin-trener .live-section-label{padding-left:8px}
+  html.skin-trener .live-row.m-oboji{grid-template-columns:minmax(0,1fr) 44px 24px 44px auto}
+  html.skin-trener .live-row.m-body{grid-template-columns:minmax(0,1fr) 44px 40px 44px}
+  html.skin-trener .live-row.m-prijem{grid-template-columns:minmax(0,1fr) auto}
+  html.skin-trener .live-row .live-score{min-width:0}
+  html.skin-trener .live-name{grid-row:1/3;max-width:none!important;border-bottom:0!important;padding:0 0 0 2px;margin:0;font-size:.82rem;line-height:1.2}
+  html.skin-trener .live-name{display:flex;flex-direction:column-reverse;justify-content:center}
+  html.skin-trener .live-name .dres{display:block;min-width:0;margin:2px 0 0;text-align:left;font-size:25px;line-height:25px;vertical-align:0}
+  html.skin-trener .live-jm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:16px}
+  html.skin-trener .recv-btns{gap:5px}
+  html.skin-trener .live-pct{grid-column:-2/-1;grid-row:2;min-width:0!important;text-align:center!important;line-height:21px;margin-top:4px;font-size:21px!important}
+  html.skin-trener .live-pct span{font-size:12px!important}
+  html.skin-trener .live-pct:empty{display:none}
+}
+@media(orientation:portrait) and (max-width:380px){
+  html.skin-trener .live-row{column-gap:5px}
+  html.skin-trener .live-row.m-oboji{grid-template-columns:minmax(0,1fr) 40px 24px 40px auto}
+  html.skin-trener .live-row .btn-plus,html.skin-trener .live-row .btn-minus,html.skin-trener .live-row .recv-btn{width:40px}
+  html.skin-trener .recv-btns{gap:5px}
+}
+.live-raz .dn-menu{left:auto;right:0;transform-origin:top right;min-width:240px}
 .poz-volba{display:flex;flex-wrap:wrap;gap:6px}
 .poz-b{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 10px 4px 6px;border:1px solid var(--line);border-radius:18px;background:var(--card);color:var(--ink);font:600 13px 'DM Sans',sans-serif;cursor:pointer}
 .poz-b .poz{opacity:.45}
@@ -1868,13 +1909,27 @@ document.addEventListener('click',e=>{if(_pozDrzKlik&&pozDrzKarta(e)){_pozDrzKli
 // nemá, jinak vedlejší. Klepnutí na vybraný kroužek ho zruší. Ukládá se hned.
 function pozVseStav(p,z){return p.pozice?.hlavni===z?'hl':(p.pozice?.vedlejsi||[]).includes(z)?'ved':'';}
 function pozVseRadek(p){
-  return`<div class="pozv-r" data-p="${p.id}"><span class="pozv-jm">${p.name}</span>${POZICE.map(d=>{const st=pozVseStav(p,d.id);
+  return`<div class="pozv-r s-dres" data-p="${p.id}"><input class="pozv-d" type="number" inputmode="numeric" min="1" max="99" value="${p.dres??''}" aria-label="${p.name}: číslo dresu" oninput="dresVseZmena(this)"><span class="pozv-jm">${p.name}</span>${POZICE.map(d=>{const st=pozVseStav(p,d.id);
     return`<button type="button" class="pozv-k${st?' '+st:''}" data-z="${d.id}" aria-pressed="${!!st}" aria-label="${p.name}: ${d.label}${st==='hl'?' (hlavní)':st==='ved'?' (vedlejší)':''}" onclick="pozVseKlik(this)">${pozChip(d.id,st==='hl')}</button>`;}).join('')}</div>`;
 }
 function openPoziceVse(){
   const hr=getActiveP().slice().sort((a,b)=>a.name.localeCompare(b.name,'cs'));
-  openModal(`<h2>Pozice hráček</h2><div class="pozv"><div class="pozv-r pozv-hd"><span></span>${POZICE.map(d=>`<span>${d.label}</span>`).join('')}</div>${hr.map(pozVseRadek).join('')}</div>
+  openModal(`<h2>Pozice a dresy</h2><div class="pozv"><div class="pozv-r s-dres pozv-hd"><span>Dres</span><span></span>${POZICE.map(d=>`<span>${d.label}</span>`).join('')}</div>${hr.map(pozVseRadek).join('')}</div>
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
+  dresVseZnac();
+}
+// Kolo 85: číslo dresu v hromadném okně se ukládá hned; stejná čísla se podbarví.
+function dresVseZmena(el){
+  const p=S.players.find(x=>String(x.id)===el.closest('.pozv-r').dataset.p);if(!p)return;
+  const n=dresCti(el.value);el.classList.toggle('chyba',n===false);if(n===false)return;
+  if(n==null)delete p.dres;else p.dres=n;
+  save();pozPrekresli();dresVseZnac();
+}
+function dresVseZnac(){
+  document.querySelectorAll('.pozv-r[data-p]').forEach(r=>{
+    const p=S.players.find(x=>String(x.id)===r.dataset.p),d=p&&dresDuplicita(p),el=r.querySelector('.pozv-d');
+    if(!el)return;el.classList.toggle('dup',!!d);if(d)el.title=`Číslo ${p.dres} má i ${d.name}`;else el.removeAttribute('title');
+  });
 }
 function pozVseKlik(el){
   const r=el.closest('.pozv-r'),p=S.players.find(x=>String(x.id)===r.dataset.p);if(!p)return;
@@ -1883,7 +1938,7 @@ function pozVseKlik(el){
   if(!st){if(hl)ved.push(z);else hl=z;}else if(st==='hl')hl=null;
   ved=POZICE.map(d=>d.id).filter(x=>ved.includes(x)&&x!==hl);
   if(hl||ved.length)p.pozice={hlavni:hl,vedlejsi:ved};else delete p.pozice;
-  r.outerHTML=pozVseRadek(p);
+  r.outerHTML=pozVseRadek(p);dresVseZnac();
   syncAutoBadges();save();pozPrekresli();
 }
 function pozVybrane(id){return[...document.querySelectorAll('#'+id+' .poz-b.sel')].map(b=>b.dataset.z);}
@@ -2050,6 +2105,13 @@ function today(){
   const d=new Date();
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
+// Kolo 85: číslo dresu hráčky (p.dres, 1–99, nepovinné). Ukazuje se jen ve vzhledu Trenéra.
+function dresHtml(p){return isTrener()&&p&&p.dres!=null?`<span class="dres">${p.dres}</span>`:'';}
+function dresCti(v){const t=String(v??'').trim();if(t==='')return null;const n=Number(t);return Number.isInteger(n)&&n>=1&&n<=99?n:false;}
+// Hodnota z pole formuláře: undefined = pole tu není, null = prázdné, false = neplatné (hláška).
+function dresZPole(id){const el=document.getElementById(id);if(!el)return undefined;const n=dresCti(el.value);if(n===false){toast('Číslo dresu musí být 1–99','err');el.focus();}return n;}
+function dresDuplicita(p){return p.dres==null?null:getActiveP().find(x=>x!==p&&x.dres===p.dres)||null;}
+function dresHlidej(p){const d=dresDuplicita(p);if(d)toast(`Číslo ${p.dres} má i ${d.name}`,'err');}
 function playerLabel(p){
   if(!p)return'?';
   if(p.nickname)return p.nickname;
@@ -2710,13 +2772,16 @@ function openAddPlayer(){
   openModal(`<h2>Přidat hráčku</h2>
     <div class="fg"><label>Jméno a příjmení</label><input id="pName" type="text" placeholder="Jana Nováková"></div>
     <div class="fg"><label>Rok narození</label><input id="pYear" type="number" value="${defYear}" min="2000" max="${new Date().getFullYear()-4}"></div>
+    ${isTrener()?'<div class="fg"><label>Číslo dresu (volitelně)</label><input id="pDres" type="number" inputmode="numeric" min="1" max="99" placeholder="1–99"></div>':''}
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="addPlayer()">Přidat</button></div>`);
   setTimeout(()=>document.getElementById("pName")?.focus(),80);
 }
 function addPlayer(){
   const name=document.getElementById("pName").value.trim();if(!name){toast("Zadej jméno!","err");return;}
+  const dr=dresZPole('pDres');if(dr===false)return;
   const p={id:Date.now().toString(),name,birthYear:parseInt(document.getElementById("pYear").value)||2011,badges:[],milestones:{},testSessions:[],notes:[]};
-  S.players.push(p);S.activeId=p.id;S.activeTab="physical";S.cmpMode=false;
+  if(dr!=null)p.dres=dr;
+  S.players.push(p);dresHlidej(p);S.activeId=p.id;S.activeTab="physical";S.cmpMode=false;
   save();closeModal();closeSidebar();render();
 }
 function deletePlayer(){
@@ -3001,7 +3066,7 @@ function openEditorTrener(){
     <div class="sk-grp" style="margin-top:8px">Metriky a odznaky</div>
     <div class="sk-rows">${row('openPhysEd()','wave-square','Fyzické metriky')}${row('openGameEd()','bullseye','Herní metriky')}${row('openMilEd()','seedling','Milníky')}${row('openBadgeEd()','medal','Odznaky')}</div>
     <div class="sk-grp" style="margin-top:8px">Hráčky</div>
-    <div class="sk-rows">${row('openPoziceVse()','people-arrows','Pozice hráček')}</div>
+    <div class="sk-rows">${row('openPoziceVse()','people-arrows','Pozice a dresy')}</div>
     <div class="sk-grp" style="margin-top:8px">Norma</div>
     <div class="sk-set-row"><span class="sk-set-lbl" id="normLbl">T-skóre počítat z</span><div class="sk-kapsle" role="group" aria-labelledby="normLbl"><button type="button" aria-pressed="${S.normScope!=='current'}" onclick="if(S.normScope==='current'){toggleNormScope();openEditorTrener();}">Celá databáze</button><button type="button" aria-pressed="${S.normScope==='current'}" onclick="if(S.normScope!=='current'){toggleNormScope();openEditorTrener();}">Aktuální tým</button></div></div>`);
 }
@@ -3422,7 +3487,7 @@ function renderHome(){
       ${av}
       <div style="font-size:0.84rem;font-weight:600;color:var(--w);display:flex;align-items:center;gap:1px">${p.name}${staleDot(p)}</div>
       ${isTrener()&&domuRazeni!=='ov'?`<div class="mv" style="font-size:1.9rem;color:${dh?dh.c:"var(--gm)"}">${dh?dh.txt:"–"}</div>`:`<div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}</div>`}
-      ${badges&&!isTrener()?`<div style="font-size:0.85rem">${badges}</div>`:""}${pozRoh(p)}${kapRoh(p)}${formaRoh(p,posledniTurnaj)}${odznakyRoh(p)}
+      ${badges&&!isTrener()?`<div style="font-size:0.85rem">${badges}</div>`:""}${pozRoh(p)}${kapRoh(p)}${formaRoh(p,posledniTurnaj)}${odznakyRoh(p)}${isTrener()&&p.dres!=null?`<span class="dres-vz">${p.dres}</span>`:''}
     </div>`;
   }).join("");
 
@@ -3459,7 +3524,7 @@ function renderPL(){
     const b=p.badges.map(id=>{const bd=badgeView(S.config.badges.find(x=>x.id===id),p);if(!bd)return"";const st=bd.special?"":badgeTagStyle(bd.color,'bc');return`<span class="bc ${bd.special?"sp":""}" style="${st}">${badgeIco(bd)}</span>`;}).join("");
     const kap=hasKap(p);
     const cls=["pc",kap?"has-kap":"",S.cmpMode?(S.cmpIds.includes(p.id)?"cmp-sel":""):(p.id===S.activeId?"active":"")].filter(Boolean).join(" ");
-    return`<div class="${cls}" data-pid="${p.id}" onclick="${S.cmpMode?"toggleCmpP":"selectPlayer"}('${p.id}')">${pozRoh(p)}<div class="pc-name">${p.name}${staleDot(p)}</div><div class="pc-b">${b||''}</div></div>`;
+    return`<div class="${cls}" data-pid="${p.id}" onclick="${S.cmpMode?"toggleCmpP":"selectPlayer"}('${p.id}')">${pozRoh(p)}<div class="pc-name">${dresHtml(p)}${p.name}${staleDot(p)}</div><div class="pc-b">${b||''}</div></div>`;
   }).join("");
 }
 // Záložky ve vzhledu Trenéra: Přehled/Porovnání jen otevřou, když už otevřené jsou, nic.
@@ -3537,7 +3602,7 @@ function renderDetail(){
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
   const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
-  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2>${pozKartaHtml(p)}<p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
+  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${dresHtml(p)}${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2>${pozKartaHtml(p)}<p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${TABS.map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -5572,7 +5637,8 @@ function openRenamePlayer(){
     <div class="fg"><label>Jméno a příjmení</label><input id="newName" type="text" value="${p.name}"></div>
     <div class="fg"><label>Přezdívka (volitelně) — zobrazuje se v grafech a živém zápase</label><input id="newNick" type="text" value="${p.nickname||''}" placeholder="Např: Natka, Eliška B..."></div>
     <div class="fg"><label>Rok narození</label><input id="newYear" type="number" value="${p.birthYear}" min="2000" max="${new Date().getFullYear()-4}"></div>
-    ${isTrener()?`<div class="fg"><label>Hlavní pozice</label>${pozVolbaHtml('pozHl',p.pozice?.hlavni?[p.pozice.hlavni]:[],false)}</div>
+    ${isTrener()?`<div class="fg"><label>Číslo dresu (volitelně)</label><input id="newDres" type="number" inputmode="numeric" min="1" max="99" placeholder="1–99" value="${p.dres??''}"></div>
+    <div class="fg"><label>Hlavní pozice</label>${pozVolbaHtml('pozHl',p.pozice?.hlavni?[p.pozice.hlavni]:[],false)}</div>
     <div class="fg"><label>Vedlejší pozice</label>${pozVolbaHtml('pozVed',p.pozice?.vedlejsi||[],true,p.pozice?.hlavni)}</div>`:''}
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="renamePlayer()">Uložit</button></div>`);
   setTimeout(()=>{const el=document.getElementById('newName');el?.focus();el?.select();},80);
@@ -5586,6 +5652,8 @@ function renamePlayer(){
   const p=gP();if(!p)return;
   const name=document.getElementById('newName')?.value.trim();
   if(!name){toast('Zadej jméno!','err');return;}
+  const dr=dresZPole('newDres');if(dr===false)return;
+  if(dr===null)delete p.dres;else if(dr!==undefined)p.dres=dr;
   p.name=name;
   p.birthYear=parseInt(document.getElementById('newYear')?.value)||p.birthYear;
   const nick=document.getElementById('newNick')?.value.trim();
@@ -5595,7 +5663,7 @@ function renamePlayer(){
     if(hl||ved.length)p.pozice={hlavni:hl,vedlejsi:ved};else delete p.pozice;
   }
   if(syncAutoBadges()){}
-  save();closeModal();renderDetail();renderPL();toast('Uloženo ✓');
+  save();closeModal();renderDetail();renderPL();toast('Uloženo ✓');dresHlidej(p);
 }
 
 // ═══════════════════════════════════════════════
@@ -6188,6 +6256,24 @@ function closeLiveScreen(){
   document.getElementById('liveOverlay')?.remove();
 }
 
+// Kolo 85 (uživatel přes Meka): pořadí hráček při zapisování. Výchozí: zapsané nahoru, mezi sebou podle dresu.
+const LIVE_RAZENI=[['dresDyn','Zapsané nahoru, pak podle dresu','Zapsané + dres'],['dres','Podle čísla dresu','Dres'],['abc','Abecedně','Abecedně'],['zapisy','Podle počtu zápisů','Počet zápisů']];
+function liveRazeni(){if(!isTrener())return'zapisy';const v=S.config.liveRazeni;return LIVE_RAZENI.some(x=>x[0]===v)?v:'dresDyn';}
+function liveSerad(arr,raz){
+  const abc=(a,b)=>playerLabel(a.p).localeCompare(playerLabel(b.p),'cs');
+  const dres=(a,b)=>(a.p.dres==null)-(b.p.dres==null)||(a.p.dres||0)-(b.p.dres||0)||abc(a,b);
+  if(raz==='zapisy')arr.sort((a,b)=>b.actionCount-a.actionCount);else arr.sort(raz==='abc'?abc:dres);
+}
+let liveMenu=false;
+function liveRazHtml(raz){
+  const r=LIVE_RAZENI.find(x=>x[0]===raz);
+  return`<div class="dn-w live-raz"><button type="button" class="dn-b" aria-haspopup="menu" aria-expanded="${liveMenu}" aria-label="Řadit hráčky: ${r[1]}" onclick="liveMenuToggle(event)"><i class="fa-solid fa-arrow-down-wide-short dn-ic" aria-hidden="true"></i>${r[2]}<i class="fa-solid fa-chevron-down dn-sip" aria-hidden="true"></i></button>${liveMenu?`<div class="dn-menu" role="menu">${LIVE_RAZENI.map(([k,t])=>`<button type="button" role="menuitemradio" aria-checked="${raz===k}" class="dn-pol${raz===k?' on':''}" onclick="liveRazeniNastav('${k}')">${t}<i class="fa-solid fa-check dn-ok" aria-hidden="true"></i></button>`).join('')}</div>`:''}</div>`;
+}
+function liveMenuToggle(e){if(e)e.stopPropagation();liveMenu=!liveMenu;renderLiveContent();}
+function liveRazeniNastav(k){liveMenu=false;S.config.liveRazeni=k;save();renderLiveContent();}
+document.addEventListener('click',e=>{if(liveMenu&&!e.target.closest('.live-raz')){e.stopPropagation();e.preventDefault();liveMenu=false;renderLiveContent();}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&liveMenu){liveMenu=false;renderLiveContent();document.querySelector('.live-raz .dn-b')?.focus();}});
+
 function renderLiveContent(){
   const content=document.getElementById('liveContent');
   if(!content||!LM)return;
@@ -6207,14 +6293,18 @@ function renderLiveContent(){
     </div>`).join('');
 
   // Player rows — sorted by action count desc, then split into with/without data
+  // Kolo 85: ve vzhledu Trenéra podle volby (liveRazeni); pevné pořadí bez rozdělení na Bez záznamu.
+  const raz=liveRazeni();
   const scoredPlayers=active.map(p=>({
     p,
     actionCount:set.actions.filter(a=>a.pid===p.id).length,
     hasData:set.actions.some(a=>a.pid===p.id)
   }));
-  scoredPlayers.sort((a,b)=>b.actionCount-a.actionCount);
-  const withData=scoredPlayers.filter(x=>x.hasData);
-  const withoutData=scoredPlayers.filter(x=>!x.hasData);
+  liveSerad(scoredPlayers,raz);
+  const pevne=raz==='dres'||raz==='abc';
+  const withData=pevne?scoredPlayers:scoredPlayers.filter(x=>x.hasData);
+  const withoutData=pevne?[]:scoredPlayers.filter(x=>!x.hasData);
+  const dresSl=isTrener()&&active.some(p=>p.dres!=null);
 
   const makeRow=(p,hasData)=>{
     const score=calcBodyScore(p.id, set);
@@ -6235,16 +6325,16 @@ function renderLiveContent(){
         }).join('')}
       </div>
       ${recvPctVal!=null
-        ?`<span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${recvColor};min-width:52px;text-align:right;flex-shrink:0">${recvPctVal}%<span style="font-size:0.65rem;color:var(--gm);font-family:'DM Sans',sans-serif;margin-left:2px">/${recvCount}</span></span>`
-        :'<span style="min-width:52px"></span>'}`:'';
-    return`<div class="live-row ${hasData?'has-data':''}" data-pid="${p.id}">
-      <div class="live-name" style="opacity:${hasData?1:0.45}">${playerLabel(p)}</div>
+        ?`<span class="live-pct" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${recvColor};min-width:52px;text-align:right;flex-shrink:0">${recvPctVal}%<span style="font-size:0.65rem;color:var(--gm);font-family:'DM Sans',sans-serif;margin-left:2px">/${recvCount}</span></span>`
+        :'<span class="live-pct" style="min-width:52px"></span>'}`:'';
+    return`<div class="live-row m-${LM.mode==='body'||LM.mode==='prijem'?LM.mode:'oboji'} ${hasData?'has-data':''}" data-pid="${p.id}">
+      <div class="live-name" style="opacity:${hasData?1:0.45}">${dresSl?`<span class="dres">${p.dres??''}</span>`:''}<span class="live-jm">${playerLabel(p)}</span></div>
       ${bodyHTML}
       ${recvHTML}
     </div>`;
   };
 
-  const rowsWithData=withData.map(x=>makeRow(x.p,true));
+  const rowsWithData=withData.map(x=>makeRow(x.p,x.hasData));
   const rowsWithout=withoutData.map(x=>makeRow(x.p,false));
   const rows=[
     ...rowsWithData,
@@ -6259,7 +6349,7 @@ function renderLiveContent(){
       ${!set.closed?'<button onclick="undoAction()" title="Vrátit poslední akci" style="background:var(--x-dk2);border:2px solid var(--g);border-radius:8px;color:var(--gl);font-size:1.1rem;width:38px;height:34px;cursor:pointer;flex-shrink:0;font-weight:700">↩</button>':''}
     </div>
     <div class="card" style="margin-bottom:12px">
-      <h3>Zadávání ${set.closed?'<span style="color:var(--gm)">(set uzavřen)</span>':''}</h3>
+      <h3${isTrener()?' class="live-h3"':''}>Zadávání ${set.closed?'<span style="color:var(--gm)">(set uzavřen)</span>':''}${isTrener()&&!set.closed?liveRazHtml(raz):''}</h3>
       ${set.closed
         ? '<p style="color:var(--gm);font-size:0.82rem">Set je uzavřen. Klikni na Další set nebo Uzavřít zápas.</p>'
         : rows}
@@ -8082,8 +8172,11 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra na Domů nebo v seznamu hráček klikni na kartu hráčky <b>pravým tlačítkem</b> (počítač) nebo ji <b>podrž prstem</b> (telefon). Na kartě hráčky stačí klepnout na řádek s pozicemi pod jménem. Vybereš <b>hlavní pozici</b> (nejvýš jednu) a libovolně <b>vedlejších</b>: Smeč, Blok, Náhra, Účko, Libero. Volba se uloží hned, opětovným klepnutím ji zrušíš. Totéž jde i přes ✎ Upravit hráčku. Pozice je nepovinná, hráčka bez ní má jen společné milníky a odznaky.`,
  kw:"pozice smeč blok náhra nahrávka účko univerzál libero hlavní vedlejší karta"},
 {q:`Jak nastavím pozice všem hráčkám najednou?`,
- a:`Nastavení › Hráčky › <b>Pozice hráček</b> (nebo tlačítko Všechny hráčky v okně Pozice). Každá aktivní hráčka má řádek s pěti kroužky S B N U L. První pozice, na kterou klepneš, je <b>hlavní</b> (plný kroužek), každá další <b>vedlejší</b> (barevný obrys). Klepnutí na vybraný kroužek ho zruší. Když chceš z vedlejší udělat hlavní, zruš hlavní a pak vedlejší klepni dvakrát (zrušit a znovu vybrat). Všechno se ukládá hned.`,
+ a:`Nastavení › Hráčky › <b>Pozice a dresy</b> (nebo tlačítko Všechny hráčky v okně Pozice). Každá aktivní hráčka má řádek s pěti kroužky S B N U L. První pozice, na kterou klepneš, je <b>hlavní</b> (plný kroužek), každá další <b>vedlejší</b> (barevný obrys). Klepnutí na vybraný kroužek ho zruší. Když chceš z vedlejší udělat hlavní, zruš hlavní a pak vedlejší klepni dvakrát (zrušit a znovu vybrat). Všechno se ukládá hned.`,
  kw:"pozice hromadně všechny hráčky najednou tabulka nastavení"},
+{q:`Jak hráčkám zadám čísla dresů?`,
+ a:`Ve vzhledu Trenéra vyplň <b>Číslo dresu</b> (1–99) v okně ✎ Upravit hráčku nebo při přidání hráčky. Celému týmu najednou ho zadáš v Nastavení › Hráčky › <b>Pozice a dresy</b>, kde se políčko vlevo u každé hráčky ukládá hned. Na Domů je číslo velké na pozadí karty, v seznamu hráček a na kartě hráčky před jménem a v živém zápase u jména, kde podle něj můžeš řadit hráčky. Když mají dvě hráčky stejné číslo, aplikace na to upozorní a políčka podbarví, uložit to ale jde. Smazáním čísla ho zrušíš.`,
+ kw:"dres číslo dresu čísla hráčky"},
 {q:`Co znamenají písmena v kroužku u jména?`,
  a:`Pozice hráčky: S = Smeč, B = Blok, N = Náhra, U = Účko, L = Libero. Plný kroužek je hlavní pozice, kroužek jen s obrysem vedlejší. Na Domů a v seznamu hráček jsou kroužky v pravém horním rohu karty, ve Srovnání za jménem a na kartě hráčky jsou pozice i napsané.`,
  kw:"kroužek písmeno S B N U L pozice ikona"},
@@ -8336,6 +8429,9 @@ const HELP_DATA=[
  a:`Aplikace se tě při zakládání zápasu zeptá, co přesně chceš u zápasu sledovat — jen „⚡ Body", jen „📥 Příjem", nebo „📊 Obojí" najednou. Podle týhle volby aplikace pak na živé obrazovce ukazuje jen odpovídající zapisovací tlačítka, ať aplikaci nezahlcuješ zapisováním něčeho, co zrovna nesleduješ.`},
 {q:`Jak zapisuju body v průběhu zápasu?`,
  a:`Aplikace na živé obrazovce u každé hráčky, co je zrovna na place, ukazuje tlačítka pro zápis bodu (+1) i chyby (−1) — klikneš na jméno konkrétní hráčky a odpovídající tlačítko, aplikace to rovnou přičte do průběžného skóre.`},
+{q:`V jakém pořadí jsou hráčky při zapisování zápasu?`,
+ a:`Ve vzhledu Trenéra pořadí vybereš tlačítkem vpravo v nadpisu <b>Zadávání</b>. Volba platí i pro další zápasy, dokud ji nezměníš.<br>• <b>Zapsané nahoru, pak podle dresu</b> (výchozí): hráčka s prvním zápisem v setu se posune nahoru mezi zapsané. Ty jsou seřazené podle čísla dresu a dál se nehýbou. Ostatní jsou pod nimi v části Bez záznamu, také podle dresu.<br>• <b>Podle čísla dresu</b> a <b>Abecedně</b>: pevné pořadí, řádky se během setu nepřesouvají a hráčky bez zápisu jsou jen ztlumené.<br>• <b>Podle počtu zápisů</b>: nahoře je hráčka s nejvíc zápisy v setu, řádky se po zápisech přeskupují.<br>Hráčky bez čísla dresu jsou při řazení podle dresu na konci, abecedně. V klasickém vzhledu se řadí podle počtu zápisů.`,
+ kw:"pořadí řazení dres zápas zapisování přeskakování"},
 {q:`Jak zapisuju příjem v průběhu zápasu?`,
  a:`Podobně jako u bodů aplikace u zapnutého sledování příjmu ukazuje u hráček tlačítka na zápis kvality přijatého míče — aplikace si to průběžně ukládá do stejného zápasového záznamu jako body.`},
 {q:`Jde omylem zapsaný bod nebo příjem vzít zpátky?`,
