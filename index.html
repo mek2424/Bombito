@@ -1137,6 +1137,8 @@ html.skin-trener .gr-pill{display:inline-flex;align-items:center;gap:6px;font-si
 html.skin-trener .gr-pill i{font-size:.9em;margin:0!important;color:inherit!important;opacity:.85}
 html.skin-trener .ov-prazdne{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}
 html.skin-trener .ov-prazdne .no-data{padding:0}
+html.skin-trener .kat-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:0.78rem;color:var(--gm)}
+html.skin-trener .kat-row .kat-b.on{border-color:var(--chalk);color:var(--court-ink);font-weight:700}
 html.skin-trener .tabsFade{bottom:1px;color:var(--ink-faint-ink)}
 html.skin-trener .card{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);padding:4px 14px 12px}
 html.skin-trener .sk-vysv{display:none}
@@ -3442,7 +3444,7 @@ function pickFa(el,inputId){
 function prijimackaPoleHtml(b){
   const h=prijimackaHranice(b);
   const opts=[];for(let v=30;v<=95;v+=5)opts.push(`<option value="${v}"${v===h?' selected':''}>${v} %</option>`);
-  return`<div class="fg"><label>Hranice – průměrná kvalita příjmu</label><select id="eprh" onchange="prijimackaNahled()">${opts.join('')}</select><div id="prhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${prijimackaNahledHtml(h)}</div></div>`;
+  return`<div class="fg"><label>Hranice – průměrná kvalita příjmu</label><select id="eprh" onchange="prijimackaNahled()">${opts.join('')}</select><div id="prhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${prijimackaNahledHtml(h)}</div>${katRadek('prijem')}</div>`;
 }
 function prijimackaNahledHtml(h){
   const rs=S.players.filter(p=>!p.archived).map(p=>({p,r:prijemSezona(p)})).filter(x=>prijemDost(x.r)).sort((a,b)=>b.r.pct-a.r.pct);
@@ -3458,7 +3460,7 @@ function prijimackaNahledHtml(h){
 // Kolo 89: hranice Zakončovatelky (+0,5 až +6,0 bodu na zápas po 0,5) a náhled z vlastních dat.
 function zakPoleHtml(b){
   const h=zakHranice(b),opts=[];for(let v=0.5;v<=6.001;v+=0.5)opts.push(`<option value="${v}"${Math.abs(v-h)<1e-9?' selected':''}>${bodyTxt(v)} na zápas</option>`);
-  return`<div class="fg"><label>Hranice – průměr bodů na zápas</label><select id="ezbh" onchange="zakNahled()">${opts.join('')}</select><div id="zbhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${zakNahledHtml(h)}</div></div>`;
+  return`<div class="fg"><label>Hranice – průměr bodů na zápas</label><select id="ezbh" onchange="zakNahled()">${opts.join('')}</select><div id="zbhNahled" style="font-size:0.78rem;color:var(--gm);margin-top:6px;line-height:1.45">${zakNahledHtml(h)}</div>${katRadek('body')}</div>`;
 }
 function zakNahledHtml(h){
   const rs=S.players.filter(p=>!p.archived).map(p=>({p,r:bodySezona(p)})).filter(x=>bodyDost(x.r)).sort((a,b)=>b.r.avg-a.r.avg);
@@ -3471,6 +3473,21 @@ function zakNahledHtml(h){
 }
 function zakNahled(){const el=document.getElementById('zbhNahled'),sel=document.getElementById('ezbh');if(el&&sel)el.innerHTML=zakNahledHtml(parseFloat(sel.value));}
 function zakNastav(v){const sel=document.getElementById('ezbh');if(sel){sel.value=String(v);zakNahled();}}
+// Kolo 90 (Mek 31. 10.): doporučený start hranic pro dívčí kategorie (odhad, ne norma – viz Nápověda).
+// Klepnutí vyplní hranici (uloží se až Uložit); poslední kategorie se pamatuje v zařízení.
+const KAT_HRANICE=[['U14',50,1.5],['U16',55,2],['U18',60,2.5],['U20',65,3],['U22',70,3]];
+function katPosledni(){try{return localStorage.getItem('bombito_kategorie')||'';}catch(e){return'';}}
+function katRadek(druh){
+  if(!isTrener())return'';
+  const k=katPosledni();
+  return`<div class="kat-row">Kategorie: ${KAT_HRANICE.map(([n,pr,bo])=>`<button type="button" class="btn btn-o sm kat-b${n===k?' on':''}" aria-pressed="${n===k}" onclick="katVyber('${druh}','${n}',this)">${n} · ${druh==='prijem'?pr+' %':bodyTxt(bo)}</button>`).join('')}</div>`;
+}
+function katVyber(druh,n,el){
+  const r=KAT_HRANICE.find(x=>x[0]===n);if(!r)return;
+  try{localStorage.setItem('bombito_kategorie',n);}catch(e){}
+  if(druh==='prijem')prijimackaNastav(r[1]);else zakNastav(r[2]);
+  el.closest('.kat-row').querySelectorAll('.kat-b').forEach(b=>{const on=b===el;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});
+}
 function prijimackaNahled(){const el=document.getElementById('prhNahled'),sel=document.getElementById('eprh');if(el&&sel)el.innerHTML=prijimackaNahledHtml(parseInt(sel.value));}
 function prijimackaNastav(v){const sel=document.getElementById('eprh');if(sel){sel.value=String(v);prijimackaNahled();}}
 function saveBadge(i){const b=S.config.badges[i];const fa=document.getElementById("efa");if(fa)b.fa=fa.value||'';const prh=document.getElementById("eprh");if(prh&&b.auto==='prijem'){b.hranice=parseInt(prh.value)||PRIJIMACKA_PCT;}const zbh=document.getElementById("ezbh");if(zbh&&b.auto==='body'){b.hranice=parseFloat(zbh.value)||ZAK_BODY;}b.icon=document.getElementById("ei2").value||b.icon;b.label=document.getElementById("eb").value.trim()||b.label;b.color=document.getElementById("editBadgeColor").value||b.color;b.special=document.getElementById("esp").checked;pozUlozItem(b);syncAutoBadges();save();toast("Uloženo ✓");openBadgeEd();if(prh||zbh)render();else renderPL();}
@@ -8911,6 +8928,9 @@ const HELP_DATA=[
 {q:`Jak funguje odznak Zakončovatelka?`,
  a:`Zakončovatelka se přiděluje sama, stejně jako Přijímačka. Rozhoduje <b>průměr bodů na zápas</b> ve všech zápasech aktuální sezóny, tedy stejné číslo jako Body/zápas v tabulce Zápasy. Hráčka odznak má, když je průměr aspoň na hranici, výchozí je +2,0 bodu na zápas. Hranici změníš v Nastavení › Odznaky › Zakončovatelka, kde hned vidíš, kdo by odznak měl, průměr týmu a hranici nejlepší čtvrtiny. Musí mít aspoň 3 zápasy. Když průměr klesne, odznak sám zmizí. Body v zápase nejsou mezi silnými stránkami (Vyniká), za ty je odznak. V koláži mají příjem a body ze zápasů ikonu svého odznaku, a když hráčka odznak má, je ikona v jeho barvě. Ve vzhledu Trenéra má ikonu meteoru.`,
  kw:"zakončovatelka body zápas automatický odznak meteor"},
+{q:`Jakou hranici Přijímačky a Zakončovatelky nastavit pro svou kategorii?`,
+ a:`Ve vzhledu Trenéra jsou v Nastavení › Odznaky u Přijímačky i Zakončovatelky pod hranicí tlačítka dívčích kategorií s doporučenou hodnotou. Klepnutím ji vyplníš do hranice, uloží se tlačítkem Uložit. Doporučení: <b>U14</b> 50 % a +1,5 bodu na zápas, <b>U16</b> 55 % a +2,0, <b>U18</b> 60 % a +2,5, <b>U20</b> 65 % a +3,0, <b>U22</b> 70 % a +3,0. Kvalita příjmu s věkem roste, bilance bodů roste pomaleji, protože soupeř víc brání a počítají se i chyby. Je to <b>výchozí odhad, ne naměřená norma</b>. Víc než kategorie rozhoduje, jak zapisuješ: když zapisuješ každou chybu (−1), vyjde bilance nižší, než když zapisuješ jen body. Po zhruba šesti zápasech se proto podívej, kdo by odznak měl a kde je nejlepší čtvrtina týmu. Dobré je, když odznak mají dvě až tři hráčky z dvanácti: když ho má půlka týmu, nic neodliší, když ho nemá nikdo, nemotivuje.`,
+ kw:"hranice kategorie U14 U16 U18 U20 U22 doporučení přijímačka zakončovatelka nastavit"},
 {q:`Jak aplikace odznak hráčce přidělí?`,
  a:`Aplikace to nedělá sama automaticky (výjimkou jsou Přijímačka a Zakončovatelka, viz výš) — na kartě hráčky klikneš na tlačítko „🏅 Odznaky", aplikace ukáže seznam všech odznaků k zaškrtnutí a ty tam ručně zapneš/vypneš, které se na hráčku podle tebe hodí.`,
  kw:"udělení odznaku manuálně přiřazení"},
