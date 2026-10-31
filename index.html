@@ -269,7 +269,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 /* SEZÓNNÍ SHRNUTÍ (Wrapped) — Kolo 29. Vzhled navržen a schválen na Claude Design
    canvasu (3 kola mock-upů), tady jen přenesený na skutečná CSS proměnná appky
    (--bg/--gl/--acc.. se přesně shodují s barvami z mock-upu, viz Kolo 29 poznámky). */
-.wr-card{position:relative;width:390px;max-width:100%;height:844px;max-height:96vh;background:var(--bg);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 60px rgba(0,0,0,.6);font-family:'DM Sans',sans-serif;color:var(--w)}
+.wr-card{--wr-mute:rgba(255,255,255,.4);--wr-mute2:rgba(255,255,255,.5);--wr-mute3:rgba(255,255,255,.35);--wr-faint:#5a6a5a;--wr-line:#16241a;--wr-chipbd:#2a4a2a;--wr-gold-bg:#4d3d10;--wr-text2:#c8d0c8;--wr-eyegreen:#6aaa70;--wr-gold-soft:rgba(232,200,64,.15);--wr-blue:#4a9ee8;position:relative;width:390px;max-width:100%;height:844px;max-height:96vh;background:var(--bg);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 60px rgba(0,0,0,.6);font-family:'DM Sans',sans-serif;color:var(--w)}
 .wr-dots{display:flex;gap:3px;padding:14px 16px 0 16px;flex-shrink:0}
 .wr-dots div{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.2);transition:background .2s}
 .wr-dots div.on{background:var(--gl)}
@@ -625,7 +625,71 @@ html.skin-trener.skin-dark{
 }
 /* Wrapped (sezónní shrnutí) a PDF mají vlastní design — vracím jim klasické hodnoty. */
 html.skin-trener #wrappedView,html.skin-trener .pdf-wrap{--g:#2a7a35;--gd:#1a4d22;--gl:#3db84a;--w:#f5f7f5;--gm:#828278;--acc:#e8c840;--red:#d05555;--bg:#0d160e;--card:#0f1a10;--brd:#1a2e1a;--gold-1:#c8a820;--gold-2:#f5e070;color-scheme:dark}
-html.skin-trener #wrappedView{background:rgba(27,36,48,.5);backdrop-filter:none}
+html.skin-trener #wrappedView{background:rgba(12,16,22,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* Kolo 87: Wrapped ve vzhledu Trenéra – tmavá „slavnostní“ karta s barvami Trenéra (kurt zelená, křída oranžová, zlatá). */
+html.skin-trener #wrappedView .wr-card{--gl:#5CC46A;--acc:#F2B33D;--red:#FF7A6B;--gm:#AAB3BF;--w:#FFFFFF;--brd:rgba(255,255,255,.1);
+  --wr-mute:rgba(255,255,255,.55);--wr-mute2:rgba(255,255,255,.66);--wr-mute3:rgba(255,255,255,.5);--wr-faint:#9AA4B1;--wr-line:rgba(255,255,255,.09);--wr-chipbd:rgba(255,255,255,.16);
+  --wr-gold-bg:rgba(242,179,61,.16);--wr-text2:#E3E8EE;--wr-eyegreen:#8EE09A;--wr-gold-soft:rgba(242,179,61,.18);--wr-blue:#6FB3F2;--wr-g1:rgba(43,125,43,.6);--wr-g2:rgba(232,98,44,.32);
+  background:radial-gradient(130% 65% at 50% -5%,var(--wr-g1),transparent 62%),radial-gradient(90% 55% at 105% 105%,var(--wr-g2),transparent 62%),#151B24;
+  border-radius:24px;box-shadow:0 24px 80px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.06);font-family:'DM Sans',sans-serif;transition:background .4s}
+html.skin-trener #wrappedView .wr-card[data-k="wcMostImproved"],html.skin-trener #wrappedView .wr-card[data-k="wcBestMoment"],html.skin-trener #wrappedView .wr-card[data-k="wcBestTest"],html.skin-trener #wrappedView .wr-card[data-k="wcBestMatch"]{--wr-g1:rgba(242,179,61,.42);--wr-g2:rgba(232,98,44,.3)}
+html.skin-trener #wrappedView .wr-card[data-k="wcMatches"],html.skin-trener #wrappedView .wr-card[data-k="wcRecordsMatches"],html.skin-trener #wrappedView .wr-card[data-k="wcPoints"]{--wr-g1:rgba(232,98,44,.48);--wr-g2:rgba(43,125,43,.35)}
+html.skin-trener #wrappedView .wr-card[data-k="wcRecordsGame"],html.skin-trener #wrappedView .wr-card[data-k="wcBadges"]{--wr-g1:rgba(68,145,213,.45);--wr-g2:rgba(43,125,43,.3)}
+html.skin-trener #wrappedView .wr-dots{gap:4px;padding:16px 18px 0}
+html.skin-trener #wrappedView .wr-dots div{height:4px;background:rgba(255,255,255,.16)}
+html.skin-trener #wrappedView .wr-dots div.on{background:linear-gradient(90deg,#5CC46A,#F2B33D)}
+html.skin-trener #wrappedView .wr-close{color:rgba(255,255,255,.75);font-size:1.15rem;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center}
+html.skin-trener #wrappedView .wr-eyebrow{color:#F59A6E;font-weight:700;letter-spacing:3px;font-size:.66rem}
+html.skin-trener #wrappedView .wr-eyebrow i{margin-right:4px}
+html.skin-trener #wrappedView .wr-h1{color:#fff;text-shadow:0 2px 22px rgba(0,0,0,.35)}
+html.skin-trener #wrappedView .wr-logo{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:3rem;color:#fff;background:radial-gradient(circle at 35% 30%,#3FA03F,#1E5E1E);box-shadow:0 0 0 6px rgba(255,255,255,.08),0 0 50px rgba(92,196,106,.45)}
+html.skin-trener #wrappedView .wr-spot{background:radial-gradient(circle at 50% 32%,rgba(242,179,61,.28) 0%,transparent 62%)}
+html.skin-trener #wrappedView .wr-tile{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-top:3px solid #5CC46A;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+html.skin-trener #wrappedView .wr-tile.b{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);border-top-color:#6FB3F2}
+html.skin-trener #wrappedView .wr-tile.o{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);border-top-color:#F2B33D}
+html.skin-trener #wrappedView .wr-tile-lbl{color:#B9C2CD}
+html.skin-trener #wrappedView .wr-avatar,html.skin-trener #wrappedView .wr-chip{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#fff}
+html.skin-trener #wrappedView .wr-row{border-bottom-color:rgba(255,255,255,.09)}
+html.skin-trener #wrappedView .wr-pill.g{background:rgba(92,196,106,.16);border-color:#5CC46A;color:#8EE09A}
+html.skin-trener #wrappedView .wr-pill.n{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.18);color:#E3E8EE}
+html.skin-trener #wrappedView .wr-sub{color:#9AA4B1}
+html.skin-trener #wrappedView .wr-row-poz,html.skin-trener #wrappedView .wr-row-spol{box-shadow:inset 2px 0 0 var(--pc,rgba(255,255,255,.22));padding-left:11px}
+html.skin-trener #wrappedView .wr-row-poz{background:linear-gradient(90deg,color-mix(in srgb,var(--pc) 14%,transparent),transparent 60%)}
+html.skin-trener #wrappedView .wr-mil-sk{display:flex;align-items:center;gap:6px;margin:16px 0 4px;font:700 10.5px 'DM Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9AA4B1}
+html.skin-trener #wrappedView .wr-mil-sk:first-of-type{margin-top:0}
+html.skin-trener #wrappedView .wr-mil-sk .poz{width:16px;height:16px;font-size:9px}
+html.skin-trener #wrappedView .wr-mrow{display:block;padding:11px 0 11px 11px}
+html.skin-trener #wrappedView .wr-mrow[onclick]{cursor:pointer}
+html.skin-trener #wrappedView .wr-mrow-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+html.skin-trener #wrappedView .wr-mrow-n{font-size:.84rem;font-weight:600;min-width:0;flex:1}
+/* jména se plynule rozbalí (výška přes grid 0fr→1fr, k tomu průhlednost) */
+html.skin-trener #wrappedView .wr-jmena{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .28s ease,opacity .22s ease}
+html.skin-trener #wrappedView .wr-jmena>div{overflow:hidden;min-height:0}
+html.skin-trener #wrappedView .wr-jmena-in{display:flex;flex-wrap:wrap;gap:5px;padding-top:9px}
+html.skin-trener #wrappedView .wr-mrow.otev .wr-jmena{grid-template-rows:1fr;opacity:1}
+@media (hover:hover){html.skin-trener #wrappedView .wr-mrow:hover .wr-jmena{grid-template-rows:1fr;opacity:1;transition-delay:.06s}}
+@media (prefers-reduced-motion:reduce){html.skin-trener #wrappedView .wr-jmena{transition:none}}
+html.skin-trener #wrappedView .wr-jm{font:600 11px/1 'DM Sans',sans-serif;padding:5px 9px;border-radius:999px}
+html.skin-trener #wrappedView .wr-jm.s3{background:#8CF09A;color:#0F2414}
+html.skin-trener #wrappedView .wr-jm.s2{background:#3E9A4E;color:#fff}
+html.skin-trener #wrappedView .wr-jm.s1{background:#244A2C;color:#CFE8D3;box-shadow:inset 0 0 0 1px #3C7A48}
+html.skin-trener #wrappedView .wr-mil{display:flex;align-items:center;gap:8px;flex-shrink:0}
+html.skin-trener #wrappedView .wr-mil-m{display:flex;flex-wrap:wrap;gap:3px;max-width:176px;justify-content:flex-end}
+html.skin-trener #wrappedView .wr-mil-m i{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2)}
+html.skin-trener #wrappedView .wr-mil-m i.s1{background:#244A2C;border-color:#3C7A48}
+html.skin-trener #wrappedView .wr-mil-m i.s2{background:#3E9A4E;border-color:#56B866}
+html.skin-trener #wrappedView .wr-mil-m i.s3{background:#8CF09A;border-color:#B4FFBE;box-shadow:0 0 7px rgba(140,240,154,.6)}
+html.skin-trener #wrappedView .wr-mil span{font:400 1rem/1 'Bebas Neue',sans-serif;color:#E3E8EE;min-width:40px;text-align:right}
+html.skin-trener #wrappedView .no-data{color:#AAB3BF}
+html.skin-trener #wrappedView .wr-navbar{height:auto;padding:10px 14px 14px;gap:10px;border-top:0;background:transparent}
+html.skin-trener #wrappedView .wr-navbar-div{display:none}
+html.skin-trener #wrappedView .wr-navbar button{height:46px;border-radius:999px;font-size:.88rem}
+html.skin-trener #wrappedView #wrPrevBtn{flex:0 0 38%;background:rgba(255,255,255,.08);color:#fff}
+html.skin-trener #wrappedView #wrNextBtn{background:#E8622C;color:#fff;box-shadow:0 8px 22px rgba(232,98,44,.4)}
+html.skin-trener #wrappedView #wrNextBtn:active{transform:scale(.98)}
+@keyframes wrIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+html.skin-trener #wrappedView .wr-body>*{animation:wrIn .35s ease both}
+@media (prefers-reduced-motion:reduce){html.skin-trener #wrappedView .wr-body>*{animation:none}}
 
 html.skin-trener body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink)}
 html.skin-trener ::-webkit-scrollbar-thumb{background:var(--line)}
@@ -5280,11 +5344,11 @@ function seasonMatchRecords(roster,start,end){
   if(bestCount)records.push({key:"count",label:"Nejvíc zápasů",name:bestCount.name,display:wrFmtUnit(bestCount.v,""),icon:wrIcon("count")});
   return{records,matchCount:ms.length,setCount:ms.reduce((s,m)=>s+(m.sets?.length||0),0)};
 }
-function seasonBestMoment(roster,norms,start,end){
+function seasonBestMoment(roster,norms,start,end,druh){
   let best=null;
   const physM=S.config.physical.filter(m=>m.active!==false&&m.id!=="dosah_vyskoku"&&m.id!=="vyska"&&m.id!=="dosah");
   const gameM=S.config.game.filter(m=>m.active!==false);
-  roster.forEach(p=>{
+  if(druh!=='zapasy')roster.forEach(p=>{
     (p.testSessions||[]).filter(s=>s.date>=start&&s.date<=end).forEach(s=>{
       physM.forEach(m=>{
         const v=s.physical?.[m.id];if(v==null)return;
@@ -5300,7 +5364,7 @@ function seasonBestMoment(roster,norms,start,end){
       });
     });
   });
-  const ms=realMatches().filter(m=>m.date>=start&&m.date<=end);
+  const ms=druh==='testy'?[]:realMatches().filter(m=>m.date>=start&&m.date<=end);
   roster.forEach(p=>{
     const bodyVals=ms.map(m=>playerMatchMetric(p,m,'body')).filter(v=>v!=null);
     if(bodyVals.length){const avg=mean(bodyVals);const t=tRaw(avg,norms["body_zapas"]);if(t!=null&&(!best||t>best.t))best={t,p,label:"Body v zápasech",value:Math.round(avg*10)/10,unit:" / zápas"};}
@@ -5351,7 +5415,9 @@ function computeSeasonWrapped(si){
   // odpovídá tomu, co dřív znamenalo jedno prosté zaškrtnutí.
   const milestones=S.config.milestones.filter(m=>m.active!==false).map(m=>{
     const completed=roster.filter(p=>{const ms=p.milestones?.[m.id];return ms&&ms.stage>=3&&ms.date>=start&&ms.date<=end;});
-    return{key:m.id,label:m.label,people:completed.map(p=>({name:playerLabel(p),initials:wrInitials(p.name)}))};
+    // Kolo 87: fáze každé hráčky soupisky ke konci sezóny (pro mřížku ve Wrapped).
+    const stages=roster.map(p=>{const ms=p.milestones?.[m.id];return ms&&ms.date<=end?(ms.stage||0):0;});
+    return{key:m.id,label:m.label,people:completed.map(p=>({name:playerLabel(p),initials:wrInitials(p.name)})),stages};
   });
   const points=roster.map(p=>{
     const hasData=realMs.some(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null);
@@ -5361,6 +5427,8 @@ function computeSeasonWrapped(si){
     return{pid:p.id,name:playerLabel(p),initials:wrInitials(p.name),points:bodySum,receivePct:recvVals.length?Math.round(mean(recvVals)):null};
   }).filter(Boolean).sort((a,b)=>b.points-a.points);
   const bm=seasonBestMoment(roster,norms,start,end);
+  // Kolo 87: zvlášť nejlepší moment z testů a ze zápasů (karty na konci Wrapped ve vzhledu Trenéra).
+  const bmTest=seasonBestMoment(roster,norms,start,end,'testy'),bmZap=seasonBestMoment(roster,norms,start,end,'zapasy');
   return{
     computedAt:today(),
     rangeStart:start,rangeEnd:end,
@@ -5373,16 +5441,48 @@ function computeSeasonWrapped(si){
     badges,
     milestones,
     points,
-    bestMoment:bm
+    bestMoment:bm,bestTest:bmTest,bestMatch:bmZap
   };
 }
+// Kolo 87: ikona ve Wrapped – ve vzhledu Trenéra Font Awesome, v klasiku emoji.
+// Kolo 87 (Mek): u milníku ve Wrapped mřížka čtverečků jako v tabulce Testy (plný = hráčka milník za sezónu zvládla).
+function wrMilStupne(m,tot){
+  if(Array.isArray(m.stages))return m.stages;
+  const season=S.seasons[WRAPPED_SI];if(!season)return Array.from({length:tot},(_,i)=>i<m.people.length?3:0);
+  const{end}=seasonRange(WRAPPED_SI);
+  return S.players.filter(p=>season.playerIds.includes(p.id)).map(p=>{const ms=p.milestones?.[m.key];return m.people.some(x=>x.initials===wrInitials(p.name)&&x.name===playerLabel(p))?3:ms&&ms.date<=end?(ms.stage||0):0;});
+}
+function wcMilestonesTrener(w){
+  const season=S.seasons[WRAPPED_SI],roster=season?S.players.filter(p=>season.playerIds.includes(p.id)):[];
+  const radky=w.milestones.map((m,i)=>{
+    const cfg=S.config.milestones.find(x=>x.id===m.key),poz=cfg&&cfg.pozice&&cfg.pozice.length?cfg.pozice:null;
+    const st=wrMilStupne(m,w.rosterSize);
+    const hr=roster.length===st.length?roster.map((p,j)=>({p,s:Math.min(3,st[j]||0)})):st.map(v=>({p:null,s:Math.min(3,v||0)}));
+    return{m,i,poz,plat:hr.filter(x=>!poz||!x.p||proPozice(cfg,x.p))};
+  }).filter(r=>r.plat.some(x=>x.s>0)); // Kolo 87 (Mek): milník, který nikdo nezačal, se neukazuje
+  const skup=r=>r.poz?POZICE.findIndex(d=>d.id===r.poz[0]):-1;
+  radky.sort((a,b)=>skup(a)-skup(b)||a.i-b.i);
+  let posl=null;
+  const html=radky.map(r=>{
+    const k=skup(r);let nad='';
+    if(k!==posl){posl=k;nad=k<0?'<div class="wr-mil-sk">Společné</div>':`<div class="wr-mil-sk">${pozChip(POZICE[k].id,true)}${POZICE[k].label}</div>`;}
+    const st=r.plat.map(x=>x.s).sort((a,b)=>b-a),pct=Math.round(st.reduce((a,b)=>a+b,0)/(3*st.length)*100);
+    const jm=r.plat.filter(x=>x.s>0&&x.p).sort((a,b)=>b.s-a.s).map(x=>`<span class="wr-jm s${x.s}">${playerLabel(x.p)}</span>`).join('');
+    return nad+`<div class="wr-row wr-mrow ${r.poz?'wr-row-poz':'wr-row-spol'}"${r.poz?` style="--pc:${pozDef(r.poz[0]).color}"`:''}${jm?` onclick="this.classList.toggle('otev')"`:''}>
+      <div class="wr-mrow-h"><div class="wr-mrow-n">${r.m.label}</div><div class="wr-mil"><div class="wr-mil-m">${st.map(v=>`<i class="s${v}"></i>`).join('')}</div><span>${pct} %</span></div></div>
+      ${jm?`<div class="wr-jmena"><div><div class="wr-jmena-in">${jm}</div></div></div>`:''}
+    </div>`;
+  }).join('');
+  return`<div class="wr-scroll"><div class="wr-headctr"><div class="wr-eyebrow">Celý tým</div><div class="wr-h1">Milníky</div></div><div class="wr-sub">Stav týmu na konci sezóny</div>${html}</div>`;
+}
+function wrIco(e,fa){return isTrener()?`<i class="fa-solid fa-${fa}" aria-hidden="true"></i>`:e;}
 function wrTileHtml(r,colorCls,extraCls,full){
-  const color=colorCls==='b'?'#4a9ee8':colorCls==='o'?'var(--acc)':'var(--gl)';
+  const color=colorCls==='b'?'var(--wr-blue)':colorCls==='o'?'var(--acc)':'var(--gl)';
   return `<div class="wr-tile ${colorCls}${extraCls?' '+extraCls:''}"${full?' style="grid-column:1/-1"':''}>
     <div class="wr-tile-ico">${r.icon}</div>
     <div class="wr-tile-lbl">${r.label}</div>
     <div class="wr-tile-name">${r.name}</div>
-    <div class="wr-tile-val" style="color:${color}">${r.display}</div>
+    <div class="wr-tile-val" style="color:${color}">${czc(r.display)}</div>
   </div>`;
 }
 function wcRecordsGrid(subLabel,title,records){
@@ -5396,11 +5496,11 @@ function wcRecordsGrid(subLabel,title,records){
 }
 function wcIntro(w,season){
   return `<div class="wr-center" style="gap:18px">
-    <div style="font-size:3.2rem">🏐</div>
+    ${isTrener()?'<div class="wr-logo"><i class="fa-solid fa-volleyball" aria-hidden="true"></i></div>':'<div style="font-size:3.2rem">🏐</div>'}
     <div class="wr-h1" style="font-size:2.2rem;line-height:1.15">${season.name}</div>
     <div class="wr-eyebrow" style="margin:0">${S.subtitle||'SK Meteor Praha'}</div>
     <div style="font-size:0.78rem;color:var(--gm);margin-top:6px">${fmtDate(w.rangeStart)||'začátek'} – ${fmtDate(w.rangeEnd)}</div>
-    <div style="font-size:0.72rem;color:rgba(255,255,255,.4);margin-top:22px">Klepni na Další →</div>
+    <div style="font-size:0.72rem;color:var(--wr-mute);margin-top:22px">Klepni na Další →</div>
   </div>`;
 }
 function wcTeamGrowth(w){
@@ -5427,26 +5527,26 @@ function wcTeamGrowth(w){
     </svg>`;
   }
   return `<div class="wr-center" style="gap:10px">
-    <div class="wr-eyebrow" style="color:#6aaa70">Tým rostl celou sezónu</div>
+    <div class="wr-eyebrow" style="color:var(--wr-eyegreen)">Tým rostl celou sezónu</div>
     <div style="display:flex;align-items:baseline;gap:14px;margin:14px 0 0">
-      <div class="wr-h1" style="font-size:3rem;color:rgba(255,255,255,.4)">${w.team.startScore}</div>
-      <div style="font-size:1.5rem;color:rgba(255,255,255,.4)">→</div>
+      <div class="wr-h1" style="font-size:3rem;color:var(--wr-mute)">${w.team.startScore}</div>
+      <div style="font-size:1.5rem;color:var(--wr-mute)">→</div>
       <div class="wr-h1" style="font-size:4.5rem;color:${up?'var(--gl)':'var(--red)'}">${w.team.endScore}</div>
     </div>
     ${curveHtml}
     <div class="wr-pill ${up?'g':'n'}" style="font-size:0.95rem;padding:6px 18px">${up?'+':''}${w.team.delta} bodů</div>
-    <div style="font-size:0.78rem;color:rgba(255,255,255,.5);margin-top:8px">Průměr týmu, ${fmtDate(w.rangeStart)||'začátek'} → ${fmtDate(w.rangeEnd)}</div>
+    <div style="font-size:0.78rem;color:var(--wr-mute2);margin-top:8px">Průměr týmu, ${fmtDate(w.rangeStart)||'začátek'} → ${fmtDate(w.rangeEnd)}</div>
   </div>`;
 }
 function wcMostImproved(w){
   const m=w.mostImproved;
   if(!m)return `<div class="wr-center"><div class="wr-eyebrow">Nejvíc se zlepšila</div><div class="no-data">Zatím nedostatek dat</div></div>`;
   return `<div class="wr-center wr-spot" style="gap:14px">
-    <div class="wr-eyebrow" style="color:var(--acc)">🚀 Největší zlepšení</div>
-    <div style="width:84px;height:84px;border-radius:50%;background:#4d3d10;border:3px solid var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.8rem">${m.initials}</div>
+    <div class="wr-eyebrow" style="color:var(--acc)">${wrIco('🚀','rocket')} Největší zlepšení</div>
+    <div style="width:84px;height:84px;border-radius:50%;background:var(--wr-gold-bg);border:3px solid var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.8rem">${m.initials}</div>
     <div class="wr-h1" style="font-size:1.6rem;letter-spacing:1px">${m.fullName}</div>
     <div class="wr-h1" style="font-size:4rem;color:var(--acc);margin-top:6px">${m.delta>=0?'+':''}${m.delta}</div>
-    <div style="font-size:0.78rem;color:rgba(255,255,255,.5)">bodů Overallu za sezónu</div>
+    <div style="font-size:0.78rem;color:var(--wr-mute2)">bodů Overallu za sezónu</div>
   </div>`;
 }
 function wcMatches(w){
@@ -5455,7 +5555,7 @@ function wcMatches(w){
     <div class="wr-eyebrow">Sezóna v číslech</div>
     <div class="wr-h1" style="font-size:4.5rem;color:var(--gl)">${w.matches.count}</div>
     <div style="font-size:0.9rem;color:var(--gm)">odehraných zápasů</div>
-    <div style="font-size:0.78rem;color:rgba(255,255,255,.4);margin-top:14px">${setyTxt(w.matches.sets,'setů')} celkem</div>
+    <div style="font-size:0.78rem;color:var(--wr-mute);margin-top:14px">${setyTxt(w.matches.sets,'setů')} celkem</div>
   </div>`;
 }
 function wcRecordsPhysical(w){return wcRecordsGrid('Rekordy sezóny · 1/3','Fyzické testy',w.records.physical);}
@@ -5481,7 +5581,7 @@ function wcPlayerGrowth(w){
         </div>
         <div class="wr-pill ${up?'g':'n'}" style="color:${up?'var(--gl)':'var(--red)'}">${up?'+':''}${g.delta}</div>
       </div>
-      <div style="height:6px;border-radius:3px;background:#16241a;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:3px;background:${up?'var(--gl)':'var(--red)'}"></div></div>
+      <div style="height:6px;border-radius:3px;background:var(--wr-line);overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:3px;background:${up?'var(--gl)':'var(--red)'}"></div></div>
     </div>`;
   }).join('');
   const avgD=Math.round(mean(w.playerGrowth.map(g=>g.delta)));
@@ -5489,7 +5589,8 @@ function wcPlayerGrowth(w){
 }
 function wcBadges(w){
   if(!w.badges.length)return `<div class="wr-center"><div class="wr-eyebrow">Celý tým</div><div class="no-data">Zatím nedostatek dat</div></div>`;
-  const rows=w.badges.map(b=>{
+  // Kolo 87 (Mek): ve vzhledu Trenéra jen hráčky, které nějaký odznak mají.
+  const rows=w.badges.filter(b=>!isTrener()||b.badgeIds.length).map(b=>{
     const chips=b.badgeIds.map(bid=>{
       const def=S.config.badges.find(x=>x.id===bid);
       if(!def)return'';
@@ -5501,20 +5602,21 @@ function wcBadges(w){
         <div style="font-size:0.86rem;font-weight:600">${b.name}</div>
         <div style="display:flex;gap:5px">${chips}</div>
       </div>
-      <div style="font-size:0.7rem;color:#5a6a5a;flex-shrink:0">${wrBadgeCountLabel(b.badgeIds.length)}</div>
+      <div style="font-size:0.7rem;color:var(--wr-faint);flex-shrink:0">${wrBadgeCountLabel(b.badgeIds.length)}</div>
     </div>`;
   }).join('');
   return `<div class="wr-scroll"><div class="wr-headctr"><div class="wr-eyebrow">Celý tým</div><div class="wr-h1">Odznaky</div></div><div class="wr-sub">Aktuální sbírka celého týmu</div>${rows}</div>`;
 }
 function wcMilestones(w){
   if(!w.milestones.length)return `<div class="wr-center"><div class="wr-eyebrow">Celý tým</div><div class="no-data">Žádné milníky</div></div>`;
+  if(isTrener())return wcMilestonesTrener(w);
   const rows=w.milestones.map(m=>{
     const n=m.people.length;
     const pillCls=n===w.rosterSize&&n>0?'g':'n';
     const body=(n===w.rosterSize&&n>0)
       ? `<div style="font-size:0.72rem;color:var(--gl)">✓ zvládl celý tým</div>`
       : (n?`<div style="display:flex;gap:5px;flex-wrap:wrap">${m.people.map(p=>`<div class="wr-chip">${p.initials}</div>`).join('')}</div>`
-          :`<div style="font-size:0.72rem;color:#5a6a5a">zatím nikdo</div>`);
+          :`<div style="font-size:0.72rem;color:var(--wr-faint)">zatím nikdo</div>`);
     return `<div class="wr-row" style="display:block">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
         <div style="font-size:0.84rem;font-weight:600">${m.label}</div>
@@ -5528,45 +5630,71 @@ function wcMilestones(w){
 function wcPoints(w){
   if(!w.points.length)return `<div class="wr-center"><div class="wr-eyebrow">Celý tým</div><div class="no-data">Žádná zápasová data</div></div>`;
   const rows=w.points.map((p,i)=>`<div class="wr-row">
-    <div style="width:26px;height:26px;border-radius:50%;background:${i===0?'rgba(232,200,64,.15)':'#16241a'};border:1px solid ${i===0?'var(--acc)':'#2a4a2a'};color:${i===0?'var(--acc)':'#c8d0c8'};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:0.85rem;flex-shrink:0">${i+1}</div>
+    <div style="width:26px;height:26px;border-radius:50%;background:${i===0?'var(--wr-gold-soft)':'var(--wr-line)'};border:1px solid ${i===0?'var(--acc)':'var(--wr-chipbd)'};color:${i===0?'var(--acc)':'var(--wr-text2)'};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:0.85rem;flex-shrink:0">${i+1}</div>
     <div style="flex:1;font-size:0.86rem;font-weight:600;margin-left:12px">${p.name}</div>
-    <div style="text-align:right;font-size:0.82rem;color:var(--w)">⚡ <b>${p.points}</b> <span style="color:#5a6a5a;font-weight:400">bodů</span></div>
-    ${p.receivePct!=null?`<div style="text-align:right;font-size:0.82rem;color:#4a9ee8;min-width:70px">📥 ${p.receivePct} %</div>`:'<div style="min-width:70px"></div>'}
+    <div style="text-align:right;font-size:0.82rem;color:var(--w)">${wrIco('⚡','bolt')} <b>${p.points}</b> <span style="color:var(--wr-faint);font-weight:400">bodů</span></div>
+    ${p.receivePct!=null?`<div style="text-align:right;font-size:0.82rem;color:var(--wr-blue);min-width:70px">${wrIco('📥','shield-halved')} ${p.receivePct} %</div>`:'<div style="min-width:70px"></div>'}
   </div>`).join('');
   return `<div class="wr-scroll"><div class="wr-headctr"><div class="wr-eyebrow">Celý tým</div><div class="wr-h1">Body a příjem</div></div><div class="wr-sub">Součet bodů a průměrný příjem ze zápasů za sezónu</div>${rows}</div>`;
 }
 function wcBestMoment(w){
   const bm=w.bestMoment;
-  if(!bm)return `<div class="wr-center"><div class="wr-eyebrow">✨ Nejlepší moment sezóny</div><div class="no-data">Zatím nedostatek dat</div></div>`;
+  if(!bm)return `<div class="wr-center"><div class="wr-eyebrow">${wrIco('✨','star')} Nejlepší moment sezóny</div><div class="no-data">Zatím nedostatek dat</div></div>`;
   return `<div class="wr-center wr-spot" style="gap:12px">
-    <div class="wr-eyebrow" style="color:var(--acc)">✨ Nejlepší moment sezóny</div>
-    <div style="width:84px;height:84px;border-radius:50%;background:#4d3d10;border:3px solid var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.8rem">${bm.initials}</div>
+    <div class="wr-eyebrow" style="color:var(--acc)">${wrIco('✨','star')} Nejlepší moment sezóny</div>
+    <div style="width:84px;height:84px;border-radius:50%;background:var(--wr-gold-bg);border:3px solid var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.8rem">${bm.initials}</div>
     <div class="wr-h1" style="font-size:1.6rem;letter-spacing:1px">${bm.fullName}</div>
-    <div class="wr-h1" style="font-size:4rem;color:var(--acc);margin-top:4px">${bm.value}${bm.unit}</div>
-    <div style="font-size:0.78rem;color:rgba(255,255,255,.5)">${bm.label}</div>
-    <div style="font-size:0.72rem;color:rgba(255,255,255,.35);max-width:240px;margin-top:6px;line-height:1.4">Nejvyšší hodnota napříč úplně vším, co aplikace tuto sezónu naměřila u celého týmu</div>
+    <div class="wr-h1" style="font-size:4rem;color:var(--acc);margin-top:4px">${czc(bm.value)}${bm.unit}</div>
+    <div style="font-size:0.78rem;color:var(--wr-mute2)">${bm.label}</div>
+    <div style="font-size:0.72rem;color:var(--wr-mute3);max-width:240px;margin-top:6px;line-height:1.4">Nejvyšší hodnota napříč úplně vším, co aplikace tuto sezónu naměřila u celého týmu</div>
   </div>
   <div style="padding:0 32px 20px 32px;text-align:center;flex-shrink:0">
-    <div style="font-size:0.82rem;color:rgba(255,255,255,.5)">Za námi další skvělá sezóna 🏐</div>
+    <div style="font-size:0.82rem;color:var(--wr-mute2)">Za námi další skvělá sezóna ${wrIco('🏐','volleyball')}</div>
   </div>`;
 }
+// Kolo 87: karta nejlepšího momentu z testů / ze zápasů (vzhled Trenéra).
+function wrMomentKarta(bm,nadpis,ikona,konec){
+  return `<div class="wr-center wr-spot" style="gap:12px">
+    <div class="wr-eyebrow" style="color:var(--acc)">${wrIco('✨',ikona)} ${nadpis}</div>
+    <div style="width:84px;height:84px;border-radius:50%;background:var(--wr-gold-bg);border:3px solid var(--acc);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.8rem">${bm.initials}</div>
+    <div class="wr-h1" style="font-size:1.6rem;letter-spacing:1px">${bm.fullName}</div>
+    <div class="wr-h1" style="font-size:4rem;color:var(--acc);margin-top:4px">${czc(bm.value)}${bm.unit}</div>
+    <div style="font-size:0.78rem;color:var(--wr-mute2)">${bm.label}</div>
+  </div>${konec?`<div style="padding:0 32px 20px 32px;text-align:center;flex-shrink:0"><div style="font-size:0.82rem;color:var(--wr-mute2)">Za námi další skvělá sezóna ${wrIco('🏐','volleyball')}</div></div>`:''}`;
+}
+function wcBestTest(w){return wrMomentKarta(w.bestTest,'Nejlepší moment z testů','stopwatch',!w.bestMatch);}
+function wcBestMatch(w){return wrMomentKarta(w.bestMatch,'Nejlepší moment ze zápasů','volleyball',true);}
 let WRAPPED_SI=null,WRAPPED_POS=0;
 const WRAPPED_CARDS=[wcIntro,wcTeamGrowth,wcMostImproved,wcMatches,wcRecordsPhysical,wcRecordsGame,wcRecordsMatches,wcPlayerGrowth,wcBadges,wcMilestones,wcPoints,wcBestMoment];
+// Kolo 87 (Mek): ve vzhledu Trenéra se karty bez dat vůbec neukazují (v klasiku dál všech 12).
+const WRAPPED_MA_DATA={wcTeamGrowth:w=>w.team.startScore!=null&&w.team.endScore!=null,wcMostImproved:w=>!!w.mostImproved,wcMatches:w=>!!w.matches.count,
+  wcRecordsPhysical:w=>w.records.physical.length>0,wcRecordsGame:w=>w.records.game.length>0,wcRecordsMatches:w=>w.records.matches.length>0,wcPlayerGrowth:w=>w.playerGrowth.length>0,
+  wcBadges:w=>w.badges.some(b=>b.badgeIds.length),wcMilestones:w=>w.milestones.some(m=>m.people.length||wrMilStupne(m,w.rosterSize).some(x=>x>0)),wcPoints:w=>w.points.length>0,wcBestMoment:w=>!!w.bestMoment};
+const WRAPPED_CARDS_TRENER=[...WRAPPED_CARDS.filter(f=>f!==wcBestMoment),wcBestTest,wcBestMatch];
+WRAPPED_MA_DATA.wcBestTest=w=>!!w.bestTest;WRAPPED_MA_DATA.wcBestMatch=w=>!!w.bestMatch;
+let WRAPPED_AKT=WRAPPED_CARDS;
 function showSeasonWrapped(si){
   const season=S.seasons[si];
   if(!season)return;
   if(!season.wrapped){season.wrapped=computeSeasonWrapped(si);save();}
   closeModal();
   WRAPPED_SI=si;WRAPPED_POS=0;
+  // Sezóny uzavřené před kolem 87 nemají momenty zvlášť – dopočítají se z dnešních dat (jen v paměti).
+  if(isTrener()&&season.wrapped&&!('bestTest' in season.wrapped)){
+    const{start,end}=seasonRange(si),roster=S.players.filter(p=>season.playerIds.includes(p.id)),norms=activeNorms('all');
+    season.wrapped.bestTest=seasonBestMoment(roster,norms,start,end,'testy');season.wrapped.bestMatch=seasonBestMoment(roster,norms,start,end,'zapasy');
+  }
+  WRAPPED_AKT=isTrener()?WRAPPED_CARDS_TRENER.filter(f=>{try{return!WRAPPED_MA_DATA[f.name]||WRAPPED_MA_DATA[f.name](season.wrapped);}catch(e){return true;}}):WRAPPED_CARDS;
   document.getElementById('wrappedView').style.display='flex';
   renderWrappedCard();
+  if(isTrener())skKonfety();
 }
 function closeWrapped(){
   document.getElementById('wrappedView').style.display='none';
   WRAPPED_SI=null;
 }
 function wrappedNext(){
-  if(WRAPPED_POS>=WRAPPED_CARDS.length-1){closeWrapped();return;}
+  if(WRAPPED_POS>=WRAPPED_AKT.length-1){closeWrapped();return;}
   WRAPPED_POS++;renderWrappedCard();
 }
 function wrappedPrev(){
@@ -5576,9 +5704,12 @@ function wrappedPrev(){
 function renderWrappedCard(){
   const season=S.seasons[WRAPPED_SI];
   const w=season.wrapped;
-  const total=WRAPPED_CARDS.length;
+  const total=WRAPPED_AKT.length;
   document.getElementById('wrappedDots').innerHTML=Array.from({length:total},(_,i)=>`<div class="${i<=WRAPPED_POS?'on':''}"></div>`).join('');
-  document.getElementById('wrappedBody').innerHTML=WRAPPED_CARDS[WRAPPED_POS](w,season);
+  document.getElementById('wrappedBody').innerHTML=WRAPPED_AKT[WRAPPED_POS](w,season);
+  // Kolo 87: ve vzhledu Trenéra má každá karta vlastní barevné pozadí a poslední karta konfety.
+  document.querySelector('#wrappedView .wr-card')?.setAttribute('data-k',WRAPPED_AKT[WRAPPED_POS].name);
+  if(isTrener()&&WRAPPED_POS===total-1)skKonfety();
   document.getElementById('wrappedBody').scrollTop=0;
   document.getElementById('wrPrevBtn').disabled=WRAPPED_POS===0;
   const nextBtn=document.getElementById('wrNextBtn');
