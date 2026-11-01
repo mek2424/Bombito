@@ -1083,9 +1083,7 @@ html.skin-trener .zap-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:1
 html.skin-trener .zap-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;text-align:center}
 html.skin-trener .zap-tile .mv{font-size:1.9rem;line-height:1.1}
 html.skin-trener .zap-tile-l{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint-ink);margin-top:2px}
-html.skin-trener #zapView .match-card{cursor:pointer;position:relative;padding-right:46px}
-html.skin-trener .zap-smazat{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:var(--ink-faint-ink);cursor:pointer;font-size:14px}
-html.skin-trener .zap-smazat:hover{background:var(--danger-bg);color:var(--danger-ink)}
+html.skin-trener #zapView .match-card{cursor:pointer;position:relative}
 .lm-zahodit{display:none}
 html.skin-trener #liveOverlay .lm-zahodit i{color:#fff}
 html.skin-trener .lm-zahodit{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:7px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-size:15px;flex-shrink:0}
@@ -1378,6 +1376,24 @@ html.skin-trener .grp-tbl th{background:var(--paper);color:var(--ink-faint-ink);
 html.skin-trener .grp-tbl td{border-bottom-color:var(--line)}
 html.skin-trener .grp-tbl input{background:var(--paper);border:1px solid var(--line);color:var(--ink)}
 html.skin-trener .grp-tbl input:focus{border-color:var(--court)}
+/* Kolo 97 (revize F6): Skupinový test – přepínač Fyzický / Herní; statistiky a detail zápasu ve sloupcích. */
+html.skin-trener .grp-druh{display:inline-flex;margin:0 0 14px}
+html.skin-trener .grp-druh i{margin-right:7px}
+html.skin-trener .zs-tur{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--court-ink);cursor:pointer}
+html.skin-trener .zs-tur i{margin-right:5px}
+html.skin-trener .md-c{flex:none;width:64px;text-align:right;font-variant-numeric:tabular-nums}
+html.skin-trener .md-c.md-w{width:88px}
+html.skin-trener .md-r .md-c{font:600 15px/1.2 'DM Sans',sans-serif}
+html.skin-trener .md-r .md-c:not([style]){color:var(--ink)}
+html.skin-trener .md-r .md-c small{font-weight:400;color:var(--ink-faint-ink)}
+html.skin-trener .me.md-hl{padding:4px 0 6px}
+html.skin-trener .md-hl .ml,html.skin-trener .md-hl .md-c{font:700 11px/1.2 'DM Sans',sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--ink-faint-ink)}
+/* Kolo 97 (revize F6): na počítači karta hráčky – Poslední hodnoty a Historie nahoře vedle sebe, grafy pod nimi ve dvou sloupcích. */
+@media(min-width:1000px){
+  html.skin-trener .gr-prvni.g2{gap:0 14px;align-items:start}
+  html.skin-trener .gr-prvni.g2>div{display:contents}
+  html.skin-trener .gr-prvni.g2 .gr-prazdne{grid-column:1/-1}
+}
 html.skin-trener .grp-tbl input:disabled{opacity:.35;background:repeating-linear-gradient(135deg,var(--paper),var(--paper) 4px,var(--line) 4px,var(--line) 5px)}
 /* Kolo 78: pozice – písmeno v kroužku, hlavní plný, vedlejší obrys */
 .poz{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--pc);color:var(--pi);background:transparent;font:700 10.5px/1 'DM Sans',sans-serif;letter-spacing:0;flex-shrink:0;box-sizing:border-box;vertical-align:middle}
@@ -6273,21 +6289,24 @@ function openGroupTest(){
   if(!active.length){toast('Žádné aktivní hráčky','err');return;}
   const phA=S.config.physical.filter(m=>m.active!==false);
   const gaA=S.config.game.filter(m=>m.active!==false);
+  // Kolo 97 (revize F6): ve vzhledu Trenéra přepínač Fyzický / Herní jako u + Test; herní sloupce zatím skryté.
+  const tr=isTrener()&&phA.length&&gaA.length,gc=k=>tr?` class="grp-${k}"${k==='g'?' style="display:none"':''}`:'';
   // Header row
   const phHeads=phA.map(m=>{
     const abbr=m.id==='dosah_vyskoku'?'Výskok↑':m.id==='dosah'?'Dosah paží':m.label.split(' ')[0];
-    return`<th title="${m.label}">${abbr}<br><small style="font-weight:400;text-transform:none">${m.unit}</small></th>`;
+    return`<th${gc('f')} title="${m.label}">${abbr}<br><small style="font-weight:400;text-transform:none">${m.unit}</small></th>`;
   }).join('');
-  const gaHeads=gaA.map(m=>`<th title="${m.label}">${gameAbbr(m)}<br><small style="font-weight:400;text-transform:none">počet</small></th>`).join('');
+  const gaHeads=gaA.map(m=>`<th${gc('g')} title="${m.label}">${gameAbbr(m)}<br><small style="font-weight:400;text-transform:none">počet</small></th>`).join('');
   // Player rows
   const rows=active.map(p=>{
-    const phInputs=phA.map(m=>`<td><input type="number" id="g_ph_${p.id}_${m.id}" step="0.1" placeholder="–"${metPlati(m,p)?'':' disabled aria-label="Neplatí pro pozici hráčky"'}></td>`).join('');
-    const gaInputs=gaA.map(m=>`<td><input type="number" id="g_ga_${p.id}_${m.id}" min="0" max="99" step="1" placeholder="–"${metPlati(m,p)?'':' disabled aria-label="Neplatí pro pozici hráčky"'}></td>`).join('');
+    const phInputs=phA.map(m=>`<td${gc('f')}><input type="number" id="g_ph_${p.id}_${m.id}" step="0.1" placeholder="–"${metPlati(m,p)?'':' disabled aria-label="Neplatí pro pozici hráčky"'}></td>`).join('');
+    const gaInputs=gaA.map(m=>`<td${gc('g')}><input type="number" id="g_ga_${p.id}_${m.id}" min="0" max="99" step="1" placeholder="–"${metPlati(m,p)?'':' disabled aria-label="Neplatí pro pozici hráčky"'}></td>`).join('');
     return `<tr><td>${playerLabel(p)}</td>${phInputs}${gaInputs}</tr>`;
   }).join('');
   openModal(`<h2>⚡ Skupinový test</h2>
     <div class="fg"><label>Datum</label><input type="date" id="grpDate" value="${today()}"></div>
-    <div class="fg"><label>Počet pokusů (herní metriky)</label><input type="number" id="grpAttempts" value="15" min="1" style="width:100px"></div>
+    ${tr?`<div class="sk-kapsle grp-druh" role="group" aria-label="Druh testu"><button type="button" aria-pressed="true" onclick="grpDruh(this,'f')"><i class="fa-solid fa-wave-square" aria-hidden="true"></i>Fyzický</button><button type="button" aria-pressed="false" onclick="grpDruh(this,'g')"><i class="fa-solid fa-bullseye" aria-hidden="true"></i>Herní</button></div>`:''}
+    <div class="fg${tr?' grp-g':''}"${tr?' style="display:none"':''}><label>Počet pokusů (herní metriky)</label><input type="number" id="grpAttempts" value="15" min="1" style="width:100px"></div>
     <div class="sk-vysv" style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">Vyplň jen hodnoty, které jsi změřil. Prázdná pole se přeskočí. U herních metrik zadej počet úspěšných, ne procenta.</div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px">
       <table class="grp-tbl">
@@ -6299,6 +6318,7 @@ function openGroupTest(){
     <div class="ma"><button class="btn btn-o" onclick="closeModalConfirm('Zahodit rozepsaný skupinový test? Zadané hodnoty pro celý tým se ztratí.')">Zrušit</button><button class="btn btn-p" onclick="saveGroupTest()">Uložit vše</button></div>`);
   setTimeout(snapModal,90);
 }
+function grpDruh(b,k){b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));document.querySelectorAll('#modalContent .grp-f,#modalContent .grp-g').forEach(e=>e.style.display=e.classList.contains('grp-'+k)?'':'none');}
 function saveGroupTest(){
   const date=document.getElementById('grpDate').value;
   const attempts=parseInt(document.getElementById('grpAttempts')?.value)||15;
@@ -6313,8 +6333,10 @@ function saveGroupTest(){
     gaA.forEach(m=>{if(!metPlati(m,p))return;const v=parseInt(document.getElementById(`g_ga_${p.id}_${m.id}`)?.value);if(!isNaN(v))game[m.id]={score:v,attempts};});
     if(!Object.keys(physical).length&&!Object.keys(game).length) return;
     if(!p.testSessions)p.testSessions=[];
-    p.testSessions=p.testSessions.filter(s=>s.date!==date);
-    p.testSessions.push({date,physical,game,note});
+    // Kolo 97: ve vzhledu Trenéra se test ve stejný den doplní (fyzický a herní zvlášť), jako u + Test.
+    const ex=isTrener()&&p.testSessions.find(s=>s.date===date);
+    if(ex){ex.physical={...(ex.physical||{}),...physical};ex.game={...(ex.game||{}),...game};if(note)ex.note=note;}
+    else{p.testSessions=p.testSessions.filter(s=>s.date!==date);p.testSessions.push({date,physical,game,note});}
     p.testSessions.sort((a,b)=>a.date.localeCompare(b.date));
     saved++;
   });
@@ -6498,9 +6520,11 @@ function renderOverviewObsah(el){
 
   // Sort
   let rows=ovPoz?active.filter(p=>pozHracky(p).includes(ovPoz)):[...active];
-  if(ovSort.col){
-    const col=cols.find(c=>c.id===ovSort.col);
-    if(col&&typeof col.sortVal==='function'){rows.sort((a,b)=>{const va=col.sortVal(a),vb=col.sortVal(b);if(va===vb)return 0;const r=va<vb?-1:1;return ovSort.asc?r:-r;});}
+  // Kolo 97 (revize F6): ve vzhledu Trenéra bez zvoleného řazení podle Overallu od nejvyššího, jako Domů.
+  const ovS=isTrener()&&!ovSort.col?{col:'overall',asc:false}:ovSort;
+  if(ovS.col){
+    const col=cols.find(c=>c.id===ovS.col);
+    if(col&&typeof col.sortVal==='function'){rows.sort((a,b)=>{const va=col.sortVal(a),vb=col.sortVal(b);if(va===vb)return 0;const r=va<vb?-1:1;return ovS.asc?r:-r;});}
   }
 
   // Kolo 86: třída c-<id> (skrývání sloupců) a skup na prvním sloupci každé skupiny (Overall | fyzické | herní | …).
@@ -6509,7 +6533,7 @@ function renderOverviewObsah(el){
   const tCls=(col,i)=>{const pr=cols.slice(1,i).filter(c=>!skryte.includes(c.id)).pop();return`c-${col.id}${pr&&skup(col.id)!==skup(pr.id)?' skup':''}`;};
   const heads=cols.map((col,i)=>{
     if(col.noSort)return`<th style="cursor:default">${col.label}</th>`;
-    const cls=ovSort.col===col.id?(ovSort.asc?'sort-asc':'sort-desc'):'';
+    const cls=ovS.col===col.id?(ovS.asc?'sort-asc':'sort-desc'):'';
     return `<th class="${cls} ${tCls(col,i)}" onclick="ovSortBy('${col.id}')">${col.label}</th>`;
   }).join('');
 
@@ -6578,7 +6602,7 @@ function renderZapasyObsah(el){
     const rp=r.length?recvPct(r.reduce((x,y)=>x+y.value,0)/r.length):null;
     const t=m.tournamentId&&(S.tournaments||[]).find(x=>x.id===m.tournamentId);
     return`<div class="match-card" onclick="openMatchStats('${m.id}')"><div class="match-card-head"><span class="match-card-opp">vs ${m.opponent}</span><span class="match-card-date">${fmtDate(m.date)}</span></div>
-      <div style="font-size:0.8rem;color:var(--gm)">${m.mode!=='prijem'?`Body: <b style="color:${b>0?'var(--gl)':b<0?'var(--red)':'var(--gm)'}">${b>0?'+':''}${b}</b>`:''}${rp!=null?` · Příjem: <b style="color:${zapRecvBarva(rp)}">${rp} %</b>`:''}${t?` · <i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name}`:''}</div><button class="zap-smazat" onclick="event.stopPropagation();deleteMatch('${m.id}')" aria-label="Smazat zápas vs ${m.opponent}" title="Smazat zápas"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button></div>`;
+      <div style="font-size:0.8rem;color:var(--gm)">${m.mode!=='prijem'?`Body: <b style="color:${b>0?'var(--gl)':b<0?'var(--red)':'var(--gm)'}">${b>0?'+':''}${b}</b>`:''}${rp!=null?` · Příjem: <b style="color:${zapRecvBarva(rp)}">${rp} %</b>`:''}${t?` · <i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name}`:''}</div></div>`;
   };
   const turKarta=tid=>{const t=S.tournaments.find(x=>x.id===tid),n=tournamentMatches(tid).length;
     return`<div class="match-card" onclick="openTournamentDetail('${tid}')"><div class="match-card-head"><span class="match-card-opp"><i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name}${t.closed?' <i class="fa-solid fa-flag-checkered" aria-hidden="true" title="Uzavřený"></i>':''}</span><span class="match-card-date">${tournamentDateRange(tid)}</span></div><div style="font-size:0.8rem;color:var(--gm)">${n} ${n===1?'zápas':n<5?'zápasy':'zápasů'}</div></div>`;};
@@ -6610,6 +6634,7 @@ function zapTymGraf(el,ms){
         y:{ticks:{font:{size:10},callback:v=>czc(v)}},y2:{position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{font:{size:10},callback:v=>v+' %'}}}}});
 }
 function ovSortBy(col){
+  if(isTrener()&&!ovSort.col)ovSort={col:'overall',asc:false};
   if(ovSort.col===col)ovSort.asc=!ovSort.asc;
   else{ovSort.col=col;ovSort.asc=true;}
   renderOverview();
@@ -7582,18 +7607,22 @@ function openMatchDetail(mid){
   const active=getActiveP();
   const allPlayers=[...getActiveP(),...(S.players.filter(p=>p.archived))];
 
+  // Kolo 97 (revize F6): ve vzhledu Trenéra sloupce Body / Příjem s nadpisem v řádku setu místo „Body: … Příjem: …“ u každé hráčky.
+  const mdB=m.mode!=='prijem',mdR=m.sets.some(st=>st.actions.some(a=>a.type==='prijem'));
   const setBlocks=m.sets.map(set=>{
     const withData=allPlayers.filter(p=>set.actions.some(a=>a.pid===p.id));
     if(!withData.length)return`<div style="color:var(--gm);font-size:0.82rem;margin-bottom:8px">Set ${set.num}: žádná data</div>`;
     const rows=withData.map(p=>{
       const score=calcBodyScore(p.id,set);
       const recvAvg=calcRecvAvg(p.id,set);
+      if(isTrener())return`<div class="me md-r"><div class="ml">${playerLabel(p)}</div>${mdB?`<span class="md-c" style="color:${score>0?'var(--gl)':score<0?'var(--red)':'var(--gm)'}">${score>0?'+':''}${score}</span>`:''}${mdR?`<span class="md-c">${recvAvg!=null?czc(recvAvg.toFixed(1)):'–'}</span>`:''}</div>`;
       return`<div class="me">
         <div class="ml">${playerLabel(p)}</div>
         ${m.mode!=='prijem'?`<span style="color:${score>0?'var(--gl)':score<0?'var(--red)':'var(--gm)'}">Body: ${score>0?'+':''}${score}</span>`:''}
         ${recvAvg!=null?`<span style="color:var(--gm);margin-left:8px">Příjem: ${czc(recvAvg.toFixed(1))}</span>`:''}
       </div>`;
     }).join('');
+    if(isTrener())return`<div style="margin-bottom:14px"><div class="me md-hl"><div class="ml">Set ${set.num}</div>${mdB?'<span class="md-c">Body</span>':''}${mdR?'<span class="md-c">Příjem</span>':''}</div>${rows}</div>`;
     return`<div style="margin-bottom:14px"><div style="font-weight:700;font-size:0.8rem;color:var(--gm);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Set ${set.num}</div>${rows}</div>`;
   }).join('');
 
@@ -7612,17 +7641,28 @@ function openMatchStats(mid){
   const allPlayers=[...getActiveP(),...S.players.filter(p=>p.archived)];
   const withData=allPlayers.filter(p=>m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
   const allActions=m.sets.flatMap(s=>s.actions);
+  // Kolo 97 (revize F6): ve vzhledu Trenéra turnaj v podtitulku (odkaz), dole Vyjmout z turnaje a Smazat.
+  const tur=isTrener()&&m.tournamentId&&(S.tournaments||[]).find(x=>x.id===m.tournamentId);
   openModal(`<h2>📊 vs ${m.opponent}</h2>
-    <div style="font-size:0.78rem;color:var(--gm);margin-bottom:12px">${fmtDate(m.date)} · ${setyTxt(m.sets.length,'setů')} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[m.mode]}</div>
+    <div style="font-size:0.78rem;color:var(--gm);margin-bottom:12px">${fmtDate(m.date)} · ${setyTxt(m.sets.length,'setů')} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[m.mode]}${tur?` · <button type="button" class="zs-tur" onclick="closeModal();openTournamentDetail('${tur.id}')"><i class="fa-solid fa-trophy" aria-hidden="true"></i>${tur.name}</button>`:''}</div>
     <div class="set-tabs" style="margin-bottom:12px" id="statsSetTabs">
       ${m.sets.map((s,i)=>`<div class="set-tab" onclick="showMatchSetStats('${mid}',${i})">${s.closed?'✓ ':''}Set ${s.num}</div>`).join('')}
       <div class="set-tab active" onclick="showMatchTotal('${mid}')">Celkem</div>
     </div>
     <div id="statsContent"></div>
-    <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+    <div class="ma">${isTrener()?`${tur&&!tur.closed?`<button class="btn btn-o" onclick="zapVyjmout('${mid}')"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Vyjmout z turnaje</button>`:''}<button class="btn btn-d" onclick="deleteMatch('${mid}')"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Smazat</button>`:''}<button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
   setTimeout(()=>renderMatchStats(m, allActions, withData, m.mode),80);
 }
 
+// Kolo 97 (revize F6): vyjmutí zápasu z turnaje ve statistikách zápasu (vzhled Trenéra), s „Vrátit“.
+function zapVyjmout(mid){
+  const m=(S.matches||[]).find(x=>x.id===mid);if(!m||!m.tournamentId)return;
+  const snap=undoSnapshot(),tid=m.tournamentId;
+  delete m.tournamentId;save();cleanupTournamentIfEmpty(tid);
+  if(document.getElementById('zapView')?.style.display==='block')renderZapasy();
+  openMatchStats(mid);
+  offerUndo(snap,'Zápas vyjmut z turnaje',()=>{if(document.getElementById('statsSetTabs'))openMatchStats(mid);});
+}
 function renderMatchStats(m, actions, players, mode){
   const el=document.getElementById('statsContent');if(!el)return;
   const showBody=mode!=='prijem';
@@ -7631,13 +7671,14 @@ function renderMatchStats(m, actions, players, mode){
     const body=actions.filter(a=>a.pid===p.id&&a.type==='body').reduce((s,a)=>s+a.value,0);
     const rv=actions.filter(a=>a.pid===p.id&&a.type==='prijem').map(a=>a.value);
     const pct=recvPct(rv.length?rv.reduce((s,v)=>s+v,0)/rv.length:null);
+    if(isTrener())return`<div class="me md-r"><div class="ml">${playerLabel(p)}</div>${showBody?`<span class="md-c" style="color:${body>0?'var(--gl)':body<0?'var(--red)':'var(--gm)'}">${body>0?'+':''}${body}</span>`:''}${showRecv?`<span class="md-c md-w">${pct!=null?`${pct} % <small>/${rv.length}</small>`:'–'}</span>`:''}</div>`;
     return`<div class="me"><div class="ml">${playerLabel(p)}</div>
       ${showBody?`<span style="color:${body>0?'var(--gl)':body<0?'var(--red)':'var(--gm)'}; font-family:'Bebas Neue',sans-serif;font-size:1.1rem">${body>0?'+':''}${body}</span>`:''}
       ${pct!=null&&showRecv?`<span style="font-size:0.82rem;color:var(--gm);margin-left:8px">${pct}% <small>/${rv.length}</small></span>`:''}
     </div>`;
   }).join('');
   el.innerHTML=`
-    <div class="card" style="margin-bottom:10px"><h3>Hráčky</h3>${playerRows||'<div class="no-data">Žádná data</div>'}</div>
+    <div class="card" style="margin-bottom:10px"><h3>Hráčky</h3>${isTrener()&&playerRows?`<div class="me md-hl"><div class="ml"></div>${showBody?'<span class="md-c">Body</span>':''}${showRecv?'<span class="md-c md-w">Příjem</span>':''}</div>`:''}${playerRows||'<div class="no-data">Žádná data</div>'}</div>
     ${showBody?`<div class="card" style="margin-bottom:10px"><h3>📈 +/− v čase</h3><div class="cw"><canvas id="msLine"></canvas></div></div>`:''}
     ${showRecv?`<div class="card"><h3>📥 Příjem</h3><div class="cw"><canvas id="msRecv"></canvas></div></div>`:''}`;
   // Draw charts
@@ -7923,7 +7964,7 @@ function openTournamentDetail(tid,backMid){
         ${m.mode!=='prijem'?`Body: <b style="color:${totalBody>0?'var(--gl)':totalBody<0?'var(--red)':'var(--gm)'}">${totalBody>0?'+':''}${totalBody}</b>`:''}
         ${recvAvgPct!=null?` Příjem: <b>${recvAvgPct}%</b>`:''}
       </div>
-      ${t.closed?'':`<div style="display:flex;justify-content:flex-end;margin-top:6px">
+      ${t.closed||isTrener()?'':`<div style="display:flex;justify-content:flex-end;margin-top:6px">
         <button class="btn btn-o sm" style="font-size:0.7rem" onclick="event.stopPropagation();removeMatchFromTournament('${m.id}','${tid}','${bm}')">↩ Vyjmout z turnaje</button>
       </div>`}
     </div>`;
@@ -8891,7 +8932,7 @@ const HELP_DATA=[
 {q:`Jak zapíšu test jedné konkrétní hráčce?`,
  a:`Ve vzhledu Trenéra klepni na kartě hráčky na <b>+ Test</b> (nebo na oranžové + vpravo dole) a vyber <b>Fyzický test</b> nebo <b>Herní test</b>. Formulář pak má jen tu jednu část. Když zapíšeš fyzický i herní test se stejným datem, spojí se do jednoho testování.<br>V klasickém vzhledu: otevři kartu hráčky a klikni na tlačítko „+ Test" nahoře u jejího jména. Aplikace ti ukáže formulář se všemi aktivně zapnutými fyzickými i herními metrikami (viz Nastavení, pokud ti nějaká chybí nebo přebývá) — vyplníš, co jsi naměřil, datum (výchozí je dnešek, ale jde změnit), volitelně poznámku, a uložíš.`},
 {q:`Jak zapíšu „Skupinový test" (celý tým najednou)?`,
- a:`V menu ⋮ klikni na „⚡ Skupinový test" — aplikace ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a metrikami jako sloupci, kam vyplňuješ hodnoty přímo za sebou bez přepínání mezi kartami. Je to rychlejší na tělocvičně, ale má jedno omezení: počet pokusů u herních metrik aplikace bere jako jedno společné číslo pro celý tým najednou (nastavíš ho nahoře nad tabulkou), zatímco v testu jedné hráčky (+ Test) jde počet pokusů nastavit zvlášť pro každou metriku. Aplikace po uložení skupinového testu navíc rovnou připraví testovací Miniher (viz blok „Minihry").`,
+ a:`V menu ⋮ klikni na „⚡ Skupinový test" — aplikace ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a metrikami jako sloupci, kam vyplňuješ hodnoty přímo za sebou bez přepínání mezi kartami. Je to rychlejší na tělocvičně, ale má jedno omezení: počet pokusů u herních metrik aplikace bere jako jedno společné číslo pro celý tým najednou (nastavíš ho nahoře nad tabulkou), zatímco v testu jedné hráčky (+ Test) jde počet pokusů nastavit zvlášť pro každou metriku. Aplikace po uložení skupinového testu navíc rovnou připraví testovací Miniher (viz blok „Minihry").<br>Ve vzhledu Trenéra je nahoře přepínač <b>Fyzický / Herní</b>: tabulka ukazuje jen jednu skupinu metrik, ať se vejde na telefon. Vyplněné hodnoty se při přepnutí neztratí a uloží se obě skupiny najednou. Fyzický a herní test ve stejný den se doplní, nepřepíšou (stejně jako u + Test).`,
  kw:"hromadný test celý tým najednou"},
 {q:`Musím vyplnit úplně všechny metriky, nebo jde nějaké přeskočit?`,
  a:`Jde přeskočit cokoli — aplikace ukládá jen políčka, která vyplníš, prázdná aplikace jednoduše přeskočí a při výpočtech (grafy, T-skóre, Overall) je ignoruje, místo aby je počítala jako nulu. Klidně tedy zapíšeš jen část metrik, když na zbytek nebyl čas.<br>U herních metrik se zapisuje počet úspěšných pokusů, ne procenta. Počet pokusů v testu měň, jen když se dnes dělal jiný počet než výchozí.`},
@@ -9140,7 +9181,7 @@ const HELP_DATA=[
  kw:"smazat zápas omylem překliknutí zkouška test zahodit koš"},
 ]},
 
-{title:`Zápasová historie a tab „Zápas"`,icon:"📋",qa:[
+{title:`Zápasová historie a tab „Zápas"`,tt:`Zápasy a záložka „Zápas“ na kartě`,icon:"📋",qa:[
 {q:`Kde najdu historii odehraných zápasů?`,
  a:`V menu ⋮ pod „Zápasy" najdeš „📚 Záznamy zápasů" — kompletní seznam všech dokončených zápasů celého týmu. Konkrétní hráčka navíc má svoje zápasy vidět i přímo na svojí kartě v tabu „📋 Zápas".`},
 {q:`Co aplikace ukazuje v tabu „📋 Zápas" na kartě hráčky?`,
@@ -9148,7 +9189,7 @@ const HELP_DATA=[
 {q:`Co znamená štítek s názvem turnaje na kartě zápasu?`,
  a:`Značí, že aplikace tenhle zápas zařadila (automaticky podle data, nebo ručně) do konkrétního turnaje — kliknutím na štítek se dostaneš rovnou do detailu toho turnaje. Zápas bez štítku aplikace bere jako osamocený, do žádného turnaje nezařazený.`},
 {q:`Co je na záložce Zápasy?`,
- a:`Ve vzhledu Trenéra je záložka <b>Zápasy</b> přehled zápasových statistik týmu za aktuální sezónu:<br>• Nahoře odkazy na <b>Záznamy zápasů</b> a <b>Turnaje</b>.<br>• Souhrn: kolik zápasů a turnajů se v sezóně odehrálo, body týmu dohromady a průměrná kvalita příjmu (1 = 100 %, 3 = 50 %, 5 = 0 %).<br>• Tabulka hráček: zápasy, ve kterých má hráčka nějaký záznam, body celkem a průměr bodů na zápas, kvalita příjmu ze všech jejích příjmů dohromady (stejně jako v Overallu a u odznaku Přijímačka) a počet příjmů. Klepnutím na záhlaví sloupce řadíš, klepnutím na jméno otevřeš kartu hráčky. Sloupec Forma ukazuje 🔥/❄️ z posledního turnaje sezóny (viz „Co znamená Forma hráčky“).<br>• Dole posledních pět zápasů (klepnutím otevřeš statistiky zápasu) a poslední turnaje.<br>Zápas spustíš oranžovým tlačítkem vpravo dole nebo v menu ⋮. Ikonou koše u zápasu ho smažeš (s „Vrátit“).`,
+ a:`Ve vzhledu Trenéra je záložka <b>Zápasy</b> přehled zápasových statistik týmu za aktuální sezónu:<br>• Nahoře odkazy na <b>Záznamy zápasů</b> a <b>Turnaje</b>.<br>• Souhrn: kolik zápasů a turnajů se v sezóně odehrálo, body týmu dohromady a průměrná kvalita příjmu (1 = 100 %, 3 = 50 %, 5 = 0 %).<br>• Tabulka hráček: zápasy, ve kterých má hráčka nějaký záznam, body celkem a průměr bodů na zápas, kvalita příjmu ze všech jejích příjmů dohromady (stejně jako v Overallu a u odznaku Přijímačka) a počet příjmů. Klepnutím na záhlaví sloupce řadíš, klepnutím na jméno otevřeš kartu hráčky. Sloupec Forma ukazuje 🔥/❄️ z posledního turnaje sezóny (viz „Co znamená Forma hráčky“).<br>• Dole posledních pět zápasů (klepnutím otevřeš statistiky zápasu) a poslední turnaje.<br>Zápas spustíš oranžovým tlačítkem vpravo dole nebo v menu ⋮. Smazat zápas jde v jeho statistikách (klepni na zápas, dole Smazat, s „Vrátit“); tam ho jde i vyjmout z turnaje.`,
  kw:"záložka zápasy statistiky tým body příjem tabulka sezóna"},
 ]},
 
@@ -9158,7 +9199,7 @@ const HELP_DATA=[
 {q:`Jak aplikace pozná, že dva zápasy patří do stejného turnaje?`,
  a:`Aplikace to zkusí poznat sama podle STEJNÉHO DATA — zápasy odehrané ve stejný den aplikace automaticky navrhne jako jeden turnaj. Návrh aplikace jde ale vždycky ručně opravit (viz další otázka), kdyby se to netrefilo.`},
 {q:`Jak zápas z turnaje ručně vyjmu, nebo naopak přidám?`,
- a:`V menu ⋮ → „🏟 Turnaje" otevři detail konkrétního turnaje — tam aplikace nabízí úpravu, které zápasy do turnaje patří, takže je jde kdykoli ručně přidat nebo z turnaje zase vyřadit, i napříč různými daty.`},
+ a:`V menu ⋮ → „🏟 Turnaje" otevři detail konkrétního turnaje — tam aplikace nabízí úpravu, které zápasy do turnaje patří, takže je jde kdykoli ručně přidat nebo z turnaje zase vyřadit, i napříč různými daty. Ve vzhledu Trenéra se zápas vyjímá v jeho statistikách: klepni na zápas (v turnaji nebo na záložce Zápasy) a dole zvol <b>Vyjmout z turnaje</b> (s „Vrátit“). Přidat zápas jde dál v detailu turnaje.`},
 {q:`Jak založím turnaj dopředu, ještě před prvním zápasem?`,
  a:`Ve vzhledu Trenéra klepni na oranžové tlačítko vpravo dole a zapni přepínač <b>Turnaj</b>. Vybereš otevřený turnaj z posledních dnů, nebo založíš nový. Pak každý zápas spuštěný tímto tlačítkem (Spustit zápas) se zapíše do turnaje, dokud přepínač nevypneš. Turnaj jde založit i jako dřív v menu ⋮ → Turnaje, jen názvem bez zápasu.`},
 {q:`Jak založím turnaj přes víc dnů?`,
@@ -9197,14 +9238,14 @@ const HELP_DATA=[
 ]},
 {group:"Přehledy",blocks:[
 
-{title:"Přehled týmu",icon:"📊",qa:[
+{title:"Přehled týmu",tt:"Testy",icon:"📊",qa:[
 {q:`Co aplikace ukazuje v „Přehledu týmu" (ve vzhledu Trenéra záložka Testy)?`,
  a:`Aplikace tu ukáže jednu velkou tabulku se všemi aktivními hráčkami jako řádky a klíčovými čísly (T-skóre jednotlivých metrik, Overall...) jako sloupci — hodí se, když chceš porovnat celý tým najednou, místo abys procházel hráčky po jedné. Klepnutím na jméno otevřeš kartu hráčky, klepnutím na Overall rozpad na fyzické/herní/zápasy. Ve vzhledu Trenéra je nad tabulkou jen přepínač „Norma“: kapsle se dvěma díly „Aktuální tým“ a „Celá databáze“ (vybraný je zvýrazněný) a vedle počet hráček v normě. Klepnutím na druhý díl normu přepneš.`},
 {q:`Jak skryju sloupce nebo zmenším tabulku?`,
  a:`Ve vzhledu Trenéra je nad tabulkou v Testech i v Zápasech tlačítko <b>Zobrazení</b>. V Testech přepneš <b>Kompaktní</b> (jen hodnoty) a <b>Detail</b> (navíc pořadí v týmu # a T-skóre). Pod tím odškrtneš sloupce, které nechceš vidět; počet skrytých ukazuje číslo na tlačítku. Volba platí na tomhle zařízení. Silnější svislá čára v tabulce Testy odděluje skupiny sloupců: Overall, fyzické metriky, herní metriky, milníky a poslední test.`,
  kw:"skrýt sloupce kompaktní detail zobrazení tabulka testy zápasy"},
 {q:`Jak podle sloupce seřadím hráčky (třeba podle Overallu)?`,
- a:`Klikni přímo na název sloupce v záhlaví tabulky — aplikace podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně).`},
+ a:`Klikni přímo na název sloupce v záhlaví tabulky — aplikace podle něj seznam seřadí, dalším kliknutím na stejný sloupec obrátí směr řazení (sestupně/vzestupně). Ve vzhledu Trenéra jsou Testy na začátku seřazené podle Overallu od nejvyššího, stejně jako karty na Domů.`},
 {q:`Co znamená hvězdička/horní index u čísla v tabulce?`,
  a:`Je to úplně stejná informace jako na kartě hráčky (viz blok „Overall") — jen aplikace ji tady kreslí jako malý horní index * místo velké hvězdičky, protože v tabulce je míň místa. Značí, že aplikace měla u téhle hráčky k dispozici míň naměřených metrik než u nejtestovanější hráčky v týmu.`},
 {q:`Co znamenají ikonky 🎯/▫️ vedle sloupce „Útok %"?`,
@@ -9214,7 +9255,7 @@ const HELP_DATA=[
  kw:"stará data tečka ikona hodiny papír upozornění zastaralé testování přetestovat"},
 ]},
 
-{title:"Porovnání",icon:"⚖",qa:[
+{title:"Porovnání",tt:"Srovnání",icon:"⚖",qa:[
 {q:`Co aplikace umí v „Porovnání"?`,
  a:`Aplikace vedle sebe postaví víc hráček najednou v pavoučích i sloupcových grafech, takže vidíš jejich profily přímo v kontrastu, místo abys je porovnával z paměti mezi jednotlivými kartami. Ve vzhledu Trenéra se záložka jmenuje <b>Srovnání</b>.`,
  kw:"srovnání porovnat záložka"},
@@ -9374,12 +9415,14 @@ function helpTxt(t){
   if(!isTrener())return t;t=String(t);
   HELP_TXT_KONTEXT.forEach(([k,fa])=>{const zb=k.slice(k.indexOf(" "));t=t.split(k).join(`<i class="fa-solid fa-${fa} help-ti" aria-hidden="true"></i>${zb}`);});
   return t.replace(HELP_TXT_RE,(_,e)=>`<i class="fa-solid fa-${HELP_TXT_FA[e]} help-ti" aria-hidden="true"></i>`);}
+// Kolo 97 (revize F6): ve vzhledu Trenéra se oddíly Nápovědy jmenují jako záložky (Testy, Srovnání, Zápasy).
+function helpNazev(b){return isTrener()&&b.tt?b.tt:b.title;}
 function helpQaHtml(qa,badge){
   return`<div class="help-qa"><details><summary>${helpTxt(qa.q)}${badge?`<span class="help-badge">${badge}</span>`:""}</summary><div class="help-a">${helpTxt(qa.a)}</div></details></div>`;
 }
 function helpRenderBlocks(){
   return HELP_DATA.map(g=>`<div class="help-group-title">${g.group}</div>${g.blocks.map(b=>
-    `<details class="help-block"><summary>${helpIco(b.icon)}${b.title}<span class="help-count">${b.qa.length}</span></summary>${b.qa.map(qa=>helpQaHtml(qa)).join("")}</details>`
+    `<details class="help-block"><summary>${helpIco(b.icon)}${helpNazev(b)}<span class="help-count">${b.qa.length}</span></summary>${b.qa.map(qa=>helpQaHtml(qa)).join("")}</details>`
   ).join("")}`).join("");
 }
 function helpSearch(query){
@@ -9392,7 +9435,7 @@ function helpSearch(query){
   HELP_DATA.forEach(g=>g.blocks.forEach(b=>{
     b.qa.forEach(qa=>{
       const hay=helpNorm(qa.q+" "+qa.a+" "+(qa.kw||""));
-      if(hay.includes(nq))hits.push({qa,blockTitle:b.title,blockIcon:b.icon});
+      if(hay.includes(nq))hits.push({qa,blockTitle:helpNazev(b),blockIcon:b.icon});
     });
   }));
   countEl.textContent=hits.length?`Nalezeno: ${hits.length}`:"Nic nenalezeno — zkus jiné slovo";
