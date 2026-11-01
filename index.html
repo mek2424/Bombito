@@ -1137,6 +1137,14 @@ html.skin-trener .gr-pill{display:inline-flex;align-items:center;gap:6px;font-si
 html.skin-trener .gr-pill i{font-size:.9em;margin:0!important;color:inherit!important;opacity:.85}
 html.skin-trener .ov-prazdne{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}
 html.skin-trener .ov-prazdne .no-data{padding:0}
+/* Kolo 92: šipka změny Overallu a tenké křivky (karta hráčky, průměr týmu). */
+html.skin-trener .ov-sip{display:inline-block;font-size:13px!important;line-height:1;vertical-align:middle;margin-left:3px;font-family:inherit}
+html.skin-trener .ov-sip.nah{color:var(--court-ink)}
+html.skin-trener .ov-sip.dol{color:var(--red)}
+html.skin-trener .pd-ov .ov-sip{font-size:16px!important;margin-left:4px}
+html.skin-trener .ov-spark{display:block;margin:6px auto 0;overflow:visible}
+html.skin-trener .ov-spark polyline{fill:none;stroke:var(--court-ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
+html.skin-trener .ov-spark circle{fill:var(--court-ink)}
 html.skin-trener .kat-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:0.78rem;color:var(--gm)}
 html.skin-trener #libRez .poz-b i{font-size:12px;color:var(--ink-faint-ink)}
 html.skin-trener #libRez .poz-b{padding-left:12px}
@@ -2678,6 +2686,31 @@ function overallTimelineHtml(p,norms){
   }
   return`<div style="margin:10px 0 0"><div style="font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gm);margin-bottom:4px">Overall v čase</div>${body}</div>`;
 }
+// Kolo 92 (revize N4): vývoj Overallu na první pohled. Body řady = dny s testem nebo zápasem hráčky
+// (jako „Overall v čase“), počítané overallAt; změna = poslední den proti předchozímu.
+function ovDny(p){const d=new Set();(p.testSessions||[]).forEach(x=>x.date&&d.add(x.date));realMatches().forEach(m=>{if(playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null)d.add(m.date);});return[...d].sort();}
+function ovRada(p,norms,max){return ovDny(p).slice(-max).map(d=>({d,v:overallAt(p,norms,d)?.score??null})).filter(x=>x.v!=null);}
+function ovSipka(p,norms){
+  if(!isTrener())return'';
+  const r=ovRada(p,norms,2);if(r.length<2)return'';
+  const dv=r[1].v-r[0].v;if(Math.abs(dv)<1)return'';
+  return`<span class="ov-sip ${dv>0?'nah':'dol'}" title="Od ${fmtDate(r[0].d)}: ${dv>0?'+':'−'}${Math.abs(dv)}"><i class="fa-solid fa-caret-${dv>0?'up':'down'}" aria-hidden="true"></i></span>`;
+}
+function ovSpark(r,w,h,tit){
+  if(r.length<2)return'';
+  const vs=r.map(x=>x.v),mn=Math.min(...vs),mx=Math.max(...vs),rz=Math.max(mx-mn,4),st=(mn+mx)/2;
+  const y=v=>(h-2-((v-(st-rz/2))/rz)*(h-4)).toFixed(1),x=i=>(2+i*(w-4)/(r.length-1)).toFixed(1);
+  const b=r.map((o,i)=>x(i)+','+y(o.v)).join(' ');
+  return`<span title="${tit}: ${r[0].v} → ${r[r.length-1].v}"><svg class="ov-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${tit}: ${r[0].v} až ${r[r.length-1].v}"><polyline points="${b}"/><circle cx="${x(r.length-1)}" cy="${y(vs[vs.length-1])}" r="2.4"/></svg></span>`;
+}
+function ovKartaSpark(p,norms){return isTrener()?ovSpark(ovRada(p,norms,16),78,20,'Overall v čase'):'';}
+// Průměr týmu v čase: posledních 12 dnů, kdy má někdo z týmu test nebo zápas.
+function tymSpark(akt,norms){
+  if(!isTrener())return'';
+  const dny=[...new Set(akt.flatMap(ovDny))].sort().slice(-12);
+  const r=dny.map(d=>{const v=akt.map(p=>overallAt(p,norms,d)?.tAvg).filter(x=>x!=null);return{d,v:v.length?overallDisplay(v.reduce((a,b)=>a+b,0)/v.length):null};}).filter(x=>x.v!=null);
+  return ovSpark(r,64,16,'Průměr týmu v čase');
+}
 function overallBreakdownHtml(p,norms,ovMax){
   const ov=overallForPlayer(p,norms,ovMax);
   const blocks=[];
@@ -3712,7 +3745,7 @@ function renderHome(){
     return`<div class="home-card${hasData?"":" home-card-nodata"}${isTrener()&&hasKap(p)?" home-kap":""}" data-pid="${p.id}" onclick="selectPlayer('${p.id}')">
       ${av}
       <div style="font-size:0.84rem;font-weight:600;color:var(--w);display:flex;align-items:center;gap:1px">${p.name}${staleDot(p)}</div>
-      ${isTrener()&&domuRazeniAkt()!=='ov'?`<div class="mv" style="font-size:1.9rem;color:${dh?dh.c:"var(--gm)"}">${dh?dh.txt:"–"}</div>`:`<div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}</div>`}
+      ${isTrener()&&domuRazeniAkt()!=='ov'?`<div class="mv" style="font-size:1.9rem;color:${dh?dh.c:"var(--gm)"}">${dh?dh.txt:"–"}</div>`:`<div class="mv" style="font-size:1.9rem;color:${hasData?overallColor(ov.tAvg):"var(--gm)"}">${ov.score??"–"}${star}${hasData?ovSipka(p,norms):''}</div>`}
       ${badges&&!isTrener()?`<div style="font-size:0.85rem">${badges}</div>`:""}${pozRoh(p)}${kapRoh(p)}${formaRoh(p,posledniTurnaj)}${odznakyRoh(p)}${isTrener()&&p.dres!=null?`<span class="dres-vz">${p.dres}</span>`:''}
     </div>`;
   }).join("");
@@ -3722,6 +3755,7 @@ function renderHome(){
       <div style="text-align:center;flex-shrink:0">
         <div class="mv" style="font-size:2.2rem;color:${teamScore!=null?overallColor(teamTAvg):"var(--gm)"}${teamScore!=null?";cursor:pointer":""}" ${teamScore!=null?`onclick="showTeamOverallBreakdown()" title="Klepni pro rozpad na fyzické/herní/zápasy"`:""}>${teamScore??"–"}</div>
         <div style="font-size:0.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--gm);margin-top:2px;white-space:nowrap">Průměr týmu</div>
+        ${tymSpark(active,norms)}
       </div>
       <div style="width:1px;align-self:stretch;background:var(--brd)"></div>
       <div style="display:flex;flex-direction:column;gap:5px;font-size:0.78rem;color:var(--gm)">
@@ -3826,7 +3860,7 @@ function renderDetail(){
   const ovScopeIcon=S.normScope==="current"?"👥":"🗃",ovScopeTitle=S.normScope==="current"?"aktuální tým":"celá databáze";
   const ovHtml=ov.score==null
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
-    :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}</div></div>`;
+    :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}${ovSipka(p,ovNorms)}</div>${ovKartaSpark(p,ovNorms)}</div>`;
   const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
   el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${dresHtml(p)}${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2>${pozKartaHtml(p)}<p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${(isTrener()?tabyPoradi(p):TABS).map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}${t.ma===false?' tab-bez':''}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
@@ -5382,6 +5416,7 @@ function playerRecentMatchAvgAt(p,type,cap,cutoff){
   return ms.length?mean(ms.map(m=>playerMatchMetric(p,m,type))):null;
 }
 function overallMatchRawAt(p,norms,cutoff){
+  if(jenPrijem(p)){const r=overallMatchRawAtJenPrijem(p,norms,cutoff);if(r)return r;}
   const vals=[];
   const bodyAvg=playerRecentMatchAvgAt(p,'body',OVERALL_MATCH_CAP,cutoff);
   if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
@@ -5410,6 +5445,14 @@ function overallAt(p,norms,cutoff){
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
   const tAvg=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum;
   return{score:overallDisplay(tAvg),tAvg};
+}
+// Kolo 92: libero „Jen příjem“ – zápasová část k datu jen z příjmu (stejně jako overallMatchRaw).
+function overallMatchRawAtJenPrijem(p,norms,cutoff){
+  const vals=[];
+  const ms=realMatches().filter(m=>m.date<=cutoff&&playerMatchMetric(p,m,'prijem')!=null).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
+  const pool=playerReceptionPool(p,ms);
+  if(pool)vals.push(tRaw(shrinkPct(pool.avg,pool.n,norms.prijem_zapas?.mu,SHRINK_K_PRIJEM),norms.prijem_zapas));
+  return{vals,n:vals.length,total:1};
 }
 // Sezónně omezená sourozenecká verze pro MINIHRU (Kolo 43). overallAt()/overallMatchRawAt()
 // výš schválně NEomezují zápasy na aktuální sezónu — je to vědomé rozhodnutí z Kola 38 kvůli
@@ -6323,7 +6366,7 @@ function renderOverviewObsah(el){
         if(v==null)return'<span style="color:var(--gm)">–</span>';
         const o=overallForPlayer(p,norms,ovMax);
         const star=o.incomplete?`<sup title="Naměřeno ${o.n} z ${o.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})" style="color:var(--acc);cursor:help">*</sup>`:'';
-        return `<b style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${overallColor(o.tAvg)};cursor:pointer" onclick="event.stopPropagation();showOverallBreakdown('${p.id}')" title="Klepni pro rozpad na fyzické/herní/zápasy">${v}</b>${star}`;
+        return `<b style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${overallColor(o.tAvg)};cursor:pointer" onclick="event.stopPropagation();showOverallBreakdown('${p.id}')" title="Klepni pro rozpad na fyzické/herní/zápasy">${v}</b>${star}${ovSipka(p,norms)}`;
       },
       sortVal:p=>overallForPlayer(p,norms,ovMax).score??-Infinity,
       lowerBetter:false},
@@ -8949,6 +8992,9 @@ const HELP_DATA=[
 {q:`Jak funguje odznak Zakončovatelka?`,
  a:`Zakončovatelka se přiděluje sama, stejně jako Přijímačka. Rozhoduje <b>průměr bodů na zápas</b> ve všech zápasech aktuální sezóny, tedy stejné číslo jako Body/zápas v tabulce Zápasy. Hráčka odznak má, když je průměr aspoň na hranici, výchozí je +2,0 bodu na zápas. Hranici změníš v Nastavení › Odznaky › Zakončovatelka, kde hned vidíš, kdo by odznak měl, průměr týmu a hranici nejlepší čtvrtiny. Musí mít aspoň 3 zápasy. Když průměr klesne, odznak sám zmizí. Body v zápase nejsou mezi silnými stránkami (Vyniká), za ty je odznak. V koláži mají příjem a body ze zápasů ikonu svého odznaku, a když hráčka odznak má, je ikona v jeho barvě. Ve vzhledu Trenéra má ikonu meteoru.`,
  kw:"zakončovatelka body zápas automatický odznak meteor"},
+{q:`Co znamená šipka u Overallu a tenká čára pod ním?`,
+ a:`Ve vzhledu Trenéra ukazuje <b>šipka</b> vedle Overallu (na Domů, v Testech a na kartě hráčky), jak se Overall změnil od předchozího testu nebo zápasu: nahoru zeleně, dolů červeně. Při změně menší než 1 bod šipka není. Kolik to bylo a od kdy, uvidíš po najetí myší. <b>Tenká čára</b> pod Overallem na kartě hráčky je jeho vývoj za posledních až 16 dnů s testem nebo zápasem, tečka je dnešní stav. Celý graf s daty otevřeš klepnutím na Overall. Stejná čára pod <b>Průměrem týmu</b> na Domů ukazuje průměr týmu za posledních 12 takových dnů.`,
+ kw:"šipka overall změna vývoj čára křivka průměr týmu trend"},
 {q:`Jak hodnotit libero jen podle příjmu?`,
  a:`Ve vzhledu Trenéra má hráčka s pozicí libero (hlavní i vedlejší) v okně Pozice a v Upravit hráčku volbu <b>Libero – hodnocení</b>: <b>Body i příjem</b> (výchozí) nebo <b>Jen příjem</b>. Volba je ruční, protože v mládeži pozice pevné nejsou: kdo hraje libero i smeč, potřebuje všechny metriky. U volby Jen příjem se do Overallu ze zápasů počítá jen příjem (body ne), herní testy útoku (Útok na cíl, Útok do pole) pro ni neplatí stejně jako metrika jen pro jiné pozice, a nemůže dostat Zakončovatelku. Body ze zápasů dál vidíš v tabulce Zápasy, na kartě i ve Srovnání. Když jí pozici libero odebereš, platí zase všechno.`,
  kw:"libero příjem body overall hodnocení útok jen příjem pozice"},
