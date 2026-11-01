@@ -1141,6 +1141,17 @@ html.skin-trener .ov-prazdne .no-data{padding:0}
 html.skin-trener .ov-sip{display:inline-block;font-size:13px!important;line-height:1;vertical-align:middle;margin-left:3px;font-family:inherit}
 html.skin-trener .ov-sip.nah{color:var(--court-ink)}
 html.skin-trener .ov-sip.dol{color:var(--red)}
+/* Kolo 93: legenda grafu za ikonkou ⓘ v záhlaví karty. */
+html.skin-trener .card h3.leg-h{display:flex;align-items:center;gap:6px}
+html.skin-trener .gr-leg-b{margin-left:auto;flex-shrink:0;width:28px;height:28px;margin-right:-6px;border:0;border-radius:50%;background:none;color:var(--ink-faint-ink);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;opacity:.7}
+html.skin-trener .gr-leg-b:hover,html.skin-trener .leg-on .gr-leg-b{opacity:1;color:var(--court-ink);background:var(--paper)}
+html.skin-trener .gr-hod+.gr-leg-b{margin-left:6px}
+html.skin-trener .gr-leg{display:none}
+html.skin-trener .leg-on .gr-leg{display:flex;flex-direction:column;gap:6px;margin:2px 0 10px;padding:9px 11px;border-radius:8px;background:var(--paper);font:500 12px/1.35 'DM Sans',sans-serif;color:var(--ink-soft);text-transform:none;letter-spacing:0}
+html.skin-trener .gr-leg>span{display:flex;align-items:center;gap:9px}
+html.skin-trener .gr-leg svg,html.skin-trener .gr-leg .lg-i{flex-shrink:0;width:24px;text-align:center}
+html.skin-trener .ov-zm-r{font-size:12px;color:var(--ink-faint-ink);margin-top:2px}
+html.skin-trener .ov-zm-r .ov-sip{font-size:15px!important;font-weight:700;margin:0 2px 0 0}
 html.skin-trener .pd-ov .ov-sip{font-size:16px!important;margin-left:4px}
 html.skin-trener .ov-spark{display:block;margin:6px auto 0;overflow:visible}
 html.skin-trener .ov-spark polyline{fill:none;stroke:var(--court-ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.75}
@@ -1514,6 +1525,7 @@ html.skin-dark .lt-b,html.skin-dark .lg-b{background:color-mix(in srgb,var(--cou
 .lt-p{position:absolute;top:-4px;height:14px;width:2px;margin-left:-1px;border-radius:1px}
 .lt-leg{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 0 0;font:600 10.5px/1.3 'DM Sans',sans-serif;color:var(--ink-faint-ink)}
 .lt-leg span{display:inline-flex;align-items:center;gap:6px}
+html.skin-trener .gr-jedno~.gr-jedno .lt-leg{display:none}
 .lg-d,.lt-tip .lg-d{width:8px;height:8px;border-radius:50%;background:var(--cc,var(--court));flex:none}
 .lg-b,.lg-r{width:14px;height:6px;border-radius:3px;flex:none}
 .lg-p{width:2px;height:10px;border-radius:1px;flex:none;margin:0 6px}
@@ -2703,13 +2715,21 @@ function ovSpark(r,w,h,tit){
   const b=r.map((o,i)=>x(i)+','+y(o.v)).join(' ');
   return`<span title="${tit}: ${r[0].v} → ${r[r.length-1].v}"><svg class="ov-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${tit}: ${r[0].v} až ${r[r.length-1].v}"><polyline points="${b}"/><circle cx="${x(r.length-1)}" cy="${y(vs[vs.length-1])}" r="2.4"/></svg></span>`;
 }
+// Řádek změny pod číslem v rozpadu Overallu: šipka a změna v barvě, datum předchozího bodu.
+function ovZmenaRadek(r){
+  if(!isTrener()||r.length<2)return'';
+  const dv=r[r.length-1].v-r[r.length-2].v,c=dv>0?'nah':dv<0?'dol':'';
+  return`<div class="ov-zm-r"><span class="ov-sip ${c}">${dv?`<i class="fa-solid fa-caret-${dv>0?'up':'down'}" aria-hidden="true"></i>`:''} ${dv>0?'+':dv<0?'−':'±'}${Math.abs(dv)}</span> od ${fmtDate(r[r.length-2].d)}</div>`;
+}
+function tymRada(akt,norms){
+  const dny=[...new Set(akt.flatMap(ovDny))].sort().slice(-12);
+  return dny.map(d=>{const v=akt.map(p=>overallAt(p,norms,d)?.tAvg).filter(x=>x!=null);return{d,v:v.length?overallDisplay(v.reduce((a,b)=>a+b,0)/v.length):null};}).filter(x=>x.v!=null);
+}
 function ovKartaSpark(p,norms){return isTrener()?ovSpark(ovRada(p,norms,16),78,20,'Overall v čase'):'';}
 // Průměr týmu v čase: posledních 12 dnů, kdy má někdo z týmu test nebo zápas.
 function tymSpark(akt,norms){
   if(!isTrener())return'';
-  const dny=[...new Set(akt.flatMap(ovDny))].sort().slice(-12);
-  const r=dny.map(d=>{const v=akt.map(p=>overallAt(p,norms,d)?.tAvg).filter(x=>x!=null);return{d,v:v.length?overallDisplay(v.reduce((a,b)=>a+b,0)/v.length):null};}).filter(x=>x.v!=null);
-  return ovSpark(r,64,16,'Průměr týmu v čase');
+  return ovSpark(tymRada(akt,norms),64,16,'Průměr týmu v čase');
 }
 function overallBreakdownHtml(p,norms,ovMax){
   const ov=overallForPlayer(p,norms,ovMax);
@@ -2733,7 +2753,7 @@ function overallBreakdownHtml(p,norms,ovMax){
   const gapHtml=gapBadge?`<p style="font-size:0.8rem;color:var(--acc);margin-top:6px">${gapBadge.icon} ${gapBadge.title}</p>`:'';
   const matchNote=ov.matchAvg!=null?`<p style="font-size:0.72rem;color:var(--gm);margin-top:2px">Zápasová část z posledních ${Math.min(ov.matchCount,OVERALL_MATCH_CAP)} reálných zápasů aktuální sezóny (aplikace bere max ${OVERALL_MATCH_CAP}).</p>`:'';
   return`<h2>📊 Overall — rozpad</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${p.name}</p>
-    <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${overallColor(ov.tAvg)}">${ov.score??'–'}</div></div>
+    <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${overallColor(ov.tAvg)}">${ov.score??'–'}</div>${ovZmenaRadek(ovRada(p,norms,2))}</div>
     ${overallTimelineHtml(p,norms)}
     ${barHtml}${matchNote}${gapHtml}
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`;
@@ -2775,7 +2795,7 @@ function teamOverallBreakdownHtml(active,ovList,teamTAvg,teamScore){
     :blocks.length===1?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
     :'';
   return`<h2>📊 Overall — rozpad</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${active.length} hráček v týmu</p>
-    <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${teamScore!=null?overallColor(teamTAvg):'var(--gm)'}">${teamScore??'–'}</div></div>
+    <div style="text-align:center;margin:8px 0"><div class="mv" style="font-size:2.4rem;color:${teamScore!=null?overallColor(teamTAvg):'var(--gm)'}">${teamScore??'–'}</div>${isTrener()?ovZmenaRadek(tymRada(getActiveP(),activeNorms())):''}</div>
     ${barHtml}
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`;
 }
@@ -3914,14 +3934,14 @@ function buildPhys(){
     const nb='<button class="note-btn '+(m.note?'has-note':'')+'" onclick="openNote(\'physical\',\''+m.id+'\')" title="'+ntitle+'">'+(m.note?'📝':'💬')+'</button>';
     if(m.id==="dosah_vyskoku"){
       const c=s?.physical?.dosah_vyskoku,pc=pv?.physical?.dosah_vyskoku,vys=calcVys(s),pvys=calcVys(pv);
-      const row=`<div class="me ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${metricTHtml(m.id,tMap)}${nb}${c!=null?`<span class="mv">${czc(c)}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,false)}</div>`;
+      const row=`<div class="me ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="ml">${m.label}${m.hint&&!isTrener()?`<small>${m.hint}</small>`:""}</div>${metricTHtml(m.id,tMap)}${nb}${c!=null?`<span class="mv">${czc(c)}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,false)}</div>`;
       (isA?activeRows:inactiveRows).push(row);
       // Výskok je dopočítaný, ne samostatně vypínatelná metrika — vždy mezi aktivními.
-      activeRows.push(`<div class="me">${metricIcoHtml('vyskok',tMap)}<div class="ml">Výskok <small>↳ dopočítáno</small></div>${metricTHtml('vyskok',tMap)}${vys!=null?`<span class="mv calc">${czc(vys)}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(vys,pvys,false)}</div>`);
+      activeRows.push(`<div class="me">${metricIcoHtml('vyskok',tMap)}<div class="ml">Výskok${isTrener()?'':' <small>↳ dopočítáno</small>'}</div>${metricTHtml('vyskok',tMap)}${vys!=null?`<span class="mv calc">${czc(vys)}</span><span class="mu">cm</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(vys,pvys,false)}</div>`);
       return;
     }
     const c=s?.physical?.[m.id],pc=pv?.physical?.[m.id];
-    const row=`<div class="me ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="ml">${m.label}${m.hint?`<small>${m.hint}</small>`:""}</div>${metricTHtml(m.id,tMap)}${nb}${c!=null?`<span class="mv">${czc(c)}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,m.lowerBetter)}</div>`;
+    const row=`<div class="me ${isA?"":"inactive"}">${metricIcoHtml(m.id,tMap)}<div class="ml">${m.label}${m.hint&&!isTrener()?`<small>${m.hint}</small>`:""}</div>${metricTHtml(m.id,tMap)}${nb}${c!=null?`<span class="mv">${czc(c)}</span><span class="mu">${m.unit}</span>`:'<span style="color:var(--gm)">–</span>'}${trEl(c,pc,m.lowerBetter)}</div>`;
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
@@ -4086,13 +4106,16 @@ function lineC(labels,data,rev,unitLabel,avg,swing){
   // nenašel dost dvojic po sobě jdoucích testů napříč poolem (viz drawPhys).
   const showBand=swing!=null;
   const subParts=[];
+  // Kolo 93 (revize N5): ve vzhledu Trenéra bez popisků nad grafem, vysvětlení je v Nápovědě.
+  if(!isTrener()){
   if(rev)subParts.push("↑ lepší výkon (osa obrácena)");
   if(showTrend)subParts.push("čárkovaně = klouzavý průměr");
   if(showBand)subParts.push("šedé pásmo = typický rozptyl mezi testy");
   if(mezera)subParts.push("tečkovaně = vynechaný test");
+  }
   return{type:"line",plugins:[swingBandPlugin(avg,swing)],data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,
     animation:{onComplete:function(){try{this.canvas.dataset.url=this.canvas.toDataURL('image/png');}catch(e){}}},
-    plugins:{legend:{display:false},
+    plugins:{legend:{display:false},grLeg:{k:['cara',showTrend&&'trend',showBand&&'pasmo',mezera&&'mezera',rev&&'obracena']},
       // Kolo 86: ve vzhledu Trenéra bublina s jednotkou (a „průměr“ u klouzavého průměru).
       tooltip:isTrener()?{callbacks:{label:c=>(c.datasetIndex?'průměr ':'')+czc(roundN(c.parsed.y))+(unitLabel?' '+unitLabel:'')}}:{},
       // Kolo 86: ve vzhledu Trenéra po dvou na řádek, ať se dlouhý popisek na telefonu neořízne.
@@ -4168,6 +4191,7 @@ function buildGame(){
     if(m.id==="utok_cil"){
       if(!attackMerged)return"";
       if(isTrener()&&!(p?.testSessions||[]).some(x=>gamePct(gameScore(x.game,'utok_pole'))!=null||gamePct(gameScore(x.game,'utok_cil'))!=null))return`<div class="card gr-prazdna">${grafNadpis('utok_cil','Útok — progres')}</div>`;
+      if(isTrener())return`<div class="card"><h3 class="gr-h">${metricHeadIco('utok_cil')}<span class="gr-n">Útok — progres</span><button class="btn btn-o sm" onclick="openAttackTransition()" title="Přechod na těžší variantu: ${fmtDate(p.attackHarderSince)}">✎ Upravit</button></h3><div class="cw"><canvas id="ch_ga_utok_cil"></canvas></div></div>`;
       return`<div class="card"><h3>🎯 Útok — progres (lehčí → těžší)</h3><p style="font-size:0.75rem;color:var(--gm);margin-bottom:6px">Přešla na těžší variantu (Útok na cíl) <b>${fmtDate(p.attackHarderSince)}</b> · graf ukazuje T-skóre, srovnatelné napříč oběma variantami <button class="btn btn-o sm" onclick="openAttackTransition()" style="margin-left:4px">✎ Upravit</button></p><div class="cw"><canvas id="ch_ga_utok_cil"></canvas></div></div>`;
     }
     return grafKarta(grafNadpis(m.id,`${m.label} (%)`,herPosl(m.id),grafZmena(p,x=>{const v=gamePct(gameScore(x.game,m.id));return v==null?null:Math.round(v*100);},false,'%')),'ch_ga_'+m.id,(p?.testSessions||[]).some(x=>gamePct(gameScore(x.game,m.id))!=null),grafJedno(p,herV(m.id),false,'%'));
@@ -4194,11 +4218,11 @@ function drawGame(){
     const showBand=norm?.swing!=null&&norm.swingN>=3;
     const swing100=showBand?norm.swing*100:null;
     const subtitleParts=[];
-    if(showTrend)subtitleParts.push("čárkovaně = klouzavý průměr");
-    if(showBand)subtitleParts.push("šedé pásmo = typický rozptyl mezi testy");
+    if(!isTrener()&&showTrend)subtitleParts.push("čárkovaně = klouzavý průměr");
+    if(!isTrener()&&showBand)subtitleParts.push("šedé pásmo = typický rozptyl mezi testy");
     const datasets=[{type:"bar",data:pcts,backgroundColor:pcts.map((_,i)=>i===pcts.length-1?CGREEN:CBARPREV),borderRadius:4,borderWidth:0,order:1}];
     if(showTrend)datasets.push({type:"line",data:movingAvg3(pcts),borderColor:CACC,backgroundColor:"transparent",borderDash:[5,3],tension:0.3,pointRadius:0,borderWidth:1.5,fill:false,order:0});
-    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[swingBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
+    CH["ga_"+m.id]=new Chart(cv,{type:"bar",plugins:[swingBandPlugin(avg100,swing100)],data:{labels:sess.map(s=>fmtDate(s.date,true)),datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['sloupce',showTrend&&'trendH',showBand&&'pasmo']},subtitle:subtitleParts.length?{display:true,text:subtitleParts.join(" · "),color:CTICK,font:{size:9},padding:{bottom:4}}:{display:false}},scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10},callback:v=>roundN(v)+"%"},min:0,max:100}}}});
   });
 }
 // Sloučený graf "Útok na cíl" / "Útok do pole" pro hráčku, která přešla na těžší
@@ -4248,7 +4272,7 @@ function drawAttackMerged(cv,p,norms){
     tension:0.3,borderWidth:2.5,spanGaps:false,
     pointRadius,pointStyle,pointBackgroundColor:pointColor,pointBorderColor:pointColor,pointBorderWidth:1.5,
   }]},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},subtitle:{display:true,text:"šedá = lehčí varianta · zelená = těžší · ⭐ = přechod",color:CTICK,font:{size:9},padding:{bottom:4}}},
+    plugins:{legend:{display:false},grLeg:{k:['lehci','tezsi','prechod','t50']},subtitle:{display:!isTrener(),text:"šedá = lehčí varianta · zelená = těžší · ⭐ = přechod",color:CTICK,font:{size:9},padding:{bottom:4}}},
     scales:{x:{ticks:{font:{size:10}}},
       y:{ticks:{font:{size:10}},min:20,max:80,
         afterBuildTicks:axis=>{axis.ticks=[{value:20},{value:30},{value:45},{value:50},{value:60},{value:75},{value:80}];}}}
@@ -4396,7 +4420,9 @@ function mkRadar(id,labels,cur,prev,atk){
   // Popisek osy "Útok" zlatě, jen když se v grafu fakticky ukazuje hvězda —
   // stejná podmínka appka používá i na vysvětlivku pod grafem (viz buildGame).
   const hasStar=atkIdx>=0&&(atk?.curVariant==="utok_cil"||atk?.prevVariant==="utok_cil");
-  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>(hasStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
+  const tr=isTrener(),zlate=(cur||[]).some((v,i)=>v>=threshold&&!isCilAt(i,atk?.curVariant));
+  const leg=tr?[[grLegSw('plna',CGREEN),'Aktuální test'],prev&&[grLegSw('cark','#555'),'Předchozí test'],'prumerR',zlate&&'zlatyBod',hasStar&&'hvezdaR']:[];
+  CH[id]=new Chart(cv,{type:"radar",data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:!tr,labels:{color:CLEG,font:{size:11},filter:item=>item.text!=="Průměr"}},grLeg:{k:leg}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>(hasStar&&ctx.index===atkIdx)?CACC:CLEG,font:{size:10}},ticks:{display:false}}}}});
 }
 function drawSpider(){
   const showP=document.getElementById("prevTog")?.checked;
@@ -4438,14 +4464,14 @@ function buildMil(){
       const click=(isA&&s.n===cur+1)?' onclick="advanceMil(\''+m.id+'\')"':'';
       return `<div class="${cls}"${click} title="${s.emoji} ${s.full}">${milIco(s.n)}</div>`;
     }).join("");
-    const statusHtml=cur>0?`${milIco(cur)} od ${fmtDate(dt)}`:'<span style="color:var(--x-faint)">zatím nezačato</span>';
+    const statusHtml=cur>0?`${milIco(cur)} od ${fmtDate(dt)}`:isTrener()?'':'<span style="color:var(--x-faint)">zatím nezačato</span>';
     const backBtn=(isA&&cur>0)?'<button class="mil-back" onclick="revertMil(\''+m.id+'\')" title="Vrátit o fázi zpět">↩</button>':'';
     return`${hlav}<div class="mi ${isA?"":"inactive"}${pozSt}">
       <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}${pn?`<div class="mi-note">${pn}</div>`:""}</div>${nb}</div>
       <div class="mi-bot"><div class="mstages">${stagesHtml}</div><div class="md2">${statusHtml}</div>${backBtn}</div>
     </div>`;
   }).join("");
-  const summary=`${milIco(1)} ${c1} &nbsp;·&nbsp; ${milIco(2)} ${c2} &nbsp;·&nbsp; ${milIco(3)} ${c3}${c0?` &nbsp;·&nbsp; ${c0} zatím nezačato`:""}`;
+  const summary=`${milIco(1)} ${c1} &nbsp;·&nbsp; ${milIco(2)} ${c2} &nbsp;·&nbsp; ${milIco(3)} ${c3}${c0&&!isTrener()?` &nbsp;·&nbsp; ${c0} zatím nezačato`:""}`;
   // Kolo 49: vysvětlení emoji fází dřív nikde nebylo — teď je schované v klepacím
   // souhrnném řádku (varianta C z mock-upu), ať nezabírá trvalé místo v kartě.
   const legend=MIL_STAGES.map(s=>`<div>${milIco(s.n)} ${s.full}</div>`).join("");
@@ -4725,8 +4751,8 @@ function multiLine(cid,datasets,lowerBetter){
     borderColor:COLORS[i%COLORS.length],backgroundColor:'transparent',
     tension:0.3,pointRadius:4,borderWidth:2,spanGaps:isTrener(),...(isTrener()?{segment:mezeraSeg(COLORS[i%COLORS.length])}:{})}))},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:CLEG,font:{size:10}}},
-        subtitle:lowerBetter?{display:true,text:'↑ lepší výkon (osa obrácena)',color:CTICK,font:{size:9},padding:{bottom:2}}:{display:false}},
+      plugins:{legend:{labels:{color:CLEG,font:{size:10}}},grLeg:{k:[lowerBetter&&'obracena',datasets.some(d=>d.ls.length<allL.length)&&'mezeraCmp']},
+        subtitle:lowerBetter&&!isTrener()?{display:true,text:'↑ lepší výkon (osa obrácena)',color:CTICK,font:{size:9},padding:{bottom:2}}:{display:false}},
       scales:{
         x:{ticks:{font:{size:10}}},
         y:{ticks:{font:{size:10}},reverse:!!lowerBetter}
@@ -4769,7 +4795,7 @@ function drawCmp(sel,norms){
     // se až nakonec (kreslí se navrch přes hráčky), barva CLEG.
     ds.push({label:"Průměr",data:f[lk].map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
     const lblColor=i=>(isGame&&anyStar&&i===atkIdx)?CACC:CLEG,tr=isTrener();
-    CH[id]=new Chart(cv,{type:"radar",data:{labels:tr?f[lk].map(l=>RADAR_ICO_GAP+l):f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>lblColor(ctx.index),font:{size:10}},ticks:{display:false}}}},plugins:tr?[radarIcoPlugin(f[isGame?"gI":"pI"],lblColor)]:[]});
+    CH[id]=new Chart(cv,{type:"radar",data:{labels:tr?f[lk].map(l=>RADAR_ICO_GAP+l):f[lk],datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:!tr,labels:{color:CLEG,font:{size:10},filter:item=>item.text!=="Průměr"}},grLeg:{k:tr?[...ds.filter(d=>d.label!=='Průměr').map(d=>[grLegSw('plna',d.borderColor),d.label]),'prumerR',anyStar&&'hvezdaR']:[]}},scales:{r:{min:0,max:100,grid:{color:CRGRID},angleLines:{color:CRGRID},pointLabels:{color:ctx=>lblColor(ctx.index),font:{size:10}},ticks:{display:false}}}},plugins:tr?[radarIcoPlugin(f[isGame?"gI":"pI"],lblColor)]:[]});
   }
   cmpRadar("cRPh","pL","pD");cmpRadar("cRGa","gL","gD");
 
@@ -5987,6 +6013,7 @@ function staleDot(p){
 function staleNoteHtml(p){
   const i=staleInfo(p);if(!i.level)return '';
   const txt=i.kind==='none'?'Zatím bez testu — první zapíšeš přes + Test':`Poslední test ${fmtDate(i.last)}, před ${i.days} dny — čas přetestovat`;
+  if(isTrener())return `<span class="stale-note${i.level==='red'?' red':''}" title="${staleTitle(i)}"><i class="fa-solid ${i.kind==='none'?'fa-clipboard':'fa-clock'}" aria-hidden="true"></i></span>`;
   return `<span class="stale-note${i.level==='red'?' red':''}" title="${staleTitle(i)}"><i class="fa-solid ${i.kind==='none'?'fa-clipboard':'fa-clock'}" aria-hidden="true"></i> ${txt}</span>`;
 }
 
@@ -6134,7 +6161,7 @@ function openCollage(pid){
   const strRows=d.str.length?d.str.map(x=>`<div class="kol-row"><span class="m-ic on"><i class="fa-solid fa-${kolMetFa(x.id)}" aria-hidden="true"></i></span><span class="kol-l">${x.label}</span><span class="m-t">${kolHodnota(x,p)}</span></div>`).join('')
     :(isTrener()&&d.best?'':`<div class="kol-none">Zatím žádná metrika s T aspoň ${STRENGTH_T}</div>`)+(d.best?`<div class="kol-row"><span class="m-ic"><i class="fa-solid fa-${kolMetFa(d.best.id)}" aria-hidden="true"></i></span><span class="kol-l">Nejlépe: ${d.best.label}</span><span class="m-t kol-t-tlum">${kolHodnota(d.best,p)}</span></div>`:'');
   const bRow=d.badges.length?`<div class="brow">${d.badges.map(b=>`<span class="ba ${b.special?"sp":""}" style="${b.special?"":badgeTagStyle(b.color,'ba')}">${badgeIco(b)} ${b.label}</span>`).join('')}</div>`:`<div class="kol-none">Žádné odznaky</div>`;
-  const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st">${st?milIco(st)+' '+MIL_STAGES[st-1].label:'—'}</span></div>`;}).join('');
+  const milRows=d.mils.map((m,i)=>{const st=d.stages[i];return`<div class="kol-mil"><span class="kol-bar" style="background:${milStageColor(st)}"></span><span class="kol-l">${m.label}</span><span class="kol-st"${st&&isTrener()?` title="${MIL_STAGES[st-1].label}"`:''}>${st?milIco(st)+(isTrener()?'':' '+MIL_STAGES[st-1].label):'—'}</span></div>`;}).join('');
   openModal(`<div class="kol-hd">${collageHtml(p,72,activeNorms())}<h2>${p.name}</h2></div>
     <div class="kol-sec"><h3>Vyniká</h3>${strRows}</div>
     <div class="kol-sec"><h3>Odznaky</h3>${bRow}</div>
@@ -6583,7 +6610,7 @@ function buildTsTimeline(p,norms){
   ];
   return`<div class="card" style="margin-top:0">
     <h3>T-score vývoj v čase</h3>
-    <p style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">T=50 = průměr týmu (čárkovaná linie). Každá barva = jedna metrika.</p>
+    ${isTrener()?'':'<p style="font-size:0.75rem;color:var(--gm);margin-bottom:10px">T=50 = průměr týmu (čárkovaná linie). Každá barva = jedna metrika.</p>'}
     <div class="cw" style="height:220px"><canvas id="tsTimelineC"></canvas></div>
   </div>`;
 }
@@ -6614,7 +6641,7 @@ function drawTsTimeline(p,norms){
   const refLinePlugin={id:'refLine',afterDraw(chart){const{ctx,chartArea,scales}=chart;if(!scales.y)return;const y50=scales.y.getPixelForValue(50);ctx.save();ctx.strokeStyle='rgba(120,120,120,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(chartArea.left,y50);ctx.lineTo(chartArea.right,y50);ctx.stroke();ctx.fillStyle='#666';ctx.font='9px sans-serif';ctx.fillText('T=50',chartArea.right+4,y50+4);ctx.restore();}};
   CH['tsTimelineC']=new Chart(cv,{type:'line',plugins:[refLinePlugin],data:{labels,datasets},options:{
     responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:CLEG,font:{size:9},boxWidth:12}}},
+    plugins:{legend:{labels:{color:CLEG,font:{size:9},boxWidth:12}},grLeg:{k:['t50','fyz','her']}},
     scales:{
       x:{ticks:{font:{size:10}}},
       y:{ticks:{font:{size:10}},
@@ -7324,7 +7351,7 @@ function buildZapasTab(){
         datasets:[{data:histBodyData.map(d=>d.y),
           backgroundColor:histBodyData.map(d=>d.y>0?CG:d.y<0?'#7a2a2a':'#444'),
           borderRadius:4,borderWidth:0}]
-      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['bodyPlus','bodyMinus']}},
         scales:{x:{ticks:{font:{size:10}}},
                 y:{ticks:{font:{size:10}}}}}});
     }
@@ -7335,7 +7362,7 @@ function buildZapasTab(){
         labels:histRecvData.map(d=>d.x),
         datasets:[{data:histRecvData.map(d=>d.y),borderColor:'#4a9ee8',
           backgroundColor:'rgba(74,158,232,0.08)',tension:0.35,pointRadius:4,fill:true,borderWidth:2}]
-      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['prijem']},
           // Kolo 86 (Mek): ve vzhledu Trenéra průměrná známka i procento (bublina a pravá osa).
           tooltip:isTrener()?{callbacks:{label:c=>czc(roundN(c.parsed.y,1))+' · '+recvPct(c.parsed.y)+' %'}}:{}},
         scales:{x:{ticks:{font:{size:10}}},
@@ -7859,7 +7886,7 @@ function openTournamentDetail(tid,backMid){
     const st=STATE_UI[formaState(f)];
     return`<div class="me" title="${formaTip(f)}" style="cursor:help">
       <div class="ml">${playerLabel(p)}</div>
-      <span class="tr ${st.cls}" style="font-size:0.78rem;padding:4px 9px">${st.txt}</span>
+      ${isTrener()&&st.cls==='ts'?'':`<span class="tr ${st.cls}" style="font-size:0.78rem;padding:4px 9px">${st.txt}</span>`}
     </div>`;
   }).join(''):'<div class="no-data">Zatím žádná hráčka s odehraným zápasem v tomto turnaji</div>';
 
@@ -8930,6 +8957,9 @@ const HELP_DATA=[
 {q:`Co je ta čárkovaná čára (klouzavý průměr/trend)?`,
  a:`Aplikace vedle skutečných hodnot dokresluje i klouzavý průměr (aplikace bere posledních až 3 měření a zprůměruje je) — pomáhá to odlišit, jestli jde o SKUTEČNÝ TREND, nebo jen o jednorázový výkyv (dobrý nebo špatný den). Když se plná čára na jedno měření prudce vychýlí, ale čárkovaná zůstane klidná, je to spíš výkyv; když se hýbou obě spolu, je to trend.`,
  kw:"trend klouzavý průměr čárkovaná výkyv"},
+{q:`Proč je u některých grafů osa obrácená a kde jsou popisky grafů?`,
+ a:`U metrik, kde je lepší menší číslo (K-test, sprint), je osa obrácená: <b>lepší výkon je vždy nahoře</b>, takže čára stoupá, když se hráčka zlepšuje. Ve vzhledu Trenéra nad grafy nejsou vysvětlivky natrvalo: klepni na <b>ⓘ</b> v záhlaví grafu a nad grafem se rozbalí jeho legenda, jen s tím, co v grafu opravdu je, a se vzorkem čáry nebo pásma. Dalším klepnutím ji zase schováš. U grafu Útok — progres je šedě lehčí varianta, zeleně těžší a hvězda je den přechodu (ukáže i bublina na tlačítku Upravit). Fáze milníku v okně koláže ukazuje ikona 🌱 🌿 🌳, název fáze uvidíš po najetí. V detailu turnaje má štítek jen hráčka ve formě nebo ve špatence, běžná forma je bez štítku.`,
+ kw:"osa obrácená popisky graf vysvětlivky lepší nahoře útok progres hvězda fáze milníku normál štítek"},
 {q:`Co je šedé pásmo kolem čáry?`,
  a:`Aplikace takhle kreslí pásmo normálního kolísání — orientační rozsah, ve kterém se výsledky hráčky (nebo napříč týmem) běžně pohybují mezi jednotlivými testy. Šířka aplikaci vychází z toho, jak moc typicky kolísají výsledky celého poolu hráček mezi dvěma testy — takže když hodnota zůstane uvnitř pásma, jde o normální kolísání; když z něj vystřelí ven, je to výraznější změna, o které stojí za to přemýšlet (v dobrém i špatném smyslu).`,
  kw:"pásmo kolísání rozptyl šedá plocha"},
@@ -8993,7 +9023,7 @@ const HELP_DATA=[
  a:`Zakončovatelka se přiděluje sama, stejně jako Přijímačka. Rozhoduje <b>průměr bodů na zápas</b> ve všech zápasech aktuální sezóny, tedy stejné číslo jako Body/zápas v tabulce Zápasy. Hráčka odznak má, když je průměr aspoň na hranici, výchozí je +2,0 bodu na zápas. Hranici změníš v Nastavení › Odznaky › Zakončovatelka, kde hned vidíš, kdo by odznak měl, průměr týmu a hranici nejlepší čtvrtiny. Musí mít aspoň 3 zápasy. Když průměr klesne, odznak sám zmizí. Body v zápase nejsou mezi silnými stránkami (Vyniká), za ty je odznak. V koláži mají příjem a body ze zápasů ikonu svého odznaku, a když hráčka odznak má, je ikona v jeho barvě. Ve vzhledu Trenéra má ikonu meteoru.`,
  kw:"zakončovatelka body zápas automatický odznak meteor"},
 {q:`Co znamená šipka u Overallu a tenká čára pod ním?`,
- a:`Ve vzhledu Trenéra ukazuje <b>šipka</b> vedle Overallu (na Domů, v Testech a na kartě hráčky), jak se Overall změnil od předchozího testu nebo zápasu: nahoru zeleně, dolů červeně. Při změně menší než 1 bod šipka není. Kolik to bylo a od kdy, uvidíš po najetí myší. <b>Tenká čára</b> pod Overallem na kartě hráčky je jeho vývoj za posledních až 16 dnů s testem nebo zápasem, tečka je dnešní stav. Celý graf s daty otevřeš klepnutím na Overall. Stejná čára pod <b>Průměrem týmu</b> na Domů ukazuje průměr týmu za posledních 12 takových dnů.`,
+ a:`Ve vzhledu Trenéra ukazuje <b>šipka</b> vedle Overallu (na Domů, v Testech a na kartě hráčky), jak se Overall změnil od předchozího testu nebo zápasu: nahoru zeleně, dolů červeně. Při změně menší než 1 bod šipka není. Kolik to bylo a od kdy, uvidíš po najetí myší a na telefonu v rozpadu Overallu (klepni na Overall), u průměru týmu stejně. <b>Tenká čára</b> pod Overallem na kartě hráčky je jeho vývoj za posledních až 16 dnů s testem nebo zápasem, tečka je dnešní stav. Celý graf s daty otevřeš klepnutím na Overall. Stejná čára pod <b>Průměrem týmu</b> na Domů ukazuje průměr týmu za posledních 12 takových dnů.`,
  kw:"šipka overall změna vývoj čára křivka průměr týmu trend"},
 {q:`Jak hodnotit libero jen podle příjmu?`,
  a:`Ve vzhledu Trenéra má hráčka s pozicí libero (hlavní i vedlejší) v okně Pozice a v Upravit hráčku volbu <b>Libero – hodnocení</b>: <b>Body i příjem</b> (výchozí) nebo <b>Jen příjem</b>. Volba je ruční, protože v mládeži pozice pevné nejsou: kdo hraje libero i smeč, potřebuje všechny metriky. U volby Jen příjem se do Overallu ze zápasů počítá jen příjem (body ne), herní testy útoku (Útok na cíl, Útok do pole) pro ni neplatí stejně jako metrika jen pro jiné pozice, a nemůže dostat Zakončovatelku. Body ze zápasů dál vidíš v tabulce Zápasy, na kartě i ve Srovnání. Když jí pozici libero odebereš, platí zase všechno.`,
@@ -9317,6 +9347,49 @@ function isTrener(){return document.documentElement.classList.contains('skin-tre
 // Paleta hráček ve světlém režimu — stejné odstíny, ztmavené na kontrast aspoň 3 : 1 s bílou
 // (dnešní pastelové #9ae84a, #cfe84a… na bílém podkladu nejsou vidět).
 const COLORS_SVETLE=["#35a040","#4491d5","#d87145","#c84ae8","#a28c2d","#329e88","#e84a4a","#679b32","#e8624a","#ba823b","#84942f","#49a033","#33a064","#369aa9","#5f4ae8","#e84aa9"];
+// Kolo 93 (Mek 1. 11.): legenda u grafu. Graf si v options.plugins.grLeg.k řekne, co v něm je; plugin po
+// vytvoření grafu přidá do záhlaví jeho karty tlačítko ⓘ a schovaný panel se vzorky (jen vzhled Trenéra).
+function grLegSw(t,c){
+  const l=(d,w)=>`<svg width="24" height="10" aria-hidden="true"><line x1="2" y1="5" x2="22" y2="5" stroke="${c}" stroke-width="${w||2.4}" stroke-linecap="round"${d?` stroke-dasharray="${d}"`:''}/></svg>`;
+  if(t==='plna')return l('');if(t==='cark')return l('5 3');if(t==='tecky')return l('1 4');if(t==='jemna')return l('3 3',1.4);
+  if(t==='pasmo')return'<svg width="24" height="10" aria-hidden="true"><rect x="1" y="1" width="22" height="8" rx="2" fill="rgba(130,130,120,0.38)"/></svg>';
+  if(t==='sloup')return`<svg width="24" height="10" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" fill="${CBARPREV}"/><rect x="14" y="0" width="7" height="10" rx="1" fill="${CGREEN}"/></svg>`;
+  if(t==='blok')return`<svg width="24" height="10" aria-hidden="true"><rect x="8" y="0" width="8" height="10" rx="1" fill="${c}"/></svg>`;
+  return`<span class="lg-i"><i class="fa-solid fa-${t}" style="color:${c}" aria-hidden="true"></i></span>`;
+}
+function grLegPolozky(){return{
+  cara:[grLegSw('plna',CGREEN),'Naměřené hodnoty'],
+  trend:[grLegSw('cark',CTICK),'Klouzavý průměr posledních 3 měření – ukazuje trend, ne jednotlivé výkyvy'],
+  trendH:[grLegSw('cark',CACC),'Klouzavý průměr posledních 3 testů'],
+  pasmo:[grLegSw('pasmo'),'Běžné kolísání mezi testy – výkyv uvnitř pásma ještě nic neznamená'],
+  mezera:[grLegSw('tecky',CGREEN),'Vynechaný test – jen naznačené spojení, žádná hodnota'],
+  obracena:[grLegSw('arrow-up',CTICK),'Menší číslo je lepší, proto je osa obrácená: lepší výkon je nahoře'],
+  sloupce:[grLegSw('sloup'),'Sytý sloupec = poslední test, světlé = dřívější'],
+  lehci:[grLegSw('plna',CTICK),'Lehčí varianta (Útok do pole)'],
+  tezsi:[grLegSw('plna',CGREEN),'Těžší varianta (Útok na cíl)'],
+  prechod:[grLegSw('star','#E0A82E'),'Den přechodu na těžší variantu'],
+  t50:[grLegSw('cark','rgba(120,120,120,0.7)'),'T 50 = průměr týmu; výš je nad průměrem, níž pod ním'],
+  prumerR:[grLegSw('jemna',CLEG),'Přerušovaný šedý prstenec = T 50, průměr týmu; ven je nad průměrem, dovnitř pod ním'],
+  zlatyBod:[grLegSw('circle',CACC),'Zlatý bod = T 75 a víc, výjimečný výkon'],
+  hvezdaR:[grLegSw('star',CACC),'Hvězda u Útoku = těžší varianta (Útok na cíl)'],
+  fyz:[grLegSw('plna',CTICK),'Plná čára = fyzická metrika (barva = metrika)'],
+  her:[grLegSw('cark',CTICK),'Čárkovaná čára = herní metrika a Výskok'],
+  mezeraCmp:[grLegSw('tecky',CTICK),'Vynechaný test – jen naznačené spojení'],
+  bodyPlus:[grLegSw('blok',CG),'Zápas s kladnou bilancí bodů (body mínus chyby)'],
+  bodyMinus:[grLegSw('blok','#7a2a2a'),'Zápas se zápornou bilancí'],
+  prijem:[grLegSw('plna','#4a9ee8'),'Průměrná známka příjmu v zápase: vlevo 1–5 (1 = nejlepší), vpravo totéž v %'],
+};}
+function grLegenda(cv,k){
+  if(!isTrener()||!cv)return;
+  const karta=cv.closest('.card'),h=karta&&karta.querySelector('h3');if(!h)return;
+  const P=grLegPolozky(),pol=k.filter(Boolean).map(x=>Array.isArray(x)?x:P[x]).filter(Boolean);if(!pol.length)return;
+  h.classList.add('leg-h');
+  if(!h.querySelector('.gr-leg-b'))h.insertAdjacentHTML('beforeend','<button type="button" class="gr-leg-b" aria-expanded="false" aria-label="Co je v grafu" onclick="grLegPrepni(this)"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></button>');
+  let d=karta.querySelector(':scope>.gr-leg');if(!d){d=document.createElement('div');d.className='gr-leg';h.after(d);}
+  d.innerHTML=pol.map(x=>`<span>${x[0]}<span>${x[1]}</span></span>`).join('');
+}
+function grLegPrepni(b){const k=b.closest('.card');if(!k)return;const on=k.classList.toggle('leg-on');b.setAttribute('aria-expanded',String(on));}
+if(window.Chart)Chart.register({id:'grLeg',afterInit(ch,a,o){if(o&&Array.isArray(o.k))grLegenda(ch.canvas,o.k);}});
 function applyChartSkin(){
   if(isTrener()){
     const cs=getComputedStyle(document.documentElement),g=n=>cs.getPropertyValue(n).trim();
