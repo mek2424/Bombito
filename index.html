@@ -1138,6 +1138,8 @@ html.skin-trener .gr-pill i{font-size:.9em;margin:0!important;color:inherit!impo
 html.skin-trener .ov-prazdne{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px}
 html.skin-trener .ov-prazdne .no-data{padding:0}
 html.skin-trener .kat-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;font-size:0.78rem;color:var(--gm)}
+html.skin-trener #libRez .poz-b i{font-size:12px;color:var(--ink-faint-ink)}
+html.skin-trener #libRez .poz-b{padding-left:12px}
 html.skin-trener .kat-row .kat-b.on{border-color:var(--chalk);color:var(--court-ink);font-weight:700}
 html.skin-trener .tabsFade{bottom:1px;color:var(--ink-faint-ink)}
 html.skin-trener .card{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);padding:4px 14px 12px}
@@ -1966,7 +1968,10 @@ function pozHracky(p){
   return out;
 }
 function proPozice(item,p){const z=item&&item.pozice;if(!z||!z.length)return true;const mp=pozHracky(p);return z.some(x=>mp.includes(x));}
-function metPlati(m,p){return !p||proPozice(m,p);}
+// Kolo 91 (Mek 1. 11.): libero hodnocené jen podle příjmu (p.liberoJenPrijem, platí jen dokud má pozici libero).
+const LIBERO_BEZ=['utok_cil','utok_pole'];
+function jenPrijem(p){return!!p&&!!p.liberoJenPrijem&&pozHracky(p).includes('libero');}
+function metPlati(m,p){return !p||(proPozice(m,p)&&!(jenPrijem(p)&&LIBERO_BEZ.includes(m.id)));}
 function milAktivni(p){return S.config.milestones.filter(m=>m.active!==false&&(!p||proPozice(m,p)));}
 function pozChip(z,hlavni,velka){
   const d=pozDef(z);if(!d)return'';
@@ -2024,21 +2029,36 @@ function pozVolba(el){
   el.classList.toggle('sel',on);el.setAttribute('aria-pressed',String(on));
   // Hlavní pozice nejde zároveň zvolit jako vedlejší.
   if(box.id==='pozHl'){const hl=on?el.dataset.z:null;document.querySelectorAll('#pozVed .poz-b').forEach(b=>{const z=b.dataset.z===hl;b.disabled=z;if(z){b.classList.remove('sel');b.setAttribute('aria-pressed','false');}});}
+  libRezObnov();
   if(box.closest('[data-poz-hned]'))pozUlozHned();
 }
+// Kolo 91: volba hodnocení libera. Řádek je vidět, jen když je libero vybrané jako hlavní nebo vedlejší pozice.
+function libRezHtml(p){
+  const jp=!!p?.liberoJenPrijem,ma=pozHracky(p||{}).includes('libero');
+  const b=(on,v,html)=>`<button type="button" class="poz-b${on?' sel':''}" data-v="${v}" aria-pressed="${on}" onclick="libRezVolba(this)">${html}</button>`;
+  return`<div class="fg" id="libRez"${ma?'':' style="display:none"'}><label>Libero – hodnocení</label><div class="poz-volba">${b(!jp,'0','<i class="fa-solid fa-meteor" aria-hidden="true"></i><i class="fa-solid fa-arrows-to-circle" aria-hidden="true"></i>Body i příjem')}${b(jp,'1','<i class="fa-solid fa-arrows-to-circle" aria-hidden="true"></i>Jen příjem')}</div></div>`;
+}
+function libRezObnov(){const r=document.getElementById('libRez');if(r)r.style.display=[...pozVybrane('pozHl'),...pozVybrane('pozVed')].includes('libero')?'':'none';}
+function libRezVybrano(){return document.querySelector('#libRez .poz-b.sel')?.dataset.v==='1';}
+function libRezVolba(el){
+  el.closest('.poz-volba').querySelectorAll('.poz-b').forEach(b=>{const on=b===el;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',String(on));});
+  if(el.closest('[data-poz-hned]'))pozUlozHned();
+}
+function libRezUloz(p){if(!document.getElementById('libRez'))return;if(libRezVybrano())p.liberoJenPrijem=true;else delete p.liberoJenPrijem;}
 // Okno Pozice z karty: každé klepnutí se hned uloží.
 let _pozPid=null;
 function openPozice(pid){
   _pozPid=pid||S.activeId;const p=gP(_pozPid);if(!p)return;const hl=p.pozice?.hlavni||null;
   openModal(`<h2>Pozice</h2><p class="poz-jm">${p.name}</p><div data-poz-hned>
     <div class="fg"><label>Hlavní pozice</label>${pozVolbaHtml('pozHl',hl?[hl]:[],false)}</div>
-    <div class="fg"><label>Vedlejší pozice</label>${pozVolbaHtml('pozVed',p.pozice?.vedlejsi||[],true,hl)}</div></div>
+    <div class="fg"><label>Vedlejší pozice</label>${pozVolbaHtml('pozVed',p.pozice?.vedlejsi||[],true,hl)}</div>${isTrener()?libRezHtml(p):''}</div>
     <div class="ma"><button class="btn btn-o" onclick="openPoziceVse()"><i class="fa-solid fa-users" aria-hidden="true"></i> Všechny hráčky</button><button class="btn btn-p" onclick="closeModal()">Hotovo</button></div>`);
 }
 function pozUlozHned(){
   const p=gP(_pozPid);if(!p)return;
   const hl=pozVybrane('pozHl')[0]||null,ved=pozVybrane('pozVed').filter(z=>z!==hl);
   if(hl||ved.length)p.pozice={hlavni:hl,vedlejsi:ved};else delete p.pozice;
+  libRezUloz(p);
   syncAutoBadges();save();pozPrekresli();
 }
 function pozPrekresli(){if(S.activeId)renderDetail();else renderHome();renderPL();}
@@ -2553,7 +2573,7 @@ const OVERALL_MATCH_CAP=12; // kolik posledních reálných zápasů hráčky (z
 const OVERALL_W_PHYS=0.25, OVERALL_W_GAME=0.35, OVERALL_W_MATCH=0.40; // startovní váhy, snadno doladitelné později
 function overallMatchRaw(p,norms){
   const vals=[];
-  const bodyAvg=playerRecentMatchAvg(p,'body',OVERALL_MATCH_CAP);
+  const bodyAvg=jenPrijem(p)?null:playerRecentMatchAvg(p,'body',OVERALL_MATCH_CAP);
   if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
   // příjem: sdružené pokusy napříč posledními zápasy (ne prostý průměr per-zápas procent),
   // pak shrinkPct podle celkového počtu příjmů — viz playerReceptionPool/shrinkPct výš.
@@ -2568,7 +2588,7 @@ function overallMatchRaw(p,norms){
   // v popiscích (matchNote/matchGapBadge níž) neukazuje na zápasy z minulé sezóny, které se
   // do vlastního průměru výše (playerRecentMatchAvg) taky už nepočítají.
   const matchCount=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null).length;
-  return{vals,n:vals.length,total:2,matchCount};
+  return{vals,n:vals.length,total:jenPrijem(p)?1:2,matchCount};
 }
 // Nejvyšší počet naměřených overall-metrik (fyzické + herní + zápasy dohromady) v týmu —
 // referenční "úplnost" pro hvězdičku.
@@ -3001,7 +3021,7 @@ function bodySezona(p){
 function bodyDost(r){return!!r&&r.zapasy>=PRIJIMACKA_MIN_ZAPASY;}
 function bodyTxt(v){const r=Math.round(v*10)/10;return(r>0?'+':r<0?'−':'')+czc(Math.abs(r).toFixed(1));}
 function autoBadgeOk(p,b){
-  if(b.auto==='body'){if(!proPozice(b,p))return false;const r=bodySezona(p);return bodyDost(r)&&r.avg>=zakHranice(b)-1e-9;}
+  if(b.auto==='body'){if(!proPozice(b,p)||jenPrijem(p))return false;const r=bodySezona(p);return bodyDost(r)&&r.avg>=zakHranice(b)-1e-9;}
   if(b.auto!=='prijem')return false;
   if(!proPozice(b,p))return false;
   const r=prijemSezona(p);
@@ -5991,7 +6011,7 @@ const NEJLEPSI_T=50;
 function collageData(p,norms,bezKap){
   const mils=milAktivni(p),str=playerStrengths(p,norms);
   const kand=strengthTs(p,norms);
-  if(isTrener()&&!str.length){const tb=zakoncovatelkaT(p,norms);if(tb!=null)kand.push({id:'body_zapas',label:'Body v zápase',t:tb});}
+  if(isTrener()&&!str.length&&!jenPrijem(p)){const tb=zakoncovatelkaT(p,norms);if(tb!=null)kand.push({id:'body_zapas',label:'Body v zápase',t:tb});}
   const best=str.length?null:kand.filter(x=>x.t>=NEJLEPSI_T).sort((a,b)=>b.t-a.t)[0]||null;
   return{str,best,badges:bezKap?[]:playerBadgesOrdered(p),mils,stages:mils.map(m=>milStage(p,m.id))};
 }
@@ -6090,7 +6110,7 @@ function openRenamePlayer(){
     <div class="fg"><label>Rok narození</label><input id="newYear" type="number" value="${p.birthYear}" min="2000" max="${new Date().getFullYear()-4}"></div>
     ${isTrener()?`<div class="fg"><label>Číslo dresu (volitelně)</label><input id="newDres" type="number" inputmode="numeric" min="1" max="99" placeholder="1–99" value="${p.dres??''}"></div>
     <div class="fg"><label>Hlavní pozice</label>${pozVolbaHtml('pozHl',p.pozice?.hlavni?[p.pozice.hlavni]:[],false)}</div>
-    <div class="fg"><label>Vedlejší pozice</label>${pozVolbaHtml('pozVed',p.pozice?.vedlejsi||[],true,p.pozice?.hlavni)}</div>`:''}
+    <div class="fg"><label>Vedlejší pozice</label>${pozVolbaHtml('pozVed',p.pozice?.vedlejsi||[],true,p.pozice?.hlavni)}</div>${libRezHtml(p)}`:''}
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="renamePlayer()">Uložit</button></div>`);
   setTimeout(()=>{const el=document.getElementById('newName');el?.focus();el?.select();},80);
 }
@@ -6112,6 +6132,7 @@ function renamePlayer(){
   if(document.getElementById('pozHl')){
     const hl=pozVybrane('pozHl')[0]||null,ved=pozVybrane('pozVed').filter(z=>z!==hl);
     if(hl||ved.length)p.pozice={hlavni:hl,vedlejsi:ved};else delete p.pozice;
+    libRezUloz(p);
   }
   if(syncAutoBadges()){}
   save();closeModal();renderDetail();renderPL();toast('Uloženo ✓');dresHlidej(p);
@@ -8928,6 +8949,9 @@ const HELP_DATA=[
 {q:`Jak funguje odznak Zakončovatelka?`,
  a:`Zakončovatelka se přiděluje sama, stejně jako Přijímačka. Rozhoduje <b>průměr bodů na zápas</b> ve všech zápasech aktuální sezóny, tedy stejné číslo jako Body/zápas v tabulce Zápasy. Hráčka odznak má, když je průměr aspoň na hranici, výchozí je +2,0 bodu na zápas. Hranici změníš v Nastavení › Odznaky › Zakončovatelka, kde hned vidíš, kdo by odznak měl, průměr týmu a hranici nejlepší čtvrtiny. Musí mít aspoň 3 zápasy. Když průměr klesne, odznak sám zmizí. Body v zápase nejsou mezi silnými stránkami (Vyniká), za ty je odznak. V koláži mají příjem a body ze zápasů ikonu svého odznaku, a když hráčka odznak má, je ikona v jeho barvě. Ve vzhledu Trenéra má ikonu meteoru.`,
  kw:"zakončovatelka body zápas automatický odznak meteor"},
+{q:`Jak hodnotit libero jen podle příjmu?`,
+ a:`Ve vzhledu Trenéra má hráčka s pozicí libero (hlavní i vedlejší) v okně Pozice a v Upravit hráčku volbu <b>Libero – hodnocení</b>: <b>Body i příjem</b> (výchozí) nebo <b>Jen příjem</b>. Volba je ruční, protože v mládeži pozice pevné nejsou: kdo hraje libero i smeč, potřebuje všechny metriky. U volby Jen příjem se do Overallu ze zápasů počítá jen příjem (body ne), herní testy útoku (Útok na cíl, Útok do pole) pro ni neplatí stejně jako metrika jen pro jiné pozice, a nemůže dostat Zakončovatelku. Body ze zápasů dál vidíš v tabulce Zápasy, na kartě i ve Srovnání. Když jí pozici libero odebereš, platí zase všechno.`,
+ kw:"libero příjem body overall hodnocení útok jen příjem pozice"},
 {q:`Jakou hranici Přijímačky a Zakončovatelky nastavit pro svou kategorii?`,
  a:`Ve vzhledu Trenéra jsou v Nastavení › Odznaky u Přijímačky i Zakončovatelky pod hranicí tlačítka dívčích kategorií s doporučenou hodnotou. Klepnutím ji vyplníš do hranice, uloží se tlačítkem Uložit. Doporučení: <b>U14</b> 50 % a +1,5 bodu na zápas, <b>U16</b> 55 % a +2,0, <b>U18</b> 60 % a +2,5, <b>U20</b> 65 % a +3,0, <b>U22</b> 70 % a +3,0. Kvalita příjmu s věkem roste, bilance bodů roste pomaleji, protože soupeř víc brání a počítají se i chyby. Je to <b>výchozí odhad, ne naměřená norma</b>. Víc než kategorie rozhoduje, jak zapisuješ: když zapisuješ každou chybu (−1), vyjde bilance nižší, než když zapisuješ jen body. Po zhruba šesti zápasech se proto podívej, kdo by odznak měl a kde je nejlepší čtvrtina týmu. Dobré je, když odznak mají dvě až tři hráčky z dvanácti: když ho má půlka týmu, nic neodliší, když ho nemá nikdo, nemotivuje.`,
  kw:"hranice kategorie U14 U16 U18 U20 U22 doporučení přijímačka zakončovatelka nastavit"},
