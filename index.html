@@ -1542,7 +1542,7 @@ html.skin-dark .lt-b,html.skin-dark .lg-b{background:color-mix(in srgb,var(--cou
 .lt-p{position:absolute;top:-4px;height:14px;width:2px;margin-left:-1px;border-radius:1px}
 .lt-leg{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 0 0;font:600 10.5px/1.3 'DM Sans',sans-serif;color:var(--ink-faint-ink)}
 .lt-leg span{display:inline-flex;align-items:center;gap:6px}
-html.skin-trener .gr-jedno~.gr-jedno .lt-leg{display:none}
+html.skin-trener .gr-leg .lg-i>i{display:inline-block;vertical-align:middle}
 .lg-d,.lt-tip .lg-d{width:8px;height:8px;border-radius:50%;background:var(--cc,var(--court));flex:none}
 .lg-b,.lg-r{width:14px;height:6px;border-radius:3px;flex:none}
 .lg-p{width:2px;height:10px;border-radius:1px;flex:none;margin:0 6px}
@@ -2782,7 +2782,7 @@ function overallBreakdownHtml(p,norms,ovMax){
   // místo spoléhání na to, kde přirozeně zalomí prohlížeč — u nejužšího segmentu (25 %)
   // se "Fyzické · 87" na jeden řádek občas o pár pixelů nevešlo, takhle je nejširší řádek
   // vždy jen samotný popisek nebo jen "87 (25%)", ne oboje spojené.
-  const barHtml=blocks.length>1
+  const barHtml=blocks.length>1||isTrener()&&blocks.length
     ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
     :blocks.length===1&&!ovZap()?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
     :'';
@@ -2827,7 +2827,7 @@ function teamOverallBreakdownHtml(active,ovList,teamTAvg,teamScore){
   if(gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(gameAvg),color:CGREEN});
   if(matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(matchAvg),color:CACC});
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
-  const barHtml=blocks.length>1
+  const barHtml=blocks.length>1||isTrener()&&blocks.length
     ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
     :blocks.length===1&&!ovZap()?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
     :'';
@@ -4074,7 +4074,9 @@ function tymHodnoty(get){return getActiveP().map(p=>{const s=lS(p);return s?get(
 // Lišta týmu: celá lišta = rozpětí soupisky, sytější pás = prostřední polovina, čárka = průměr, tečka = hráčka (body: [{v,c,t}]).
 // Lepší výkon je vždy vpravo (lowerBetter obrací směr). Pod lištou legenda, čísla v bublině (stejná jako u grafů) na najetí/klepnutí.
 // Jména hráček (legenda, bublina) jen když je teček víc (Srovnání); u jedné hráčky je jasné, čí tečka je.
-const LT_TIP={};let ltTipN=0,ltTipW=null,ltTipNajeti=false;
+const LT_TIP={},LT_LEG={};let ltTipN=0,ltTipW=null,ltTipNajeti=false;
+// Kolo 99: legenda lišty za ⓘ v záhlaví karty (grLegenda); doplní se po vložení do stránky.
+function ltLegDoplnit(){document.querySelectorAll('.lt-w[data-tip]:not([data-leg])').forEach(w=>{w.dataset.leg='1';const k=LT_LEG[w.dataset.tip];if(k)grLegenda(w,k);});}
 function listaTymu(body,tym,lb,unit,titulek){
   const vse=[...tym,...body.map(b=>b.v)],mn=Math.min(...vse),mx=Math.max(...vse);
   if(tym.length<2||mx===mn)return'';
@@ -4085,8 +4087,10 @@ function listaTymu(body,tym,lb,unit,titulek){
   const id='lt'+(++ltTipN),jm=body.length>1;
   LT_TIP[id]=(titulek?`<div class="tt-h">${titulek}</div>`:'')+body.map(b=>`<div class="tt-r"><i class="lg-d"${b.c?` style="--cc:${b.c}"`:''}></i>${jm&&b.t?b.t+' ':''}${f(b.v)}</div>`).join('')
     +`<div class="tt-r tt-t"><i class="lg-p"></i>Průměr týmu ${f(mean(tym))}</div><div class="tt-r tt-t"><i class="lg-b"></i>Střed týmu ${od(q(.25),q(.75))}</div><div class="tt-r tt-t"><i class="lg-r"></i>Rozpětí týmu ${od(so[0],so[so.length-1])}</div>`;
-  const legenda=(jm?body.map(b=>`<span><i class="lg-d"${b.c?` style="--cc:${b.c}"`:''}></i>${b.t||''}</span>`).join(''):'')+'<span><i class="lg-p"></i>Průměr</span><span><i class="lg-b"></i>Střed týmu</span><span><i class="lg-r"></i>Rozpětí týmu</span>';
-  return`<div class="lt-w" data-tip="${id}"><div class="lt"><div class="lt-b" style="left:${l};right:calc(100% - ${r})"></div><div class="lt-p" style="left:${x(mean(tym))}"></div>${body.map(b=>`<div class="lt-d" style="left:${x(b.v)}${b.c?';--cc:'+b.c:''}"></div>`).join('')}</div><div class="lt-leg">${legenda}</div></div>`;
+  const vz=c=>`<span class="lg-i">${c}</span>`,tecka=b=>vz(`<i class="lg-d"${b.c?` style="--cc:${b.c}"`:''}></i>`);
+  LT_LEG[id]=[...(jm?body.map(b=>[tecka(b),b.t||'']):[[tecka(body[0]||{}),'Tečka = hráčka']]),[vz('<i class="lg-p"></i>'),'Průměr týmu'],[vz('<i class="lg-b"></i>'),'Střed týmu – prostřední polovina hráček'],[vz('<i class="lg-r"></i>'),'Rozpětí týmu – od nejslabší po nejlepší'],[grLegSw('arrow-right',CTICK),'Lepší výkon je vždy vpravo'],[grLegSw('hand-pointer',CTICK),'Klepni na lištu: přesná čísla']];
+  setTimeout(ltLegDoplnit);
+  return`<div class="lt-w" data-tip="${id}"><div class="lt"><div class="lt-b" style="left:${l};right:calc(100% - ${r})"></div><div class="lt-p" style="left:${x(mean(tym))}"></div>${body.map(b=>`<div class="lt-d" style="left:${x(b.v)}${b.c?';--cc:'+b.c:''}"></div>`).join('')}</div></div>`;
 }
 function ltTipUkaz(w,cx){
   let t=document.getElementById('ltTip');if(!t){t=document.createElement('div');t.id='ltTip';t.className='lt-tip';document.body.appendChild(t);}
@@ -9071,7 +9075,7 @@ const HELP_DATA=[
 {q:`Co znamená plná barevná čára v grafu?`,
  a:`To jsou skutečně naměřené hodnoty hráčky v čase, propojené čárou, přesně tak, jak jsi je zapsal — aplikace do ní nic nevyhlazuje ani nepočítá.`},
 {q:`Proč místo grafu vidím jen lištu s tečkou?`,
- a:`Ve vzhledu Trenéra se graf kreslí až od <b>dvou měření</b>, protože z jedné hodnoty vývoj nepoznáš. Do té doby je místo grafu nízká karta s hodnotou a lištou, která ukazuje, kde hráčka stojí vůči týmu: <b>celá lišta</b> je rozpětí soupisky (poslední hodnota každé hráčky), <b>sytější pás</b> prostřední polovina týmu, <b>svislá čárka</b> průměr a <b>tečka</b> hráčka. Lepší výkon je vždy vpravo, i u metrik, kde je lepší menší číslo (třeba sprint). Pod lištou je legenda. Přesná čísla ukáže bublina po najetí myší nebo klepnutí na lištu. Ve Srovnání je stejná lišta, když žádná z vybraných hráček nemá víc než jedno měření; tečky mají barvu pilulek hráček. Až přibude druhé měření, na stejném místě se objeví graf.`,
+ a:`Ve vzhledu Trenéra se graf kreslí až od <b>dvou měření</b>, protože z jedné hodnoty vývoj nepoznáš. Do té doby je místo grafu nízká karta s hodnotou a lištou, která ukazuje, kde hráčka stojí vůči týmu: <b>celá lišta</b> je rozpětí soupisky (poslední hodnota každé hráčky), <b>sytější pás</b> prostřední polovina týmu, <b>svislá čárka</b> průměr a <b>tečka</b> hráčka. Lepší výkon je vždy vpravo, i u metrik, kde je lepší menší číslo (třeba sprint). Legendu ukáže ⓘ v záhlaví karty. Přesná čísla ukáže bublina po najetí myší nebo klepnutí na lištu. Ve Srovnání je stejná lišta, když žádná z vybraných hráček nemá víc než jedno měření; tečky mají barvu pilulek hráček. Až přibude druhé měření, na stejném místě se objeví graf.`,
  kw:"lišta tečka jedno měření jeden test graf chybí tým rozpětí průměr srovnání"},
 {q:`Proč jsou některé záložky šedé a grafy jen jako štítky?`,
  a:`Ve vzhledu Trenéra se aplikace řídí tím, co máš zapsané. Karta hráčky se otevře na první záložce s daty a záložky bez dat (třeba Herní, když hráčka nemá herní test) jsou <b>šedé a na konci</b>. Klepnout na ně jde dál, zapisuje se v nich stejně jako dřív. Metriky bez jediného měření nemají prázdný graf, ale jsou jako <b>štítky s čárkovaným okrajem</b> v jedné nízké kartě na konci. Ve Srovnání jsou stejně na konci celé oddíly, ke kterým vybrané hráčky nemají data. Na Domů se prstenec milníků ukáže, až má aspoň jedna hráčka zapsaný milník, a ikonka „bez testu“, až tým testuje. Řazení nabízí jen to, k čemu jsou data. Záložky <b>Testy</b> a <b>Zápasy</b> nahoře jsou šedé, dokud v nich nic není.`,
