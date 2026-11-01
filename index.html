@@ -4051,7 +4051,7 @@ function maZap(p){return realMatches().some(m=>playerMatchMetric(p,m,'body')!=nu
 function maMil(p){return milAktivni(p).some(m=>milStage(p,m.id)>0);}
 function tabMaData(p,id){return id==='physical'?maFyz(p):id==='game'?maHer(p):id==='spider'?maFyz(p)||maHer(p):id==='zapas'?maZap(p):id==='milestones'?maMil(p):true;}
 // Záložky karty: s daty v původním pořadí, bez dat ztlumené na konci.
-function tabyPoradi(p){const a=TABS.map(t=>({...t,ma:tabMaData(p,t.id)}));return[...a.filter(t=>t.ma),...a.filter(t=>!t.ma)];}
+function tabyPoradi(p){const a=[...TABS.filter(t=>t.id==='zapas'),...TABS.filter(t=>t.id!=='zapas')].map(t=>({...t,ma:tabMaData(p,t.id)}));return[...a.filter(t=>t.ma),...a.filter(t=>!t.ma)];}
 function vychoziTab(id){if(!isTrener())return'physical';const p=S.players.find(x=>x.id===id),t=p&&tabyPoradi(p)[0];return t&&t.ma?t.id:'physical';}
 function tymTestuje(){return getActiveP().some(p=>(p.testSessions||[]).length);}
 function tymMilniky(){return getActiveP().some(maMil);}
@@ -4116,11 +4116,14 @@ function ttUkaz(el){
   t.style.left=Math.min(Math.max(8,b.left+b.width/2-tw/2),innerWidth-tw-8)+'px';
   t.style.top=(b.top-th-8>=8?b.top-th-8:b.bottom+8)+'px';
 }
+// Kolo 100 (Mek): bez bubliny u nápisu Bombito a u křížku Zavřít (title se schová do data-tt-off, klasik ho vrátí).
+const TT_BEZ='header h1,header .logo-wrap,.sk-close';
 function ttSkryj(){ttEl=null;const t=document.getElementById('ltTip');if(t&&!ltTipW)t.classList.remove('on');}
 document.addEventListener('pointerover',e=>{
   if(e.pointerType!=='mouse'||!e.target.closest)return;
-  const el=e.target.closest('[title],[data-tt]');
-  if(!isTrener()){if(el&&el.dataset.tt&&!el.title)el.title=el.dataset.tt;return;}
+  const el=e.target.closest('[title],[data-tt],[data-tt-off]');
+  if(!isTrener()){if(el&&!el.title&&(el.dataset.tt||el.dataset.ttOff))el.title=el.dataset.tt||el.dataset.ttOff;return;}
+  if(el&&el.matches(TT_BEZ)){if(el.title){el.dataset.ttOff=el.title;el.removeAttribute('title');}if(ttEl)ttSkryj();return;}
   if(el&&el.closest('.lt-w')){ttEl=null;return;}
   if(!el){if(ttEl)ttSkryj();return;}
   if(el.title){el.dataset.tt=el.title;if(!el.getAttribute('aria-label'))el.setAttribute('aria-label',el.title);el.removeAttribute('title');}
@@ -7401,18 +7404,23 @@ function buildZapasTab(){
   const recvVals=allActions.filter(a=>a.type==='prijem').map(a=>a.value);
   const recvAvg=recvVals.length?(recvVals.reduce((s,v)=>s+v,0)/recvVals.length).toFixed(2):null;
 
-  const summaryCards=`<div class="g2" style="margin-bottom:14px">
-    <div class="card" style="text-align:center">
+  const bodyCard=`<div class="card" style="text-align:center">
       <h3>${metricHeadIco('body_zapas')}Celkové body</h3>
       <div class="mv ${totalBody>0?'':totalBody<0?'':''}" style="font-size:2rem;color:${totalBody>0?'var(--gl)':totalBody<0?'var(--red)':'var(--gm)'}">${totalBody>0?'+':''}${totalBody}</div>
       <div style="font-size:0.75rem;color:var(--gm);margin-top:4px">${souhrnM.length} zápasů${souhrnTxt} · ${allActions.filter(a=>a.type==='body').length} akcí</div>
-    </div>
-    ${recvAvg?`<div class="card" style="text-align:center">
+    </div>`;
+  const recvCard=recvAvg?`<div class="card" style="text-align:center">
       <h3>${metricHeadIco('prijem_zapas')}Průměr příjem</h3>
       <div class="mv" style="font-size:2rem;color:${recvAvg<=2?'var(--gl)':recvAvg<=3.5?'var(--acc)':'var(--red)'}">${czc(recvAvg)}<span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;font-weight:400;margin-left:6px">${recvPct(parseFloat(recvAvg))}${isTrener()?' ':''}%</span></div>
       <div style="font-size:0.75rem;color:var(--gm);margin-top:4px">${recvVals.length} hodnocení</div>
-    </div>`:'<div class="card"><h3>Příjem</h3><p class="no-data">Žádná data</p></div>'}
-  </div>`;
+    </div>`:'<div class="card"><h3>Příjem</h3><p class="no-data">Žádná data</p></div>';
+  // Kolo 100 (Mek): ve vzhledu Trenéra jen karty s daty, libero s „Jen příjem“ má příjem první, jediná karta přes celou šířku.
+  const nBodyA=allActions.filter(a=>a.type==='body').length;
+  const sumKarty=!isTrener()?[bodyCard,recvCard]:[nBodyA?bodyCard:'',recvAvg?recvCard:''].filter(Boolean);
+  if(isTrener()&&jenPrijem(p))sumKarty.reverse();
+  const summaryCards=sumKarty.length?`<div class="${sumKarty.length>1?'g2':''}" style="margin-bottom:14px">
+    ${sumKarty.join('\n    ')}
+  </div>`:'';
 
   // Match list — last 3 + show all button
   const allSorted=pMatches.slice().reverse();
@@ -7441,7 +7449,7 @@ function buildZapasTab(){
     +(hasMore?`<button class="btn btn-o" style="width:100%;margin-top:6px;font-size:0.8rem" onclick="openMatchLibrary('${p.id}')">📚 Všechny záznamy (${allSorted.length})</button>`:'');
 
   // History charts
-  const histBodyData=pMatches.map(m=>{
+  const histBodyData=pMatches.filter(m=>!isTrener()||m.sets.some(st=>st.actions.some(a=>a.pid===p.id&&a.type==='body'))).map(m=>{
     const sc=m.sets.flatMap(s=>s.actions).filter(a=>a.pid===p.id&&a.type==='body').reduce((s,a)=>s+a.value,0);
     return{x:fmtDate(m.date,true),y:sc};
   });
@@ -7450,9 +7458,10 @@ function buildZapasTab(){
     return vals.length?{x:fmtDate(m.date,true),y:Math.round(vals.reduce((s,v)=>s+v,0)/vals.length*10)/10}:null;
   }).filter(Boolean);
 
+  const grBody=histBodyData.length>1?`<div class="card"><h3>Body — vývoj v čase</h3><div class="cw"><canvas id="zh_body"></canvas></div></div>`:'';
+  const grRecv=histRecvData.length>1?`<div class="card"><h3>Příjem — vývoj v čase</h3><div class="cw"><canvas id="zh_recv"></canvas></div></div>`:'';
   const histCharts=`<div class="g2">
-    ${histBodyData.length>1?`<div class="card"><h3>Body — vývoj v čase</h3><div class="cw"><canvas id="zh_body"></canvas></div></div>`:''}
-    ${histRecvData.length>1?`<div class="card"><h3>Příjem — vývoj v čase</h3><div class="cw"><canvas id="zh_recv"></canvas></div></div>`:''}
+    ${isTrener()&&jenPrijem(p)?grRecv+grBody:grBody+'\n    '+grRecv}
   </div>`;
 
   setTimeout(()=>{
@@ -9078,7 +9087,7 @@ const HELP_DATA=[
  a:`Ve vzhledu Trenéra se graf kreslí až od <b>dvou měření</b>, protože z jedné hodnoty vývoj nepoznáš. Do té doby je místo grafu nízká karta s hodnotou a lištou, která ukazuje, kde hráčka stojí vůči týmu: <b>celá lišta</b> je rozpětí soupisky (poslední hodnota každé hráčky), <b>sytější pás</b> prostřední polovina týmu, <b>svislá čárka</b> průměr a <b>tečka</b> hráčka. Lepší výkon je vždy vpravo, i u metrik, kde je lepší menší číslo (třeba sprint). Legendu ukáže ⓘ v záhlaví karty. Přesná čísla ukáže bublina po najetí myší nebo klepnutí na lištu. Ve Srovnání je stejná lišta, když žádná z vybraných hráček nemá víc než jedno měření; tečky mají barvu pilulek hráček. Až přibude druhé měření, na stejném místě se objeví graf.`,
  kw:"lišta tečka jedno měření jeden test graf chybí tým rozpětí průměr srovnání"},
 {q:`Proč jsou některé záložky šedé a grafy jen jako štítky?`,
- a:`Ve vzhledu Trenéra se aplikace řídí tím, co máš zapsané. Karta hráčky se otevře na první záložce s daty a záložky bez dat (třeba Herní, když hráčka nemá herní test) jsou <b>šedé a na konci</b>. Klepnout na ně jde dál, zapisuje se v nich stejně jako dřív. Metriky bez jediného měření nemají prázdný graf, ale jsou jako <b>štítky s čárkovaným okrajem</b> v jedné nízké kartě na konci. Ve Srovnání jsou stejně na konci celé oddíly, ke kterým vybrané hráčky nemají data. Na Domů se prstenec milníků ukáže, až má aspoň jedna hráčka zapsaný milník, a ikonka „bez testu“, až tým testuje. Řazení nabízí jen to, k čemu jsou data. Záložky <b>Testy</b> a <b>Zápasy</b> nahoře jsou šedé, dokud v nich nic není.`,
+ a:`Ve vzhledu Trenéra se aplikace řídí tím, co máš zapsané. Karta hráčky má první záložku <b>Zápas</b> a otevře se na první záložce s daty; záložky bez dat (třeba Herní, když hráčka nemá herní test) jsou <b>šedé a na konci</b>. Klepnout na ně jde dál, zapisuje se v nich stejně jako dřív. Metriky bez jediného měření nemají prázdný graf, ale jsou jako <b>štítky s čárkovaným okrajem</b> v jedné nízké kartě na konci. Ve Srovnání jsou stejně na konci celé oddíly, ke kterým vybrané hráčky nemají data. Na Domů se prstenec milníků ukáže, až má aspoň jedna hráčka zapsaný milník, a ikonka „bez testu“, až tým testuje. Řazení nabízí jen to, k čemu jsou data. Záložky <b>Testy</b> a <b>Zápasy</b> nahoře jsou šedé, dokud v nich nic není.`,
  kw:"šedé záložky ztlumené štítky bez dat prázdné grafy pilulky prstenec řazení testy zápasy"},
 {q:`Co znamená tečkovaný úsek čáry v grafu?`,
  a:`Ve vzhledu Trenéra graf na kartě hráčky ukazuje všechna fyzická testování. Když hráčka v některém testování danou metriku neměla změřenou (vynechala ji), bod tam chybí a čára přes to místo vede jen <b>tečkovaně a slaběji</b>. Je to jen naznačení, žádná hodnota se tam nedopočítává. Herní test se do fyzických grafů nepočítá, takže samotný herní test mezeru nedělá. Stejně tečkovaně jsou spojené mezery ve Srovnání. Nad grafem je vpravo vždy poslední naměřená hodnota a pod ní změna od prvního měření (zeleně zlepšení, červeně zhoršení; u časů je zlepšením pokles). Při jediném měření se změna neukazuje.`,
