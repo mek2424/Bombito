@@ -1150,6 +1150,7 @@ html.skin-trener .gr-leg{display:none}
 html.skin-trener .leg-on .gr-leg{display:flex;flex-direction:column;gap:6px;margin:2px 0 10px;padding:9px 11px;border-radius:8px;background:var(--paper);font:500 12px/1.35 'DM Sans',sans-serif;color:var(--ink-soft);text-transform:none;letter-spacing:0}
 html.skin-trener .gr-leg>span{display:flex;align-items:center;gap:9px}
 html.skin-trener .gr-leg svg,html.skin-trener .gr-leg .lg-i{flex-shrink:0;width:24px;text-align:center}
+html.skin-trener .zap-tym{margin-top:12px}
 html.skin-trener .ov-zm-r{font-size:12px;color:var(--ink-faint-ink);margin-top:2px}
 html.skin-trener .ov-zm-r .ov-sip{font-size:15px!important;font-weight:700;margin:0 2px 0 0}
 html.skin-trener .pd-ov .ov-sip{font-size:16px!important;margin-left:4px}
@@ -6565,6 +6566,25 @@ function renderZapasyObsah(el){
     <div class="g2" style="margin-top:14px"><div><div class="sk-grp">Poslední zápasy</div>${ms.slice(0,5).map(zapKarta).join('')}<button class="btn btn-o sm zap-vse" onclick="openAllMatchesLibrary()"><i class="fa-solid fa-list" aria-hidden="true"></i> Všechny zápasy</button></div>${tids.length?`<div><div class="sk-grp">Turnaje</div>${tids.slice(0,3).map(turKarta).join('')}<button class="btn btn-o sm zap-vse" onclick="openTournaments()"><i class="fa-solid fa-trophy" aria-hidden="true"></i> Všechny turnaje</button></div>`:''}</div>`
     :'<div class="empty" style="height:30vh"><div class="ei"><i class="fa-solid fa-trophy" aria-hidden="true"></i></div><div>V této sezóně zatím žádný zápas</div></div>'}
 `;
+  if(isTrener()&&ms.length)zapTymGraf(el,ms);
+}
+// Kolo 95 (revize F2): na záložce Zápasy graf týmu po turnajích (zápasy bez turnaje po dnech): body týmu na zápas
+// jako sloupce, kvalita příjmu jako čára na pravé ose. Až od dvou turnajů/dnů v sezóně.
+function zapTymGraf(el,ms){
+  const sk=[];
+  ms.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(m=>{const k=m.tournamentId||('d'+m.date);let g=sk.find(x=>x.k===k);if(!g){const t=m.tournamentId&&(S.tournaments||[]).find(x=>x.id===m.tournamentId);g={k,lbl:t?t.name:fmtDate(m.date,true),ms:[]};sk.push(g);}g.ms.push(m);});
+  if(sk.length<2)return;
+  const r=sk.map(g=>{const a=g.ms.flatMap(m=>m.sets.flatMap(st=>st.actions)),b=a.filter(x=>x.type==='body').reduce((x,y)=>x+y.value,0),pv=a.filter(x=>x.type==='prijem').map(x=>x.value);return{lbl:g.lbl,b:Math.round(b/g.ms.length*10)/10,p:pv.length?recvPct(pv.reduce((x,y)=>x+y,0)/pv.length):null};});
+  const sum=el.querySelector('.zap-sum');if(!sum)return;
+  sum.insertAdjacentHTML('afterend','<div class="card zap-tym"><h3>'+metricHeadIco('body_zapas')+'Tým po turnajích</h3><div class="cw" style="height:190px"><canvas id="zapTymC"></canvas></div></div>');
+  if(CH.zapTymC){CH.zapTymC.destroy();delete CH.zapTymC;}
+  CH.zapTymC=new Chart(document.getElementById('zapTymC'),{type:'bar',data:{labels:r.map(x=>x.lbl),datasets:[
+    {type:'bar',data:r.map(x=>x.b),backgroundColor:r.map(x=>x.b>=0?CG:'#7a2a2a'),borderRadius:4,borderWidth:0,yAxisID:'y',order:2},
+    {type:'line',data:r.map(x=>x.p),borderColor:'#4a9ee8',backgroundColor:'transparent',pointRadius:3,borderWidth:2,tension:0.3,yAxisID:'y2',spanGaps:true,order:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['tymBody','tymPrijem']},
+      tooltip:{callbacks:{label:c=>c.datasetIndex?'příjem '+c.parsed.y+' %':czc((c.parsed.y>0?'+':'')+c.parsed.y)+' bodu na zápas'}}},
+      scales:{x:{ticks:{font:{size:10},maxRotation:45,autoSkip:false,callback:function(v){const l=this.getLabelForValue(v);return l.length>12?l.slice(0,11)+'…':l;}}},
+        y:{ticks:{font:{size:10},callback:v=>czc(v)}},y2:{position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{font:{size:10},callback:v=>v+' %'}}}}});
 }
 function ovSortBy(col){
   if(ovSort.col===col)ovSort.asc=!ovSort.asc;
@@ -6615,6 +6635,7 @@ function buildTsTimeline(p,norms){
   </div>`;
 }
 
+let tsRozklad=null; // Kolo 95: rozložená skupina ve Vývoji T-skóre ('fyz' | 'her' | null)
 function drawTsTimeline(p,norms){
   const cv=document.getElementById('tsTimelineC');if(!cv)return;
   const sessions=p.testSessions||[];
@@ -6638,10 +6659,29 @@ function drawTsTimeline(p,norms){
       tension:0.3,pointRadius:3,borderWidth:1.5,spanGaps:true,borderDash:[3,2],
     })),
   ];
+  // Kolo 95 (revize F1): ve vzhledu Trenéra tři čáry – průměr T fyzických, herních a zápasů v den testu;
+  // klepnutí na Fyzické/Herní v legendě rozloží skupinu na metriky (silná čára = průměr, tenké = metriky).
+  let ds=datasets,legK=['t50','fyz','her'];
+  if(isTrener()){
+    const nP=phM.length+1,prum=a=>{const v=a.filter(x=>x!=null);return v.length?Math.round(v.reduce((x,y)=>x+y,0)/v.length):null;};
+    const sk=(label,data,c,key)=>({label,data,borderColor:c,backgroundColor:'transparent',tension:0.3,pointRadius:4,borderWidth:3,spanGaps:true,_sk:key});
+    const fyz=sessions.map((_,j)=>prum(datasets.slice(0,nP).map(d=>d.data[j])));
+    const her=sessions.map((_,j)=>prum(datasets.slice(nP).map(d=>d.data[j])));
+    const zap=sessions.map(x=>{const m=overallMatchRawAt(p,norms,x.date);return m.n?Math.round(m.vals.reduce((a,b)=>a+b,0)/m.n):null;});
+    const sum=[fyz.some(v=>v!=null)&&sk('Fyzické',fyz,CGREEN,'fyz'),her.some(v=>v!=null)&&sk('Herní',her,CACC,'her'),zap.some(v=>v!=null)&&sk('Zápasy',zap,'#4a9ee8','zap')].filter(Boolean);
+    const tenke=a=>a.map(d=>({...d,borderWidth:1.3,pointRadius:2}));
+    const sedy=d=>({...d,borderColor:CLEG,pointBackgroundColor:CLEG});
+    if(tsRozklad==='fyz'&&sum.some(d=>d._sk==='fyz'))ds=[sedy(sum.find(d=>d._sk==='fyz')),...tenke(datasets.slice(0,nP))];
+    else if(tsRozklad==='her'&&sum.some(d=>d._sk==='her'))ds=[sedy(sum.find(d=>d._sk==='her')),...tenke(datasets.slice(nP))];
+    else{tsRozklad=null;ds=sum;}
+    legK=['t50',tsRozklad?'rozkladZpet':'skupiny',sum.some(d=>d._sk!=='zap')&&'rozklad'];
+  }
   const refLinePlugin={id:'refLine',afterDraw(chart){const{ctx,chartArea,scales}=chart;if(!scales.y)return;const y50=scales.y.getPixelForValue(50);ctx.save();ctx.strokeStyle='rgba(120,120,120,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(chartArea.left,y50);ctx.lineTo(chartArea.right,y50);ctx.stroke();ctx.fillStyle='#666';ctx.font='9px sans-serif';ctx.fillText('T=50',chartArea.right+4,y50+4);ctx.restore();}};
-  CH['tsTimelineC']=new Chart(cv,{type:'line',plugins:[refLinePlugin],data:{labels,datasets},options:{
+  CH['tsTimelineC']=new Chart(cv,{type:'line',plugins:[refLinePlugin],data:{labels,datasets:ds},options:{
     responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{labels:{color:CLEG,font:{size:9},boxWidth:12}},grLeg:{k:['t50','fyz','her']}},
+    plugins:{legend:{labels:{color:CLEG,font:{size:isTrener()?11:9},boxWidth:12},
+      onClick:isTrener()?(e,it,lg)=>{const d=lg.chart.data.datasets[it.datasetIndex];if(d&&(d._sk==='fyz'||d._sk==='her')){tsRozklad=tsRozklad===d._sk?null:d._sk;if(CH.tsTimelineC){CH.tsTimelineC.destroy();delete CH.tsTimelineC;}drawTsTimeline(p,norms);}else Chart.defaults.plugins.legend.onClick.call(lg,e,it,lg);}:undefined},
+      grLeg:{k:legK}},
     scales:{
       x:{ticks:{font:{size:10}}},
       y:{ticks:{font:{size:10}},
@@ -7354,8 +7394,8 @@ function buildZapasTab(){
         labels:histBodyData.map(d=>d.x),
         datasets:[{data:histBodyData.map(d=>d.y),
           backgroundColor:histBodyData.map(d=>d.y>0?CG:d.y<0?'#7a2a2a':'#444'),
-          borderRadius:4,borderWidth:0}]
-      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['bodyPlus','bodyMinus']}},
+          borderRadius:4,borderWidth:0},...(isTrener()&&histBodyData.length>=3?[{type:'line',data:movingAvg3(histBodyData.map(d=>d.y)),borderColor:CTICK,borderDash:[5,3],borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]:[])]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['bodyPlus','bodyMinus',histBodyData.length>=3&&'trendZ']}},
         scales:{x:{ticks:{font:{size:10}}},
                 y:{ticks:{font:{size:10}}}}}});
     }
@@ -7365,8 +7405,8 @@ function buildZapasTab(){
       CH['zh_recv']=new Chart(cvr,{type:'line',data:{
         labels:histRecvData.map(d=>d.x),
         datasets:[{data:histRecvData.map(d=>d.y),borderColor:'#4a9ee8',
-          backgroundColor:'rgba(74,158,232,0.08)',tension:0.35,pointRadius:4,fill:true,borderWidth:2}]
-      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['prijem']},
+          backgroundColor:'rgba(74,158,232,0.08)',tension:0.35,pointRadius:4,fill:true,borderWidth:2},...(isTrener()&&histRecvData.length>=3?[{data:movingAvg3(histRecvData.map(d=>d.y)),borderColor:CTICK,borderDash:[5,3],borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,backgroundColor:'transparent'}]:[])]
+      },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},grLeg:{k:['prijem',histRecvData.length>=3&&'trendZ']},
           // Kolo 86 (Mek): ve vzhledu Trenéra průměrná známka i procento (bublina a pravá osa).
           tooltip:isTrener()?{callbacks:{label:c=>czc(roundN(c.parsed.y,1))+' · '+recvPct(c.parsed.y)+' %'}}:{}},
         scales:{x:{ticks:{font:{size:10}}},
@@ -8990,6 +9030,9 @@ const HELP_DATA=[
  kw:"barvy zelená šedá zlatý bod legenda pavouk T 75"},
 {q:`Co dělá přepínač „Předchozí" na Pavoukovi?`,
  a:`Když ho zapneš, aplikace do grafu vedle aktuálního profilu hráčky dokreslí i profil z jejího PŘEDCHOZÍHO testování — takže jedním pohledem porovnáš, jak se od minula posunula na všech osách najednou, ne jen v jedné metrice.`},
+{q:`Co ukazuje Vývoj T-skóre a graf Tým po turnajích?`,
+ a:`Ve vzhledu Trenéra má <b>Vývoj T-skóre</b> (pod pavoukem) tři silné čáry: průměr T-skóre fyzických metrik, herních metrik a zápasů v den každého testu. Klepnutím na <b>Fyzické</b> nebo <b>Herní</b> v legendě nad grafem se čára rozloží na jednotlivé metriky (tenké čáry), dalším klepnutím se složí zpátky. Na záložce <b>Zápasy</b> je graf <b>Tým po turnajích</b>: sloupce jsou body týmu na zápas v každém turnaji (body mínus chyby), modrá čára kvalita příjmu týmu na pravé ose. Zápasy mimo turnaj se seskupí po dnech. V grafech Body a Příjem na kartě hráčky je od tří zápasů čárkovaně klouzavý průměr. Co je v grafu, ukáže vždy ⓘ v jeho záhlaví.`,
+ kw:"vývoj t-skóre tři čáry rozložit metriky tým po turnajích graf zápasy klouzavý průměr"},
 {q:`Co je graf „T-score vývoj v čase" pod pavoukem?`,
  a:`Samostatný graf (jiný než Pavouk) přímo pod ním, co ukazuje vývoj T-skóre jednotlivých metrik v čase jako běžné křivky — na rozdíl od Pavouka, který ukazuje jen JEDEN okamžik (aktuální, případně i předchozí), tenhle graf ukazuje CELOU HISTORII. Pozor, tohle je jediné místo v aplikaci (spolu s PDF exportem), kde aplikace pořád ukazuje obě varianty útoku („Útok na cíl"/„Útok do pole") jako dvě oddělené křivky místo sloučené jedné.`},
 ]},
@@ -9373,6 +9416,12 @@ function grLegPolozky(){return{
   tezsi:[grLegSw('plna',CGREEN),'Těžší varianta (Útok na cíl)'],
   prechod:[grLegSw('star','#E0A82E'),'Den přechodu na těžší variantu'],
   t50:[grLegSw('cark','rgba(120,120,120,0.7)'),'T 50 = průměr týmu; výš je nad průměrem, níž pod ním'],
+  skupiny:[grLegSw('plna',CGREEN),'Každá čára je průměr T-skóre skupiny: Fyzické, Herní, Zápasy'],
+  rozklad:[grLegSw('hand-pointer',CTICK),'Klepni nad grafem na Fyzické nebo Herní: čára se rozloží na jednotlivé metriky, dalším klepnutím se složí'],
+  rozkladZpet:[grLegSw('plna',CLEG),'Silná čára = průměr skupiny, tenké čáry = jednotlivé metriky'],
+  trendZ:[grLegSw('cark',CTICK),'Klouzavý průměr posledních 3 zápasů – ukazuje trend'],
+  tymBody:[grLegSw('blok',CG),'Body týmu na zápas v turnaji (body mínus chyby, levá osa)'],
+  tymPrijem:[grLegSw('plna','#4a9ee8'),'Kvalita příjmu týmu v turnaji (pravá osa)'],
   prumerR:[grLegSw('jemna',CLEG),'Přerušovaný šedý prstenec = T 50, průměr týmu; ven je nad průměrem, dovnitř pod ním'],
   zlatyBod:[grLegSw('circle',CACC),'Zlatý bod = T 75 a víc, výjimečný výkon'],
   hvezdaR:[grLegSw('star',CACC),'Hvězda u Útoku = těžší varianta (Útok na cíl)'],
