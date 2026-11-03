@@ -1461,7 +1461,7 @@ html.skin-trener .cmp-chipy .cmp-chip{margin:0;padding:5px 10px;display:inline-f
 html.skin-trener .cmp-chipy .cmp-chip:has(.poz-roh){margin-top:0}
 html.skin-trener .cmp-chipy .cmp-chip .poz-roh{position:static;transform:none;margin-right:5px;gap:2px}
 html.skin-trener .cmp-chipy .cmp-chip .poz-roh .poz{box-shadow:none}
-.poz-radek{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:2px 0 4px;font-size:13px;color:var(--ink-soft)}
+.poz-radek{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;max-width:100%;min-width:0;margin:2px 0 4px;font-size:13px;color:var(--ink-soft)}
 .poz-radek .pz{display:inline-flex;align-items:center;gap:5px}
 .poz-radek .pz b{color:var(--ink);font-weight:700}
 .med{display:flex;flex-direction:column;gap:6px}
@@ -2064,8 +2064,9 @@ function pozKartaHtml(p){
   if(!zs.length)return'';
   const h=p.pozice.hlavni,ved=zs.filter(z=>z!==h);
   const hl=h?`<span class="pz">${pozChip(h,true,true)}<b>${pozDef(h).label}</b></span>`:'';
-  const vd=ved.length?`<span class="pz">${ved.map(z=>`${pozChip(z,false,true)}${pozDef(z).label}`).join(' ')}</span>`:'';
-  return`<button type="button" class="poz-radek poz-klik" onclick="openPozice()" title="Pozice">${hl}${vd}</button>`;
+  const vd=ved.length?`<span class="pz">${ved.map(z=>pozChip(z,false,true)).join('')}</span>`:'';
+  const t='Pozice: '+zs.map(z=>pozDef(z).label+(z===h?' (hlavní)':'')).join(', ');
+  return`<button type="button" class="poz-radek poz-klik" onclick="openPozice()" title="${t}" aria-label="${t}">${hl}${vd}</button>`;
 }
 // Výběr pozic (tlačítka s kroužkem a názvem). multi=false: nejvýš jedna, opětovné klepnutí zruší.
 function pozVolbaHtml(id,vybrane,multi,zakazana){
