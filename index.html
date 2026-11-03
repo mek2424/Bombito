@@ -2488,6 +2488,8 @@ function computeNorms(matchScope){
     const stat=key==="body_zapas"?robustMuSigma(vals):{mu:mean(vals),sigma:std(vals,mean(vals))};
     norms[key]={mu:stat.mu,sigma:stat.sigma,n:vals.length,lowerBetter:false};
   });
+  norms.body_set=bodySetNorma(pool,matches);
+  norms.milniky=milNorma();
   return norms;
 }
 function toggleNormScope(){
@@ -2620,6 +2622,34 @@ function overallDisplay(tAvg){
 // z Kola 22, teď zobecněný na libovolný počet chybějících bloků (viz overallForPlayer níž).
 const OVERALL_MATCH_CAP=12; // kolik posledních reálných zápasů hráčky (z AKTUÁLNÍ sezóny, Kolo 38) se bere do průměru
 const OVERALL_W_PHYS=0.25, OVERALL_W_GAME=0.35, OVERALL_W_MATCH=0.40; // startovní váhy, snadno doladitelné později
+// Kolo 101 (Mek): milníky = jemný čtvrtý blok, 10 % celku, když jsou všechny bloky (0,1/0,9 vůči součtu 1 ostatních).
+const OVERALL_W_MIL=0.1/0.9, CMIL='#9b7ad8';
+// Podíl získaných fází milníků (0–1); cutoff = jen fáze zapsané do toho data (přibližně, ukládá se datum poslední fáze).
+// Polovina společné milníky, polovina poziční: průměr přes VŠECHNY pozice hráčky, hlavní i vedlejší (Mek: vedlejší se počítají).
+// Průměr, ne součet → víc pozic neznamená výhodu. hlavniPoz() používají body (bodySk), ne milníky.
+function hlavniPoz(p){const h=p?.pozice?.hlavni;return h&&pozDef(h)?h:null;}
+function milPodil(p,cutoff){
+  const ms=milAktivni(p);if(!ms.length)return null;
+  const st=m=>{const z=p.milestones?.[m.id];return z&&(!cutoff||!z.date||z.date<=cutoff)?z.stage||0:0;};
+  const podil=a=>a.length?a.reduce((s,m)=>s+st(m),0)/(a.length*3):null;
+  const spol=podil(ms.filter(m=>!(m.pozice||[]).length));
+  const poz=pozHracky(p).map(z=>podil(ms.filter(m=>(m.pozice||[]).includes(z)))).filter(v=>v!=null);
+  const pozAvg=poz.length?poz.reduce((a,b)=>a+b,0)/poz.length:null;
+  return spol!=null&&pozAvg!=null?(spol+pozAvg)/2:spol??pozAvg;
+}
+// Norma: aktivní hráčky (i s nulou) + archivované, které nějaký milník mají.
+function milNorma(){
+  if(!getActiveP().some(maMil))return null;
+  const akt=getActiveP();
+  const vals=normPlayers().filter(p=>akt.includes(p)||maMil(p)).map(p=>milPodil(p)).filter(v=>v!=null);
+  const mu=mean(vals),sigma=std(vals,mu);
+  return vals.length>1&&sigma?{mu,sigma,n:vals.length,lowerBetter:false}:null;
+}
+function overallMilAvg(p,norms,cutoff){
+  if(ovZap())return null;
+  const nm=norms.milniky!==undefined?norms.milniky:milNorma();if(!nm)return null;
+  const v=milPodil(p,cutoff);return v==null?null:tRaw(v,nm);
+}
 // Kolo 98: pohled „Jen zápasy“ (vzhled Trenéra) – Overall jen ze zápasového bloku. Nepamatuje se (po zavření aplikace vypnutý).
 let ovJenZap=false;
 function ovZap(){return ovJenZap&&isTrener();}
@@ -2628,10 +2658,38 @@ function ovZapIko(){return ovZap()?'<i class="fa-solid fa-trophy ov-zap-i" role=
 function ovZapPrepni(){ovJenZap=!ovJenZap;domuMenu=null;rerenderCurrent();}
 // PDF a Wrapped vždy s běžným Overallem.
 function ovBezZap(fn){const z=ovJenZap;ovJenZap=false;try{return fn();}finally{ovJenZap=z;}}
+// Kolo 101 (Mek): body do Overallu jako body za odehraný set (odehraný = set s jakoukoli zapsanou akcí hráčky,
+// sestava se neeviduje), sdružené přes posledních N zápasů. Málo setů → přitažení k průměru pozice (SHRINK_K_BODY_SET).
+// Hráčka se porovnává se skupinou své HLAVNÍ pozice (útok = smeč + účko, nahrávka, blok, libero); bez hlavní pozice
+// s celým týmem. Průměr skupiny je přitažený k týmu (POZ_K_BODY), ať 2 hráčky ve skupině nedělají z normy náhodu.
+const SHRINK_K_BODY_SET=4, POZ_K_BODY=2;
+function hracAkce(p,m){return m.sets.some(s=>s.actions.some(a=>a.pid===p.id));}
+function ovBodyMs(list,p){return list.filter(m=>hracAkce(p,m)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);}
+function bodySetPool(p,matches){
+  let b=0,n=0,nb=0;
+  matches.forEach(m=>m.sets.forEach(st=>{let on=false;st.actions.forEach(a=>{if(a.pid!==p.id)return;on=true;if(a.type==='body'){b+=a.value;nb++;}});if(on)n++;}));
+  return nb&&n?{rate:b/n,n}:null;
+}
+function bodySk(p){const h=hlavniPoz(p);return h==='smec'||h==='ucko'?'utok':h;}
+function bodySetNorma(players,matches){
+  const bs=players.filter(p=>!jenPrijem(p)).map(p=>({p,r:bodySetPool(p,matches)})).filter(x=>x.r);
+  if(bs.length<2)return null;
+  const mu0=mean(bs.map(x=>x.r.rate)),poz={};
+  [...new Set(bs.map(x=>bodySk(x.p)).filter(Boolean))].forEach(g=>{const v=bs.filter(x=>bodySk(x.p)===g).map(x=>x.r.rate);poz[g]=(v.reduce((a,b)=>a+b,0)+POZ_K_BODY*mu0)/(v.length+POZ_K_BODY);});
+  const st=robustMuSigma(bs.map(x=>x.r.rate-(poz[bodySk(x.p)]??mu0)+mu0));
+  return{mu:st.mu,sigma:st.sigma,poz,n:bs.length,lowerBetter:false};
+}
+function bodySetT(p,ms,norms){
+  const nm=norms.body_set!==undefined?norms.body_set:bodySetNorma(normPlayers(),seasonRealMatches());
+  if(!nm)return null;
+  const r=bodySetPool(p,ms);if(!r)return null;
+  const ref=nm.poz[bodySk(p)]??nm.mu;
+  return tRaw(shrinkPct(r.rate,r.n,ref,SHRINK_K_BODY_SET)-ref+nm.mu,nm);
+}
 function overallMatchRaw(p,norms){
   const vals=[];
-  const bodyAvg=jenPrijem(p)?null:playerRecentMatchAvg(p,'body',OVERALL_MATCH_CAP);
-  if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
+  const bodyT=jenPrijem(p)?null:bodySetT(p,ovBodyMs(seasonRealMatches(),p),norms);
+  if(bodyT!=null)vals.push(bodyT);
   // příjem: sdružené pokusy napříč posledními zápasy (ne prostý průměr per-zápas procent),
   // pak shrinkPct podle celkového počtu příjmů — viz playerReceptionPool/shrinkPct výš.
   const prijemMs=seasonRealMatches().filter(m=>playerMatchMetric(p,m,'prijem')!=null)
@@ -2674,12 +2732,14 @@ function overallForPlayer(p,norms,maxCovered){
   if(physAvg!=null)blocks.push({avg:physAvg,w:OVERALL_W_PHYS});
   if(gameAvg!=null)blocks.push({avg:gameAvg,w:OVERALL_W_GAME});
   if(matchAvg!=null)blocks.push({avg:matchAvg,w:OVERALL_W_MATCH});
-  if(!blocks.length)return{score:null,tAvg:null,n,total,incomplete:true,physAvg:null,gameAvg:null,matchAvg:null,matchCount:match.matchCount};
+  const milAvg=blocks.length?overallMilAvg(p,norms):null;
+  if(milAvg!=null)blocks.push({avg:milAvg,w:OVERALL_W_MIL});
+  if(!blocks.length)return{score:null,tAvg:null,n,total,incomplete:true,physAvg:null,gameAvg:null,matchAvg:null,milAvg:null,matchCount:match.matchCount};
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
   const tAvg=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum;
   // Kolo 78: metriky cizích pozic hráčka mít nemůže, proto se od týmového maxima odečtou.
   const nep=ovZap()?0:S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku"&&!metPlati(m,p)).length+S.config.game.filter(m=>m.active!==false&&!metPlati(m,p)).length;
-  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered-nep,physAvg,gameAvg,matchAvg,matchCount:match.matchCount};
+  return{score:overallDisplay(tAvg),tAvg,n,total,incomplete:n<maxCovered-nep,physAvg,gameAvg,matchAvg,milAvg,matchCount:match.matchCount};
 }
 // ═══ Kolo 23: rozpad Overallu po kliknutí + odznak zápasový/testovací typ ═══
 // Práh 10 bodů na SUROVÉM T-skóre (ne na přeškálovaném 40–99 zobrazení) je záměrně —
@@ -2774,6 +2834,7 @@ function overallBreakdownHtml(p,norms,ovMax){
   if(ov.physAvg!=null)blocks.push({label:'Fyzické',w:OVERALL_W_PHYS,score:overallDisplay(ov.physAvg),color:"#4a9ee8"});
   if(ov.gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(ov.gameAvg),color:CGREEN});
   if(ov.matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(ov.matchAvg),color:CACC});
+  if(ov.milAvg!=null)blocks.push({label:'Milníky',w:OVERALL_W_MIL,score:overallDisplay(ov.milAvg),color:CMIL,min:1});
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
   // Výška baru zvýšena z 34 na 44px oproti Kolu 23 — se třemi segmenty (dřív dvěma) je ten
   // nejužší užší a text se občas zalomí na dva řádky, 44px na to má dost místa. font-size
@@ -2783,7 +2844,7 @@ function overallBreakdownHtml(p,norms,ovMax){
   // se "Fyzické · 87" na jeden řádek občas o pár pixelů nevešlo, takhle je nejširší řádek
   // vždy jen samotný popisek nebo jen "87 (25%)", ne oboje spojené.
   const barHtml=blocks.length>1||isTrener()&&blocks.length
-    ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
+    ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;${b.min?'flex-shrink:0;min-width:66px;':''}background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
     :blocks.length===1&&!ovZap()?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
     :'';
   const gapBadge=matchGapBadge(ov);
@@ -2822,13 +2883,15 @@ function teamOverallBreakdownHtml(active,ovList,teamTAvg,teamScore){
   const physAvg=avg(ovList.map(o=>o.physAvg).filter(v=>v!=null));
   const gameAvg=avg(ovList.map(o=>o.gameAvg).filter(v=>v!=null));
   const matchAvg=avg(ovList.map(o=>o.matchAvg).filter(v=>v!=null));
+  const milAvg=avg(ovList.map(o=>o.milAvg).filter(v=>v!=null));
   const blocks=[];
   if(physAvg!=null)blocks.push({label:'Fyzické',w:OVERALL_W_PHYS,score:overallDisplay(physAvg),color:"#4a9ee8"});
   if(gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(gameAvg),color:CGREEN});
   if(matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(matchAvg),color:CACC});
+  if(milAvg!=null)blocks.push({label:'Milníky',w:OVERALL_W_MIL,score:overallDisplay(milAvg),color:CMIL,min:1});
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
   const barHtml=blocks.length>1||isTrener()&&blocks.length
-    ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
+    ?`<div style="display:flex;height:44px;border-radius:6px;overflow:hidden;margin:10px 0">${blocks.map(b=>`<div style="width:${b.w/wSum*100}%;${b.min?'flex-shrink:0;min-width:66px;':''}background:${b.color}22;border-bottom:3px solid ${b.color};display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:0.8rem;color:${b.color};font-weight:600;line-height:1.3"><span>${b.label}</span><span style="opacity:.85">${b.score} <span style="opacity:.6">(${Math.round(b.w/wSum*100)}%)</span></span></div>`).join('')}</div>`
     :blocks.length===1&&!ovZap()?`<p style="font-size:0.82rem;color:var(--gm);margin:10px 0">Zatím jen z bloku „${blocks[0].label}" — ostatní zdroje dat (fyzické testy / herní testy / zápasy) zatím chybí.</p>`
     :'';
   return`<h2>📊 Overall — rozpad${ovZapIko()}</h2><p style="font-size:0.85rem;color:var(--gl);margin-bottom:2px">${active.length} hráček v týmu</p>
@@ -5111,8 +5174,9 @@ function pdfOverallHtmlJadro(p){
   if(ovAll.physAvg!=null)blocks.push({label:'Fyzické',w:OVERALL_W_PHYS,score:overallDisplay(ovAll.physAvg),color:'#4a9ee8'});
   if(ovAll.gameAvg!=null)blocks.push({label:'Herní',w:OVERALL_W_GAME,score:overallDisplay(ovAll.gameAvg),color:PDF_CGREEN});
   if(ovAll.matchAvg!=null)blocks.push({label:'Zápasy',w:OVERALL_W_MATCH,score:overallDisplay(ovAll.matchAvg),color:PDF_CACC});
+  if(ovAll.milAvg!=null)blocks.push({label:'Milníky',w:OVERALL_W_MIL,score:overallDisplay(ovAll.milAvg),color:CMIL,min:1});
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
-  const barHtml=blocks.length?`<div class="pdf-ov-bar-row"><span class="pdf-ov-bar-tag">Rozpad<br>🗃 dle&nbsp;dat.:</span><div class="pdf-ov-bar">${blocks.map(b=>`<div style="width:${(b.w/wSum*100).toFixed(1)}%;background:${b.color}22;border-bottom:3px solid ${b.color};color:${b.color}"><span>${b.label}</span><span style="opacity:.8">${b.score}</span></div>`).join('')}</div></div>`:'';
+  const barHtml=blocks.length?`<div class="pdf-ov-bar-row"><span class="pdf-ov-bar-tag">Rozpad<br>🗃 dle&nbsp;dat.:</span><div class="pdf-ov-bar">${blocks.map(b=>`<div style="width:${(b.w/wSum*100).toFixed(1)}%;${b.min?'flex-shrink:0;min-width:52px;':''}background:${b.color}22;border-bottom:3px solid ${b.color};color:${b.color}"><span>${b.label}</span><span style="opacity:.8">${b.score}</span></div>`).join('')}</div></div>`:'';
   const gapBadge=matchGapBadge(ovAll);
   const gapHtml=gapBadge?`<div class="pdf-ov-gap">${gapBadge.icon} ${gapBadge.title}</div>`:'';
 
@@ -5496,8 +5560,8 @@ function playerRecentMatchAvgAt(p,type,cap,cutoff){
 function overallMatchRawAt(p,norms,cutoff){
   if(jenPrijem(p)){const r=overallMatchRawAtJenPrijem(p,norms,cutoff);if(r)return r;}
   const vals=[];
-  const bodyAvg=playerRecentMatchAvgAt(p,'body',OVERALL_MATCH_CAP,cutoff);
-  if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
+  const bodyT=bodySetT(p,ovBodyMs(realMatches().filter(m=>m.date<=cutoff),p),norms);
+  if(bodyT!=null)vals.push(bodyT);
   const prijemMs=realMatches().filter(m=>m.date<=cutoff&&playerMatchMetric(p,m,'prijem')!=null)
     .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
   const pool=playerReceptionPool(p,prijemMs);
@@ -5519,6 +5583,8 @@ function overallAt(p,norms,cutoff){
   if(physAvg!=null)blocks.push({avg:physAvg,w:OVERALL_W_PHYS});
   if(gameAvg!=null)blocks.push({avg:gameAvg,w:OVERALL_W_GAME});
   if(matchAvg!=null)blocks.push({avg:matchAvg,w:OVERALL_W_MATCH});
+  const milAvg=blocks.length?overallMilAvg(p,norms,cutoff):null;
+  if(milAvg!=null)blocks.push({avg:milAvg,w:OVERALL_W_MIL});
   if(!blocks.length)return null;
   const wSum=blocks.reduce((s,b)=>s+b.w,0);
   const tAvg=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum;
@@ -5545,10 +5611,8 @@ function overallMatchRawAtJenPrijem(p,norms,cutoff){
 function overallMatchRawAtSeason(p,norms,cutoff){
   const start=currentSeasonStart();
   const vals=[];
-  const bodyMs=realMatches().filter(m=>m.date<=cutoff&&m.date>=start&&playerMatchMetric(p,m,'body')!=null)
-    .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
-  const bodyAvg=bodyMs.length?mean(bodyMs.map(m=>playerMatchMetric(p,m,'body'))):null;
-  if(bodyAvg!=null)vals.push(tRaw(bodyAvg,norms.body_zapas));
+  const bodyT=bodySetT(p,ovBodyMs(realMatches().filter(m=>m.date<=cutoff&&m.date>=start),p),norms);
+  if(bodyT!=null)vals.push(bodyT);
   const prijemMs=realMatches().filter(m=>m.date<=cutoff&&m.date>=start&&playerMatchMetric(p,m,'prijem')!=null)
     .sort((a,b)=>b.date.localeCompare(a.date)).slice(0,OVERALL_MATCH_CAP);
   const pool=playerReceptionPool(p,prijemMs);
@@ -5570,6 +5634,8 @@ function overallAtSeason(p,norms,cutoff){
   if(physAvg!=null)blocks.push({avg:physAvg,w:OVERALL_W_PHYS});
   if(gameAvg!=null)blocks.push({avg:gameAvg,w:OVERALL_W_GAME});
   if(matchAvg!=null)blocks.push({avg:matchAvg,w:OVERALL_W_MATCH});
+  const milAvg=blocks.length?overallMilAvg(p,norms,cutoff):null;
+  if(milAvg!=null)blocks.push({avg:milAvg,w:OVERALL_W_MIL});
   if(!blocks.length)return null;
   const wSum2=blocks.reduce((s,b)=>s+b.w,0);
   const tAvg2=blocks.reduce((s,b)=>s+b.avg*b.w,0)/wSum2;
@@ -9063,8 +9129,8 @@ const HELP_DATA=[
 {q:`Co je „Overall" a proč aplikace ukazuje číslo mezi 40 a 99?`,
  a:`Overall je JEDNO souhrnné číslo, které se snaží vyjádřit celkovou úroveň hráčky napříč fyzičkou, herními dovednostmi i výkonem v ostrých zápasech — inspirované stupnicí, jakou znáš třeba z fotbalových videoher. Aplikace ho staví na T-skóre (běžně stupnice 20–80, viz blok „T-skóre a normy"), jen ho pro Overall přeškáluje na „hráčštější" rozsah 40–99, aby se to čtenářům lépe četlo. Číslo samo o sobě nic „neabsolutního" neznamená — pořád je to relativní srovnání vůči zvolené referenční skupině (Tým/Databáze).`},
 {q:`Jak aplikace Overall počítá (Fyzické/Herní/Zápasy)?`,
- a:`Aplikace zvlášť spočítá průměrné T-skóre ve třech blocích — Fyzické testy (váha 25 %), Herní testy (váha 35 %) a Zápasy (váha 40 %) — a pak je zkombinuje do jednoho čísla podle těchhle vah. Váhy rostou s tím, jak blízko je daný typ dat opravdové hře v zápase (fyzický test je nejobecnější, zápas je realita) — méně váhy tedy nemusí znamenat menší důležitost bloku, jen menší váhu v TOMHLE konkrétním souhrnném čísle. Když hráčce nějaký blok v datech úplně chybí (třeba nemá žádný herní test), aplikace ho z výpočtu prostě VYNECHÁ a váhy zbylých bloků si mezi sebe úměrně rozdělí tak, aby dohromady pořád daly 100 % — takže chybějící blok aplikaci nepenalizuje, jen se počítá jen z toho, co aplikace má.`,
- kw:"vzorec výpočet váhy fyzické herní zápasy"},
+ a:`Aplikace zvlášť spočítá průměrné T-skóre ve třech blocích — Fyzické testy (váha 25 %), Herní testy (váha 35 %) a Zápasy (váha 40 %) — a pak je zkombinuje do jednoho čísla podle těchhle vah. Váhy rostou s tím, jak blízko je daný typ dat opravdové hře v zápase (fyzický test je nejobecnější, zápas je realita) — méně váhy tedy nemusí znamenat menší důležitost bloku, jen menší váhu v TOMHLE konkrétním souhrnném čísle. Když hráčce nějaký blok v datech úplně chybí (třeba nemá žádný herní test), aplikace ho z výpočtu prostě VYNECHÁ a váhy zbylých bloků si mezi sebe úměrně rozdělí tak, aby dohromady pořád daly 100 % — takže chybějící blok aplikaci nepenalizuje, jen se počítá jen z toho, co aplikace má.<br><br><b>Milníky</b> jsou čtvrtý, jemný blok (10 % celku). Počítají se, jen když tým milníky používá — aspoň jedna hráčka má nějaký zapsaný; jinak Overall milníky vůbec neovlivní. Hráčka dostane podíl získaných fází ze všech milníků, které pro ni platí: polovinu tvoří společné milníky, polovinu poziční — u více pozic (hlavní i vedlejší) jako průměr přes pozice. Víc pozic tedy neznamená výhodu, jen víc milníků k získání; hráčka bez pozice má jen společné milníky. Výsledek se porovná s týmem stejně jako testy.<br><br><b>Body ze zápasů</b> se do Overallu berou jako body za odehraný set (odehraný = set, ve kterém má hráčka zapsanou jakoukoli akci) a hráčka se porovnává se skupinou své hlavní pozice: smečařky s účky, nahrávačky mezi sebou, blokařky mezi sebou, libera mezi sebou. Hráčky bez hlavní pozice se porovnávají s celým týmem. Krátký herní čas ani pozice s přirozeně menším počtem bodů ji tak neznevýhodní. Při málo odehraných setech se číslo přitáhne k průměru skupiny. <b>Příjem</b> se porovnává napříč všemi, kdo přijímají, bez ohledu na pozici; hráčka, která v daném systému nepřijímá, příjem nemá a nic se jí nestrhává. Tabulky a grafy zápasů dál ukazují body za zápas.`,
+ kw:"vzorec výpočet váhy fyzické herní zápasy milníky"},
 {q:`Počítá aplikace do Overallu herní testy a příjem stejně, ať mají za sebou 3 pokusy, nebo 30?`,
  a:`Do tabulek, karty hráčky, žebříčků a pavouka aplikace VŽDY ukazuje přesně to syrové procento, které spočítala ze zapsaných čísel — tam se nic neupravuje. Ale jen do výpočtu OVERALLU aplikace navíc potichu zohledňuje, kolik pokusů (u herních testů) nebo přijatých míčů (u příjmu ze zápasu) za daným procentem stojí — málo pokusů dělá z procenta nespolehlivé číslo (70 % ze 3 pokusů může být náhoda), hodně pokusů naopak číslo dělá důvěryhodnějším (48 % z 26 pokusů je už solidní vzorek). Aplikace proto do Overallu (a jen do Overallu, nikam jinam) počítá s hodnotou mírně přitaženou k typickému týmovému průměru dané metriky — tím silněji, čím míň pokusů za procentem stojí. U hodně pokusů je tahle úprava skoro neznatelná. Aplikace tohle přitažené číslo nikde nezobrazuje samo o sobě — je to čistě interní mezikrok mezi syrovým procentem a výsledným Overallem.`,
  kw:"malý počet pokusů spolehlivost uhlazení herní test příjem overall shrinkage"},
