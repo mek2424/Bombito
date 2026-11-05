@@ -1709,6 +1709,21 @@ html.skin-trener .logo-wrap{display:none}
 html.skin-trener .stale-ic{color:var(--warn);font-size:11px}
 html.skin-trener .stale-ic.red,html.skin-trener .stale-note.red{color:var(--danger-ink)}
 html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
+/* Kolo 106: rozehraný zápas */
+html.skin-trener #lmBar.on{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line);font-size:13px;color:var(--ink);flex-shrink:0;position:relative;z-index:139;min-width:0}
+html.skin-trener #lmBar.zap{background:color-mix(in srgb,var(--warn) 14%,var(--card));border-bottom-color:color-mix(in srgb,var(--warn) 45%,var(--line))}
+.lm-bar-dot{width:9px;height:9px;border-radius:50%;background:var(--danger-ink);flex:none;animation:lmPuls 1.4s ease-in-out infinite}
+@keyframes lmPuls{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.lm-bar-dot{animation:none}}
+.lm-bar-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lm-bar-b{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 12px;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer}
+.lm-bar-b.prim{background:var(--court);border-color:var(--court);color:#fff}
+@media(max-width:420px){html.skin-trener #lmBar.zap .lm-bar-b:not(.prim){display:none}}
+html.skin-trener .lm-karta{border-color:var(--court);box-shadow:inset 0 0 0 1px var(--court)}
+html.skin-trener .lm-karta.zap{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
+html.skin-trener .lm-karta .live-badge{margin-left:6px}
+.lm-karta-pozor{color:var(--danger-ink)}
+.lm-karta-akce{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
 /* Kolo 104: Google Disk */
 html.skin-trener #hdrTym .hdr-disk{font-size:11px;opacity:.95}
 html.skin-trener #hdrTym .hdr-disk.ceka{opacity:.6}
@@ -1811,6 +1826,7 @@ html.skin-trener #hdrTym:focus-visible{outline:2px solid #fff;outline-offset:2px
   <button type="button" data-nav="ov" onclick="skTab('ov')"><i class="fa-solid fa-chart-simple" aria-hidden="true"></i>Testy</button>
   <button type="button" data-nav="denik" class="sk-tab-dk" onclick="skTab('denik')" aria-label="Deníček" title="Deníček"><i class="fa-solid fa-book-open" aria-hidden="true"></i></button>
 </nav>
+<div id="lmBar" class="t-only" role="status"></div>
 <div id="sidebarBackdrop" onclick="closeSidebar()"></div>
 <div class="body-wrap">
   <aside id="sidebar">
@@ -3742,6 +3758,7 @@ function render(){
   const sub=document.getElementById("subtitleEl");if(sub)sub.value=S.subtitle||"SK Meteor Praha";
   tymHlavickaSync();
   renderPL();
+  lmBarSync();
   if(isTrener()){const sk=document.getElementById('skTabs');if(sk){sk.querySelector('[data-nav="ov"]')?.classList.toggle('nav-bez',!tymTestuje());sk.querySelector('[data-nav="zapasy"]')?.classList.toggle('nav-bez',!realMatches().length);}}
   document.getElementById("emptyState").style.display="none";
   document.getElementById("playerDetail").style.display="none";
@@ -6748,6 +6765,7 @@ function renderZapasyObsah(el){
   const turKarta=tid=>{const t=S.tournaments.find(x=>x.id===tid),n=tournamentMatches(tid).length;
     return`<div class="match-card" onclick="openTournamentDetail('${tid}')"><div class="match-card-head"><span class="match-card-opp"><i class="fa-solid fa-trophy" aria-hidden="true"></i> ${t.name}${t.closed?' <i class="fa-solid fa-flag-checkered" aria-hidden="true" title="Uzavřený"></i>':''}</span><span class="match-card-date">${tournamentDateRange(tid)}</span></div><div style="font-size:0.8rem;color:var(--gm)">${n} ${n===1?'zápas':n<5?'zápasy':'zápasů'}</div></div>`;};
   el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:8px">🏆 Zápasy</h2>
+    ${lmKartaHtml(false)}
     ${ms.length?`<div class="zap-sum">${dlazdice(ms.length,ms.length===1?'zápas v sezóně':ms.length<5?'zápasy v sezóně':'zápasů v sezóně')}${dlazdice((body>0?'+':'')+body,'body týmu',body>0?'var(--gl)':body<0?'var(--red)':null)}${dlazdice(recv==null?'–':recv+' %','kvalita příjmu',zapRecvBarva(recv))}${dlazdice(tids.length,tids.length===1?'turnaj':tids.length>1&&tids.length<5?'turnaje':'turnajů')}</div>
     ${isTrener()?`<div class="tab-zobr-row">${pozOn?tabPozHtml('zapasy'):''}${tabZobrHtml('zapasy',zapSl,false)}</div>${tabZobrStyl('zapasy','#zapView')}`:pozOn?pozFiltrHtml(ovPoz,'ovPozNastav',true):''}
     <div class="ov-wrap"><table class="ov-tbl"><thead><tr>${th('name','Hráčka')}${th('z','Zápasy')}${th('body','Body','body_zapas')}${th('prum','Body/zápas','body_zapas')}${th('recv','Příjem','prijem_zapas')}${th('n','Příjmů','prijem_zapas')}${posledniT?`<th style="cursor:default" class="c-forma">Forma${isTrener()?'<button type="button" class="th-info" onclick="event.stopPropagation();openHelp(\'forma\')" aria-label="Co znamená Forma" title="Co znamená Forma"><i class="fa-solid fa-circle-question" aria-hidden="true"></i></button>':''}</th>`:''}</tr></thead><tbody>${rows||'<tr><td colspan="9" style="color:var(--gm)">Žádná hráčka s touhle pozicí</td></tr>'}</tbody></table></div>
@@ -7042,6 +7060,7 @@ function zalozZapas(v){
 function openLiveScreen(){
   loadLM();
   if(!LM)return;
+  if(document.getElementById('liveOverlay'))return;
   // Warn before closing browser/tab during live match
   window._lmUnloadHandler=e=>{e.preventDefault();e.returnValue='Máš rozehraný zápas. Zavřít?';return e.returnValue;};
   window.addEventListener('beforeunload',window._lmUnloadHandler);
@@ -7062,11 +7081,14 @@ function openLiveScreen(){
 `;
   document.body.appendChild(overlay);
   renderLiveContent();
+  lmBarSync();
 }
 
 // Kolo 67: rozehraný zápas spuštěný omylem (nebo na zkoušku) jde zahodit, nic se z něj neuloží.
 function zahoditZapas(){
   confirmAction('Zahodit rozehraný zápas?',()=>{
+    // Kolo 106: zahodit i průběžnou zálohu (každých 5 zápisů v S.matches), ať nestraší v Záznamech.
+    const zid=LM&&LM.id;if(zid&&S.matches){const n=S.matches.length;S.matches=S.matches.filter(m=>!(m.id===zid&&m.finished===false));if(S.matches.length!==n)save();}
     localStorage.removeItem(lmKey());LM=null;
     closeLiveScreen();rerenderCurrent();toast('Zápas zahozen');
   },{noteTrener:'Nic z něj se neuloží.',yesLabel:'Zahodit'});
@@ -7074,6 +7096,7 @@ function zahoditZapas(){
 function closeLiveScreen(){
   window.removeEventListener('beforeunload',window._lmUnloadHandler);
   document.getElementById('liveOverlay')?.remove();
+  lmBarSync();
 }
 
 // Kolo 85 (uživatel přes Meka): pořadí hráček při zapisování. Výchozí: zapsané nahoru, mezi sebou podle dresu.
@@ -7614,8 +7637,10 @@ function buildZapasTab(){
 }
 
 function openAllMatchesLibrary(){
-  const matches=(S.matches||[]).filter(m=>!m._autosave).slice().reverse();
-  if(!matches.length){toast('Žádné záznamy zápasů','err');return;}
+  // Kolo 106: ve vzhledu Trenéra nedohrané zálohy zápasu ne jako hotový zápas; rozehraný zápas jako karta LIVE nahoře.
+  const matches=(S.matches||[]).filter(m=>!m._autosave&&!(isTrener()&&m.finished===false)).slice().reverse();
+  const lmK=lmKartaHtml(true);
+  if(!matches.length&&!lmK){toast('Žádné záznamy zápasů','err');return;}
   const cards=matches.map(m=>{
     const allActions=m.sets.flatMap(s=>s.actions);
     const players=[...getActiveP(),...S.players.filter(p=>p.archived)];
@@ -7641,8 +7666,8 @@ function openAllMatchesLibrary(){
     </div>`;
   }).join('');
   openModal(`<h2>📚 Záznamy zápasů</h2>
-    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${matches.length} zápasů celkem</p>
-    <div style="max-height:65vh;overflow-y:auto">${cards}</div>
+    <p style="color:var(--gm);font-size:0.78rem;margin-bottom:12px">${matches.length} zápasů celkem${lmK?' + 1 rozehraný':''}</p>
+    <div style="max-height:65vh;overflow-y:auto">${lmK}${cards}</div>
     <div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
 }
 
@@ -9305,6 +9330,9 @@ const HELP_DATA=[
 {group:"Zápasy a turnaje",blocks:[
 
 {title:"Živý zápas — zapisování bodů a příjmu",icon:"🏆",qa:[
+{tr:1,q:`Zapomněl jsem ukončit zápas — jak to poznám?`,
+ a:`Dokud je zápas rozehraný a jeho obrazovka zavřená, ukazuje se pod záložkami lišta s červenou tečkou „Rozehraný zápas vs …“ s tlačítkem Pokračovat. Když se zápas hrál jiný den nebo se do něj přes 3 hodiny nic nezapsalo, lišta zežloutne („Zápas není ukončený“) a nabídne rovnou „Ukončit“; po otevření appky se navíc jednou zeptá, jestli zápas ukončit a uložit, pokračovat, nebo zahodit. Rozehraný zápas je vidět i nahoře v Záznamech zápasů a na záložce Zápasy (karta LIVE). Do statistik, Overallu a turnaje se zápas počítá až po ukončení.`,
+ kw:"zapomenutý neukončený rozehraný zápas live upozornění připomínka ukončit"},
 {q:`Jak založím nový zápas?`,
  a:`V menu ⋮ klikni na „🏆 Spustit zápas", zadej soupeře, datum, co chceš aplikací sledovat (mode — viz další otázka) a volitelně poznámku. Aplikace po potvrzení „Zahájit zápas" rovnou otevře živou obrazovku pro zapisování.`},
 {q:`Co znamená „mode" zápasu (body/příjem/obojí)?`,
@@ -10441,6 +10469,72 @@ function testProHracku(druh){
   document.body.appendChild(scrim);document.body.appendChild(w);skFabSync();
 })();
 // ══════════════════════════════════════════════════════════
+// ROZEHRANÝ ZÁPAS (Kolo 106) — připomínka a karta v záznamech, jen vzhled Trenéra
+// ══════════════════════════════════════════════════════════
+// Trenér často zavře obrazovku živého zápasu a zapomene ho ukončit. Dokud zápas běží, ukazuje
+// se pod záložkami lišta LIVE (Pokračovat / Ukončit). „Zapomenutý“ = hraný jiný den než dnes,
+// nebo poslední zápis (či založení) je starší než LM_ZAPOMENUTY_MS — lišta je pak výraznější
+// a appka se po otevření jednou zeptá, co se zápasem.
+const LM_ZAPOMENUTY_MS=3*3600*1000;
+function lmRozehrany(){if(!LM)loadLM();return LM&&!LM.finished?LM:null;}
+function lmPosledniAkce(m){
+  let t=0;(m.sets||[]).forEach(s=>(s.actions||[]).forEach(a=>{if(a.ts>t)t=a.ts;}));
+  if(!t){const z=parseInt(String(m.id||'').replace(/^m_/,''),10);if(z>0)t=z;}
+  return t||null;
+}
+function lmZapomenuty(m){
+  if(!m)return false;
+  if(m.date&&m.date<today())return true;
+  const t=lmPosledniAkce(m);return!!t&&Date.now()-t>LM_ZAPOMENUTY_MS;
+}
+function lmKdy(m){
+  const t=lmPosledniAkce(m);if(!t)return fmtDate(m.date);
+  const min=Math.round((Date.now()-t)/60000);
+  if(min<1)return'právě teď';if(min<60)return'před '+min+' min';
+  const h=Math.round(min/60);if(h<24)return'před '+h+' h';
+  return fmtDate(tymDen(t));
+}
+function lmSetTxt(m){const n=(m.sets||[]).length,z=(m.sets||[]).reduce((s,x)=>s+(x.actions||[]).length,0);return n+'. set · '+z+' '+(z===1?'zápis':z>=2&&z<=4?'zápisy':'zápisů');}
+function lmEsc(x){return String(x==null?'':x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function lmBarSync(){
+  const el=document.getElementById('lmBar');if(!el)return;
+  const m=isTrener()?lmRozehrany():null;
+  if(!m||document.getElementById('liveOverlay')){el.classList.remove('on');el.innerHTML='';return;}
+  const z=lmZapomenuty(m);
+  el.className='t-only on'+(z?' zap':'');
+  el.innerHTML=`<span class="lm-bar-dot" aria-hidden="true"></span><span class="lm-bar-txt"><b>${z?'Zápas není ukončený':'Rozehraný zápas'}</b> vs ${lmEsc(m.opponent)} · ${z?'naposledy '+lmKdy(m):lmSetTxt(m)}</span>
+    <button type="button" class="lm-bar-b" onclick="openLiveScreen()">Pokračovat</button>${z?'<button type="button" class="lm-bar-b prim" onclick="lmUkoncit()">Ukončit</button>':''}`;
+}
+function lmUkoncit(){closeModal();if(!lmRozehrany())return;if(!document.getElementById('liveOverlay'))openLiveScreen();finishMatch();}
+function lmZahodit(){closeModal();if(!lmRozehrany())return;if(!document.getElementById('liveOverlay'))openLiveScreen();zahoditZapas();}
+// Po otevření appky jednou (pro každý zápas jen jednou za otevření prohlížeče).
+function lmPripomenPoStartu(){
+  const m=isTrener()?lmRozehrany():null;if(!m||!lmZapomenuty(m))return;
+  try{if(sessionStorage.getItem('bombito_lm_pripomenuto')===m.id)return;sessionStorage.setItem('bombito_lm_pripomenuto',m.id);}catch(e){}
+  setTimeout(()=>{
+    if(document.getElementById('modal').style.display!=='none'||document.getElementById('liveOverlay'))return;
+    openModal(`${skHubHead('Zápas není ukončený')}
+      <p class="tym-pozn" style="margin-top:10px">Zápas <b>vs ${lmEsc(m.opponent)}</b> (${fmtDate(m.date)}) je pořád rozehraný — naposledy se zapisovalo ${lmKdy(m)}. Dokud ho neukončíš, nepočítá se do statistik, Overallu ani turnaje.</p>
+      <div class="tym-volby" style="margin-top:12px">
+        <button type="button" class="tym-volba prim" onclick="lmUkoncit()"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Ukončit a uložit zápas</span><span class="tym-sub">${lmSetTxt(m)}</span></span></button>
+        <button type="button" class="tym-volba" onclick="closeModal();openLiveScreen()"><i class="fa-solid fa-play" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Pokračovat v zápase</span></span></button>
+        <button type="button" class="tym-volba" onclick="lmZahodit()"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Zahodit zápas</span><span class="tym-sub">nic z něj se neuloží</span></span></button>
+      </div>
+      <div class="ma"><button class="btn btn-o" onclick="closeModal()">Později</button></div>`);
+  },900);
+}
+// Karta rozehraného zápasu nahoře v Záznamech zápasů a na záložce Zápasy.
+function lmKartaHtml(vModalu){
+  const m=isTrener()?lmRozehrany():null;if(!m)return'';
+  const z=lmZapomenuty(m),pre=vModalu?'closeModal();':'';
+  return`<div class="match-card lm-karta${z?' zap':''}" onclick="${pre}openLiveScreen()">
+    <div class="match-card-head"><span class="match-card-opp">vs ${lmEsc(m.opponent)}</span><span class="live-badge">LIVE</span><span class="match-card-date">${fmtDate(m.date)}</span></div>
+    <div style="font-size:0.8rem;color:var(--gm)">${z?'<b class="lm-karta-pozor">Není ukončený</b> · naposledy '+lmKdy(m)+' · ':''}${lmSetTxt(m)}</div>
+    <div class="lm-karta-akce"><button class="btn btn-o sm" onclick="event.stopPropagation();${pre}openLiveScreen()">Pokračovat</button><button class="btn btn-p sm" onclick="event.stopPropagation();lmUkoncit()">Ukončit zápas</button></div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════════════
 // TÝMY (Kolo 103) — více týmů, jen ve vzhledu Trenéra
 // ══════════════════════════════════════════════════════════
 // Aktivní tým žije pořád v „bombito_v4“ — klasický vzhled i celý zbytek appky tak
@@ -11042,7 +11136,7 @@ function diskStart(){
   if(i&&navigator.onLine){diskPriprav();if(diskPrihlasen()){diskZkontroluj().then(()=>{const j=diskInfo();if(j&&j.zmena&&j.auto&&!j.konflikt)diskAutoUloz();});}}
 }
 
-tymyInit();load();tymySyncPoLoad();diskStart();tymHlaskaPoStartu();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
+tymyInit();load();tymySyncPoLoad();diskStart();tymHlaskaPoStartu();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();lmPripomenPoStartu();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
 
 </script>
 <script>
