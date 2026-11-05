@@ -1708,6 +1708,16 @@ html.skin-trener .logo-wrap{display:none}
 html.skin-trener .stale-ic{color:var(--warn);font-size:11px}
 html.skin-trener .stale-ic.red,html.skin-trener .stale-note.red{color:var(--danger-ink)}
 html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
+/* Kolo 104: Google Disk */
+html.skin-trener #hdrTym .hdr-disk{font-size:11px;opacity:.95}
+html.skin-trener #hdrTym .hdr-disk.ceka{opacity:.6}
+html.skin-trener #hdrTym .hdr-disk.bezi{animation:diskPuls 1s ease-in-out infinite alternate}
+html.skin-trener #hdrTym .hdr-disk.pozor{color:#FFD36B}
+@keyframes diskPuls{from{opacity:.35}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){html.skin-trener #hdrTym .hdr-disk.bezi{animation:none}}
+.disk-ucet{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink);padding:4px 0 2px;min-width:0}
+.disk-ucet>i{color:var(--court-ink)}
+.disk-ucet>span{flex:1;min-width:0;overflow-wrap:anywhere}
 /* Kolo 103: týmy (jen vzhled Trenéra) */
 html.skin-trener #hdrTym{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:2px;padding:3px 10px 3px 9px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;align-self:flex-start;min-width:0}
 html.skin-trener #hdrTym>i{font-size:10px;opacity:.85;flex:none}
@@ -1747,7 +1757,7 @@ html.skin-trener #hdrTym:focus-visible{outline:2px solid #fff;outline-offset:2px
   <div class="hd">
     <h1 onclick="goHome()" style="cursor:pointer" title="Zpět na hlavní stránku"><span class="k-only">🏐 Bombito</span><span class="t-only t-lbl">Bombito</span></h1>
     <input id="subtitleEl" type="text" value="SK Meteor Praha" title="Klikni pro úpravu" onchange="saveSubtitle(this.value)">
-    <button type="button" class="t-only" id="hdrTym" onclick="openTymy()" aria-label="Přepnout tým"><span id="hdrTymTxt"></span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+    <button type="button" class="t-only" id="hdrTym" onclick="openTymy()" aria-label="Přepnout tým"><span id="hdrTymTxt"></span><i id="hdrDisk" class="fa-solid fa-cloud hdr-disk" style="display:none" role="img"></i><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
   </div>
   <div class="hact">
     <button class="btn btn-o sm" id="navBackBtn" onclick="navBack()" title="Zpět">←</button>
@@ -2220,7 +2230,7 @@ let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badg
 const CH={};
 let _modalSnap=null;
 
-function save(){if(window._tymStop)return;localStorage.setItem("bombito_v4",JSON.stringify(S));if(window.skFabSync)skFabSync();}
+function save(){if(window._tymStop)return;localStorage.setItem("bombito_v4",JSON.stringify(S));if(window.skFabSync)skFabSync();try{diskPoZmene();}catch(e){}}
 function load(){
   const raw=localStorage.getItem("bombito_v4")||localStorage.getItem("bombito_v3")||localStorage.getItem("bombito_v2");
   if(raw){try{S=JSON.parse(raw);}catch(e){}}
@@ -3038,6 +3048,7 @@ function importData(e){
     try{
       const d=JSON.parse(ev.target.result);
       if(!d.players){toast("Soubor nevypadá jako záloha Bombito","err");return;}
+      try{_diskImport=null;}catch(e){}
       _pendingImport=d;
       confirmImport(f.name,d);
     }catch{toast("Chyba importu — soubor není platný JSON","err");}
@@ -9455,6 +9466,12 @@ const HELP_DATA=[
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
  a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
  kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
+{tr:1,q:`Jak propojím tým s Google Diskem?`,
+ a:`Klepni nahoře na název týmu → „Google Disk“ (nebo v Exportu „Propojit tým s Google Diskem“) a přihlas se Googlem. Pak „Uložit tým na Disk“ — appka na Disku vytvoří složku Bombito a v ní soubor „Bombito – název týmu.json“. Od té chvíle se změny ukládají na Disk samy (asi 15 vteřin po poslední změně), dokud jsi přihlášený a online; vypnout to jde zaškrtávátkem „Ukládat změny na Disk automaticky“. Ikonka mráčku vedle názvu týmu ukazuje stav: plný mráček = uloženo, mráček se šipkou = změny čekají (třeba na přihlášení), vykřičník = něco je potřeba vyřešit. Google drží přihlášení zhruba hodinu — pak appka ukládá dál do zařízení a po dalším přihlášení pošle na Disk, co chybí. Appka na Disku vidí jen soubory, které sama vytvořila nebo které jsi v ní sám vybral.`,
+ kw:"google disk drive propojení automatické ukládání cloud mráček přihlášení"},
+{tr:1,q:`Jak sdílím tým s kolegou přes Google Disk?`,
+ a:`Ve „Google Disk“ klepni na „Otevřít na Disku a sdílet“ a soubor kolegovi nasdílej jako na Disku obvykle (s právem úprav, jestli má do týmu i zapisovat). Kolega v Bombitu (vzhled Trenéra) otevře „Google Disk“ → „Otevřít tým z Disku…“ → „Sdílené se mnou“, vybere soubor a přidá ho jako nový tým. Od té chvíle oba ukládáte do stejného souboru. Když soubor mezitím změní někdo jiný, appka nic nepřepíše a zeptá se, jestli načíst verzi z Disku, nebo ji přepsat svými daty. Sdílí se vždycky jen ten jeden tým.`,
+ kw:"sdílení kolega trenér google disk společný tým"},
 {tr:1,q:`Co se stane, když načtu soubor s týmem (import)?`,
  a:`Aplikace se zeptá, kam soubor patří: buď jím nahradí tým, ze kterého soubor pochází (pozná ho sama), nebo vybraný tým, nebo ho přidá jako nový tým — ostatní týmy zůstanou beze změny. U každé možnosti vidíš, kolik hráček a jak čerstvá data tým teď má, a aplikace varuje, když je soubor starší. Před nahrazením si appka schová předchozí stav týmu, takže jde použít „Vrátit stav před posledním importem“. Starší zálohy z doby před týmy jdou načíst stejně.`,
  kw:"import načíst soubor nahradit přidat nový tým"},
@@ -10474,7 +10491,7 @@ function openTymy(){
     return`<div class="tym-radek${akt?' akt':''}">
       <button type="button" class="tym-hl" ${akt?'disabled aria-current="true"':`onclick="tymPrepni('${t.id}')"`}>
         <i class="fa-solid ${akt?'fa-circle-check':'fa-circle'} tym-ic" aria-hidden="true"></i>
-        <span class="tym-txt"><span class="tym-nazev">${tymEsc(nazev)}</span><span class="tym-sub">${tymHracekTxt(n)} · ${zalTxt}${akt?' · vybraný':''}</span></span>
+        <span class="tym-txt"><span class="tym-nazev">${tymEsc(nazev)}</span><span class="tym-sub">${tymHracekTxt(n)} · ${zalTxt}${t.disk&&diskNastaveny()?' · na Disku':''}${akt?' · vybraný':''}</span></span>
       </button>
       <button type="button" class="tym-akce" onclick="tymExportModal('${t.id}')" aria-label="Exportovat tým" title="Exportovat tým"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
       <button type="button" class="tym-akce" onclick="tymPrejmenujModal('${t.id}')" aria-label="Přejmenovat tým" title="Přejmenovat tým"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
@@ -10483,7 +10500,7 @@ function openTymy(){
   }).join('');
   openModal(`${skHubHead('Týmy')}
     <div class="tym-seznam">${radky}</div>
-    <div class="sk-rows" style="margin-top:6px">${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,application/json" style="display:none" onchange="importData(event)"></label></div>
+    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,application/json" style="display:none" onchange="importData(event)"></label></div>
     <p class="tym-pozn">Každý tým má vlastní hráčky, zápasy, turnaje, nastavení metrik i zálohu. Vzhled appky je společný.</p>`);
 }
 
@@ -10607,9 +10624,10 @@ function tymExportModal(id){
   const b=tymExportBalik(id);if(!b){toast('Tým nejde exportovat','err');return;}
   _tymExportId=b.id;
   const share=tymUmiSdilet();
-  const radky=share
+  const diskRadek=diskNastaveny()&&b.id===tymyCti()?.aktivni?skHubRow('openDisk()','cloud',diskInfo()?'Google Disk — tým je propojený':'Propojit tým s Google Diskem (ukládání bez exportu)'):'';
+  const radky=diskRadek+(share
     ?skHubRow('tymExportSdilej()','cloud-arrow-up','Uložit na Google Disk')+skHubRow('tymExportSdilej()','share-nodes','Sdílet jinam (soubory, e-mail…)')+skHubRow('tymExportStahni()','download','Jen stáhnout do zařízení')
-    :skHubRow('tymExportStahni(true)','cloud-arrow-up','Stáhnout a otevřít Google Disk')+skHubRow('tymExportStahni()','download','Jen stáhnout do zařízení');
+    :skHubRow('tymExportStahni(true)','cloud-arrow-up','Stáhnout a otevřít Google Disk')+skHubRow('tymExportStahni()','download','Jen stáhnout do zařízení'));
   openModal(`${skHubHead('Exportovat tým')}
     <div class="tym-exp-info"><b>${tymEsc(b.nazev)}</b> · ${tymHracekTxt(b.n)}<br><span>${tymEsc(b.filename)}</span></div>
     <p class="tym-pozn" style="margin-top:0">Chceš zálohu uložit i na Google Disk?</p>
@@ -10646,8 +10664,11 @@ function tymImportVolba(filename,d){
   const aktNazev=tymNazev();
   let h='';
   if(zTymu&&zTymu.id!==r.aktivni)h+=volba(`tymImportProved('${zTymu.id}')`,'rotate','Nahradit tým „'+tymEsc(zTymu.nazev)+'“',srovnani(zTymu.id)+'<span class="tym-sub">soubor pochází z tohoto týmu</span>',true);
-  h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni),zTymu&&zTymu.id===r.aktivni||!info&&r.seznam.length===1);
-  h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','<span class="tym-sub">ostatní týmy zůstanou beze změny</span>',info&&!zTymu);
+  // Prázdný vybraný tým (třeba úplně nové zařízení) se rovnou nahradí, ať nevzniká prázdný tým navíc.
+  const prazdny=!S.players.length&&!(S.matches||[]).length&&!(S.tournaments||[]).length;
+  const nahraditAkt=zTymu&&zTymu.id===r.aktivni||!zTymu&&(prazdny||!info&&r.seznam.length===1);
+  h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni)+(prazdny?'<span class="tym-sub">tým je zatím prázdný</span>':''),nahraditAkt);
+  h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','<span class="tym-sub">ostatní týmy zůstanou beze změny</span>',!nahraditAkt&&!(zTymu&&zTymu.id!==r.aktivni));
   openModal(`${skHubHead('Načíst tým ze souboru')}
     <div class="tym-exp-info"><b>${tymEsc(filename)}</b><br><span>V souboru: ${tymHracekTxt(d.players.length)}, poslední data ${newDate?fmtDate(newDate):'žádná'}${info&&info.nazev?' · tým „'+tymEsc(info.nazev)+'“':''}</span></div>
     <div class="tym-volby">${h}</div>
@@ -10667,6 +10688,7 @@ function tymImportProved(cilId){
     if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
     try{localStorage.setItem(TYM_PREFIX+id,JSON.stringify(d));}catch(e){toast('V zařízení není dost místa na další tým','err');return;}
     r.seznam.push({id,nazev});tymyPis(r);_pendingImport=null;
+    diskPoImportu(id);
     tymPrepni(id);return;
   }
   const t=r.seznam.find(x=>x.id===cilId);if(!t)return;
@@ -10674,6 +10696,7 @@ function tymImportProved(cilId){
     _pendingImport=d;doImport();
     const r2=tymyCti(),t2=r2&&r2.seznam.find(x=>x.id===cilId);
     if(t2){t2.nazev=S.subtitle||t2.nazev;if(souborId){t2.id=souborId;r2.aktivni=souborId;}tymyPis(r2);}
+    diskPoImportu(souborId||cilId);
     tymHlavickaSync();return;
   }
   if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
@@ -10684,6 +10707,7 @@ function tymImportProved(cilId){
   }catch(e){toast('V zařízení není dost místa','err');return;}
   if(d.subtitle)t.nazev=d.subtitle;else d.subtitle=t.nazev;
   tymyPis(r);_pendingImport=null;
+  diskPoImportu(cilId);
   tymPrepni(cilId);
 }
 
@@ -10698,7 +10722,324 @@ function tymResetTrener(){
     <div class="sk-rows">${radky}</div>`);
 }
 
-tymyInit();load();tymySyncPoLoad();tymHlaskaPoStartu();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
+// ══════════════════════════════════════════════════════════
+// GOOGLE DISK (Kolo 104) — propojení týmu se souborem na Disku, jen vzhled Trenéra
+// ══════════════════════════════════════════════════════════
+// Každý tým může mít svůj soubor „Bombito – <tým>.json“ ve složce Bombito na Disku. Appka
+// používá jen oprávnění drive.file — vidí výhradně soubory, které sama vytvořila nebo které
+// trenér sám vybral (sdílené od kolegy přes výběr souborů Googlu). Propojení (ID souboru,
+// verze, automatické ukládání) je uložené u týmu v seznamu týmů v tomhle zařízení; soubor
+// na Disku má stejný obsah jako ruční export, takže jde načíst i obyčejným importem.
+// Přihlášení drží Google jen hodinu — potom appka ukládá dál lokálně, ikona v hlavičce
+// ukáže, že se čeká na přihlášení, a po přihlášení se neuložené změny pošlou.
+const DISK_CFG=(()=>{const d={clientId:'',apiKey:'',appId:''};try{const o=JSON.parse(localStorage.getItem('bombito_disk_cfg')||'null');if(o&&typeof o==='object')Object.assign(d,o);}catch(e){}return d;})();
+const DISK_SCOPE='https://www.googleapis.com/auth/drive.file';
+const DISK_API='https://www.googleapis.com/drive/v3',DISK_UP='https://www.googleapis.com/upload/drive/v3';
+const DISK_POLE='id,name,modifiedTime,version,webViewLink,trashed,capabilities(canEdit),lastModifyingUser(displayName,me)';
+const DISK_KLIC='bombito_disk',DISK_TOK_KLIC='bombito_disk_tok',DISK_AUTO_MS=15000;
+class DiskChyba extends Error{constructor(kod,status){super(kod);this.kod=kod;this.status=status;}}
+function diskNastaveny(){return!!DISK_CFG.clientId;}
+function diskStav(){try{return JSON.parse(localStorage.getItem(DISK_KLIC)||'{}')||{};}catch(e){return{};}}
+function diskStavPis(o){try{localStorage.setItem(DISK_KLIC,JSON.stringify(o));}catch(e){}}
+let diskTok=(()=>{try{const t=JSON.parse(sessionStorage.getItem(DISK_TOK_KLIC)||'null');return t&&t.exp>Date.now()+60000?t:null;}catch(e){return null;}})();
+function diskPrihlasen(){return!!(diskTok&&diskTok.exp>Date.now()+30000);}
+function diskOdhlasLokalne(){diskTok=null;try{sessionStorage.removeItem(DISK_TOK_KLIC);}catch(e){}}
+let diskTC=null,diskTCcek=null,diskGisP=null,diskPickerP=null,diskBezi=false,diskTm=null,diskSeq=0,diskPosledni=null;
+
+function diskSkript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=()=>res();s.onerror=()=>{s.remove();rej(new DiskChyba('sit'));};document.head.appendChild(s);});}
+// Knihovnu Googlu appka načte dopředu (při otevření okna Disku), aby klepnutí na „Přihlásit“
+// otevřelo okno Googlu hned — jinak by ho prohlížeč zablokoval jako vyskakovací okno.
+function diskPriprav(){
+  if(!diskNastaveny())return Promise.resolve(false);
+  if(!diskGisP)diskGisP=diskSkript('https://accounts.google.com/gsi/client').then(()=>{
+    diskTC=google.accounts.oauth2.initTokenClient({client_id:DISK_CFG.clientId,scope:DISK_SCOPE,
+      callback:r=>{const c=diskTCcek;diskTCcek=null;if(!c)return;
+        if(r&&r.access_token&&(!google.accounts.oauth2.hasGrantedAllScopes||google.accounts.oauth2.hasGrantedAllScopes(r,DISK_SCOPE))){
+          diskTok={token:r.access_token,exp:Date.now()+(parseInt(r.expires_in,10)||3600)*1000};
+          try{sessionStorage.setItem(DISK_TOK_KLIC,JSON.stringify(diskTok));}catch(e){}
+          c.res(diskTok.token);
+        }else c.rej(new DiskChyba(r&&r.access_token?'opravneni':'prihlaseni'));},
+      error_callback:e=>{const c=diskTCcek;diskTCcek=null;if(c)c.rej(new DiskChyba(e&&e.type==='popup_closed'?'zavreno':'prihlaseni'));}});
+  }).catch(e=>{diskGisP=null;throw e;});
+  return diskGisP.then(()=>true,()=>false);
+}
+function diskPickerPriprav(){
+  if(!DISK_CFG.apiKey)return Promise.resolve(false);
+  if(!diskPickerP)diskPickerP=diskSkript('https://apis.google.com/js/api.js').then(()=>new Promise((res,rej)=>gapi.load('picker',{callback:res,onerror:()=>rej(new DiskChyba('sit'))}))).catch(e=>{diskPickerP=null;throw e;});
+  return diskPickerP.then(()=>true,()=>false);
+}
+// Musí běžet přímo z klepnutí.
+function diskPrihlas(){
+  if(diskPrihlasen())return Promise.resolve(diskTok.token);
+  if(!diskTC)return Promise.reject(new DiskChyba('nenacteno'));
+  return new Promise((res,rej)=>{diskTCcek={res,rej};diskTC.requestAccessToken({prompt:diskStav().byl?'':'consent'});});
+}
+function diskChybaTxt(e){
+  return{odhlasen:'Přihlášení ke Googlu vypršelo — přihlas se znovu',sit:'Nejde se spojit s Googlem — jsi online?',nenalezen:'Soubor na Disku nebyl nalezen (je smazaný nebo ti ho přestali sdílet)',
+    pristup:'K souboru na Disku nemáš přístup pro úpravy',prihlaseni:'Přihlášení ke Googlu se nepovedlo',zavreno:'Přihlášení bylo zrušeno',opravneni:'Bez povolení přístupu k souborům appka na Disk ukládat nemůže',
+    nenacteno:'Chvilku, appka ještě načítá Google — zkus to znovu',neplatny:'Soubor nevypadá jako záloha Bombito'}[e&&e.kod]||('Chyba Google Disku'+(e&&e.status?' ('+e.status+')':''));
+}
+async function diskFetch(url,o){
+  o=o||{};
+  if(!diskPrihlasen())throw new DiskChyba('odhlasen');
+  if(!navigator.onLine)throw new DiskChyba('sit');
+  let r;
+  try{r=await fetch(url,Object.assign({cache:'no-store'},o,{headers:Object.assign({Authorization:'Bearer '+diskTok.token},o.headers||{})}));}
+  catch(e){throw new DiskChyba('sit');}
+  if(r.status===401){diskOdhlasLokalne();throw new DiskChyba('odhlasen');}
+  if(r.status===404)throw new DiskChyba('nenalezen');
+  if(r.status===403)throw new DiskChyba('pristup',403);
+  if(!r.ok)throw new DiskChyba('chyba',r.status);
+  return r;
+}
+const diskJson=async(url,o)=>(await diskFetch(url,o)).json();
+
+// ── Soubory na Disku ──
+async function diskSlozka(){
+  const st=diskStav();
+  if(st.slozka){try{const m=await diskJson(DISK_API+'/files/'+st.slozka+'?fields=id,trashed');if(!m.trashed)return m.id;}catch(e){if(e.kod!=='nenalezen')throw e;}}
+  const q=encodeURIComponent("mimeType='application/vnd.google-apps.folder' and name='Bombito' and trashed=false and 'root' in parents");
+  const l=await diskJson(DISK_API+'/files?q='+q+'&fields=files(id)&spaces=drive');
+  let id=l.files&&l.files[0]&&l.files[0].id;
+  if(!id)id=(await diskJson(DISK_API+'/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Bombito',mimeType:'application/vnd.google-apps.folder'})})).id;
+  const st2=diskStav();st2.slozka=id;diskStavPis(st2);return id;
+}
+function diskJmenoSouboru(nazev){return'Bombito – '+String(nazev||'tým').replace(/[\\/:*?"<>|]+/g,' ').trim()+'.json';}
+async function diskVytvor(nazev,json){
+  const slozka=await diskSlozka();
+  const meta={name:diskJmenoSouboru(nazev),mimeType:'application/json',parents:[slozka]};
+  const b='bombito'+Math.random().toString(36).slice(2);
+  const body=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${json}\r\n--${b}--`;
+  return diskJson(DISK_UP+'/files?uploadType=multipart&fields='+DISK_POLE,{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body});
+}
+const diskPrepis=(id,json)=>diskJson(DISK_UP+'/files/'+id+'?uploadType=media&fields='+DISK_POLE,{method:'PATCH',headers:{'Content-Type':'application/json; charset=UTF-8'},body:json});
+const diskMeta=id=>diskJson(DISK_API+'/files/'+id+'?fields='+DISK_POLE+'&supportsAllDrives=true');
+async function diskStahni(id){
+  const t=await (await diskFetch(DISK_API+'/files/'+id+'?alt=media&supportsAllDrives=true')).text();
+  let d;try{d=JSON.parse(t);}catch(e){throw new DiskChyba('neplatny');}
+  if(!d||!Array.isArray(d.players))throw new DiskChyba('neplatny');
+  return d;
+}
+async function diskSeznam(){
+  const q=encodeURIComponent("mimeType='application/json' and trashed=false");
+  const l=await diskJson(DISK_API+'/files?q='+q+'&orderBy=modifiedTime desc&pageSize=50&fields=files('+DISK_POLE+')');
+  return l.files||[];
+}
+
+// ── Propojení týmu (v seznamu týmů, v tomhle zařízení) ──
+function diskInfo(id){const r=tymyCti();const t=r&&r.seznam.find(x=>x.id===(id||r.aktivni));return t&&t.disk||null;}
+function diskInfoPis(id,fn){const r=tymyCti();if(!r)return;const t=r.seznam.find(x=>x.id===(id||r.aktivni));if(!t)return;fn(t);tymyPis(r);}
+function diskPropoj(tymId,m,auto){
+  const r=tymyCti();if(!r)return;
+  r.seznam.forEach(t=>{if(t.id!==tymId&&t.disk&&t.disk.id===m.id)delete t.disk;}); // jeden soubor = jeden tým
+  const t=r.seznam.find(x=>x.id===tymId);if(!t)return;
+  const stare=t.disk||{};
+  t.disk={id:m.id,nazev:m.name,ver:String(m.version),mt:m.modifiedTime,link:m.webViewLink||'',auto:auto!=null?auto:stare.auto!==false,sync:Date.now(),zmena:false,konflikt:false,jenCteni:m.capabilities&&m.capabilities.canEdit===false};
+  tymyPis(r);
+}
+function diskCas(iso){if(!iso)return'';const d=new Date(iso);return fmtDate(tymDen(d.getTime()))+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function diskKdo(m){const u=m&&m.lastModifyingUser;return u?(u.me?'ty':u.displayName||''):'';}
+
+// ── Stav v hlavičce (ikona vedle názvu týmu) ──
+function diskIkona(){
+  const el=document.getElementById('hdrDisk');if(!el)return;
+  const info=isTrener()&&diskNastaveny()?diskInfo():null;
+  if(!info){el.style.display='none';return;}
+  let ic='fa-cloud',cls='',t='Tým je propojený s Google Diskem — uloženo';
+  if(diskBezi){ic='fa-cloud-arrow-up';cls='bezi';t='Ukládám na Disk…';}
+  else if(info.konflikt){ic='fa-triangle-exclamation';cls='pozor';t='Soubor na Disku se mezitím změnil — otevři Google Disk';}
+  else if(info.jenCteni&&info.zmena){ic='fa-cloud';cls='ceka';t='Soubor na Disku máš jen pro čtení — změny zůstávají v zařízení';}
+  else if(info.zmena&&!diskPrihlasen()){ic='fa-cloud-arrow-up';cls='ceka';t='Neuložené změny čekají na přihlášení ke Googlu';}
+  else if(info.zmena){ic='fa-cloud-arrow-up';cls='ceka';t=info.auto?'Změny se za chvíli uloží na Disk':'Změny zatím nejsou na Disku';}
+  else if(info.chyba){ic='fa-triangle-exclamation';cls='pozor';t=diskChybaTxt({kod:info.chyba});}
+  el.className='fa-solid '+ic+' hdr-disk '+cls;el.title=t;el.setAttribute('aria-label',t);el.style.display='';
+}
+
+// ── Automatické ukládání: volá se ze save() ──
+function diskPoZmene(){
+  if(!isTrener()||!diskNastaveny())return;
+  const info=diskInfo();if(!info)return;
+  const j=JSON.stringify(diskObsah(S));if(j===diskPosledni)return;
+  diskPosledni=j;diskSeq++;
+  if(!info.zmena)diskInfoPis(null,t=>{t.disk.zmena=true;});
+  if(info.auto&&!info.konflikt&&!info.jenCteni){clearTimeout(diskTm);diskTm=setTimeout(diskAutoUloz,DISK_AUTO_MS);}
+  diskIkona();
+}
+// Jen data týmu — kam se zrovna kliklo (otevřená hráčka, záložka) změnu nedělá.
+function diskObsah(st){const o=Object.assign({},st);['activeId','activeTab','cmpMode','cmpIds','_tym'].forEach(k=>delete o[k]);return o;}
+function diskAutoUloz(){
+  diskTm=null;
+  const info=diskInfo();if(!info||!info.zmena||!info.auto||info.konflikt||info.jenCteni)return diskIkona();
+  if(!diskPrihlasen()||!navigator.onLine)return diskIkona();
+  diskUloz({tichy:true});
+}
+window.addEventListener('online',()=>{const i=diskInfo();if(i&&i.zmena&&i.auto)diskAutoUloz();});
+
+// ── Uložit tým na Disk ──
+async function diskUloz(opts){
+  opts=opts||{};
+  const r=tymyCti();if(!r)return false;
+  const id=r.aktivni,info=diskInfo(id);
+  if(diskBezi)return false;
+  diskBezi=true;diskIkona();
+  const seq=diskSeq;
+  try{
+    const b=tymExportBalik(id);
+    let m;
+    if(!info)m=await diskVytvor(b.nazev,b.json);
+    else{
+      if(!opts.prepsat){
+        const cur=await diskMeta(info.id);
+        if(cur.trashed)throw new DiskChyba('nenalezen');
+        if(String(cur.version)!==String(info.ver)){
+          diskInfoPis(id,t=>{t.disk.konflikt=true;});
+          if(!opts.tichy)diskKonfliktModal(cur);else toast('Soubor týmu na Disku se mezitím změnil — automatické ukládání čeká','err',{text:'Vyřešit',fn:()=>diskKonfliktModal(cur)});
+          return false;
+        }
+      }
+      m=await diskPrepis(info.id,b.json);
+    }
+    diskPropoj(id,m,info?info.auto:true);
+    if(seq!==diskSeq){diskInfoPis(id,t=>{t.disk.zmena=true;});clearTimeout(diskTm);diskTm=setTimeout(diskAutoUloz,DISK_AUTO_MS);}
+    tymZaznamExport(id);
+    if(!opts.tichy)toast('Uloženo na Google Disk ✓');
+    return true;
+  }catch(e){
+    if(e.kod==='pristup')diskInfoPis(id,t=>{if(t.disk)t.disk.jenCteni=true;});
+    else if(e.kod!=='odhlasen'&&e.kod!=='sit')diskInfoPis(id,t=>{if(t.disk)t.disk.chyba=e.kod||'chyba';});
+    if(!opts.tichy||e.kod==='nenalezen'||e.kod==='pristup')toast(diskChybaTxt(e),'err');
+    return false;
+  }finally{diskBezi=false;diskIkona();if(diskOknoOtevrene())openDisk();}
+}
+function diskOknoOtevrene(){return document.getElementById('modal').style.display!=='none'&&!!document.getElementById('diskModal');}
+function diskKonfliktModal(cur){
+  const kdo=diskKdo(cur);
+  openModal(`${skHubHead('Soubor na Disku se změnil')}
+    <p class="tym-pozn" style="margin-top:10px">Soubor <b>${tymEsc(cur.name)}</b> na Disku někdo změnil ${tymEsc(diskCas(cur.modifiedTime))}${kdo?' ('+tymEsc(kdo)+')':''} — od chvíle, kdy ho tohle zařízení naposledy uložilo nebo načetlo. Co s tím?</p>
+    <div class="tym-volby" style="margin-top:12px">
+      <button type="button" class="tym-volba prim" onclick="diskNacti('${cur.id}')"><i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Načíst verzi z Disku</span><span class="tym-sub">tvoje změny od posledního uložení se zahodí (zůstanou ve „Vrátit stav před posledním importem“)</span></span></button>
+      <button type="button" class="tym-volba" onclick="closeModal();diskUloz({prepsat:true})"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Přepsat Disk daty z tohoto zařízení</span><span class="tym-sub">změny na Disku se ztratí</span></span></button>
+    </div>`);
+}
+
+// ── Načíst soubor z Disku (stejná volba jako import ze souboru) ──
+let _diskImport=null;
+async function diskNacti(fileId){
+  try{
+    toast('Načítám z Disku…');
+    const [m,d]=await Promise.all([diskMeta(fileId),diskStahni(fileId)]);
+    _diskImport=m;_pendingImport=d;
+    tymImportVolba(m.name,d);
+  }catch(e){toast(diskChybaTxt(e),'err');}
+}
+// Volá tymImportProved, když se data načetla z Disku: cílový tým se propojí s tím souborem.
+function diskPoImportu(tymId){
+  const m=_diskImport;_diskImport=null;
+  if(!m||!diskNastaveny())return;
+  diskPropoj(tymId,m);
+  if(tymId===tymyCti()?.aktivni){diskPosledni=JSON.stringify(diskObsah(S));diskIkona();}
+}
+
+// ── Okno „Google Disk“ ──
+function openDisk(){
+  if(!diskNastaveny()){openModal(`${skHubHead('Google Disk')}<p class="tym-pozn" style="margin-top:10px">Propojení s Google Diskem ještě není v téhle verzi appky nastavené. Zatím jde tým uložit na Disk přes Export (sdílení).</p>`);return;}
+  diskPriprav().then(ok=>{if(ok&&diskPrihlasen())diskPickerPriprav();});
+  const st=diskStav(),pr=diskPrihlasen(),info=diskInfo(),nazev=tymNazev();
+  let h=`${skHubHead('Google Disk')}<div id="diskModal" hidden></div>`;
+  if(!navigator.onLine)h+=`<p class="tym-warn" style="margin-top:10px">Jsi offline — Disk bude k dispozici, až budeš připojený.</p>`;
+  h+=`<div class="sk-grp" style="margin-top:14px">Účet Google</div>`;
+  h+=pr
+    ?`<div class="disk-ucet"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>${st.ucet?'Přihlášen(a): <b>'+tymEsc(st.ucet)+'</b>':'Přihlášen(a)'}</span><button type="button" class="sk-ghost" onclick="diskOdhlas()">Odhlásit</button></div>`
+    :`<div class="sk-rows">${skHubRow('diskPrihlasKlik()','right-to-bracket','Přihlásit se Googlem')}</div><p class="tym-pozn" style="margin-top:6px">Google drží přihlášení zhruba hodinu, pak se appka zeptá znovu. Appka vidí na Disku jen svoje soubory týmů.</p>`;
+  h+=`<div class="sk-grp" style="margin-top:14px">Tým „${tymEsc(nazev)}“</div>`;
+  if(info){
+    const stav=diskBezi?'ukládám…':info.konflikt?'<span class="tym-warn">soubor na Disku se mezitím změnil</span>':info.jenCteni?'<span class="tym-warn">soubor máš jen pro čtení</span>':info.zmena?'změny zatím nejsou na Disku':'všechno uloženo';
+    h+=`<div class="tym-exp-info" style="margin-top:0"><b>${tymEsc(info.nazev||'soubor na Disku')}</b><br><span>naposledy uloženo/načteno ${tymEsc(diskCas(info.mt))} · ${stav}</span></div>
+      <label class="tym-chk"><input type="checkbox" ${info.auto?'checked':''} ${info.jenCteni?'disabled':''} onchange="diskAutoNastav(this.checked)"> Ukládat změny na Disk automaticky (když jsi přihlášený a online)</label>`;
+    h+=pr?`<div class="sk-rows">${info.konflikt?skHubRow('diskKonfliktZnovu()','triangle-exclamation','Vyřešit rozdíl s Diskem','sk-danger'):''}${info.jenCteni?'':skHubRow('diskUloz()','cloud-arrow-up','Uložit na Disk teď')}${skHubRow(`diskNacti('${info.id}')`,'cloud-arrow-down','Načíst z Disku')}${info.link?skHubRow(`window.open('${tymEsc(info.link)}','_blank','noopener')`,'share-nodes','Otevřít na Disku a sdílet'):''}${skHubRow('diskOdpoj()','link-slash','Odpojit tým od Disku')}</div>`
+      :`<div class="sk-rows">${skHubRow('diskOdpoj()','link-slash','Odpojit tým od Disku')}</div>`;
+  }else{
+    h+=`<p class="tym-pozn" style="margin-top:0">Tým zatím není s Diskem propojený.</p>`;
+    if(pr)h+=`<div class="sk-rows">${skHubRow('diskUloz()','cloud-arrow-up','Uložit tým na Disk (složka Bombito)')}</div>`;
+  }
+  if(pr)h+=`<div class="sk-grp" style="margin-top:14px">Jiné soubory</div><div class="sk-rows">${skHubRow('diskSouboryModal()','folder-open','Otevřít tým z Disku…')}</div>
+    <p class="tym-pozn" style="margin-top:6px">Sdílení: otevři soubor na Disku a sdílej ho kolegovi. Ten ho v Bombitu načte přes „Otevřít tým z Disku…“ → „Sdílené se mnou“ a jeho změny se pak ukládají do stejného souboru.</p>`;
+  openModal(h);
+}
+function diskPrihlasKlik(){
+  if(!diskTC){toast(diskChybaTxt({kod:'nenacteno'}));diskPriprav();return;}
+  diskPrihlas().then(async()=>{
+    const st=diskStav();st.byl=true;diskStavPis(st);
+    try{const a=await diskJson(DISK_API+'/about?fields=user(displayName,emailAddress)');const st2=diskStav();st2.ucet=a.user&&(a.user.emailAddress||a.user.displayName)||'';diskStavPis(st2);}catch(e){}
+    diskPickerPriprav();
+    const i=diskInfo();
+    if(i&&!i.konflikt)await diskZkontroluj();
+    if(i&&i.zmena&&i.auto&&!diskInfo()?.konflikt)diskUloz({tichy:true});
+    diskIkona();openDisk();
+  }).catch(e=>{toast(diskChybaTxt(e),'err');});
+}
+function diskOdhlas(){
+  const t=diskTok&&diskTok.token;diskOdhlasLokalne();
+  try{if(t&&window.google&&google.accounts&&google.accounts.oauth2)google.accounts.oauth2.revoke(t,()=>{});}catch(e){}
+  const st=diskStav();delete st.ucet;st.byl=false;diskStavPis(st);
+  diskIkona();openDisk();toast('Odhlášeno od Googlu');
+}
+function diskAutoNastav(on){diskInfoPis(null,t=>{if(t.disk)t.disk.auto=!!on;});if(on)diskAutoUloz();diskIkona();}
+function diskOdpoj(){
+  confirmAction('Odpojit tým od Google Disku?',()=>{diskInfoPis(null,t=>{delete t.disk;});diskIkona();openDisk();toast('Tým odpojen od Disku');},
+    {noteTrener:'Soubor na Disku zůstane, jen se do něj přestane ukládat. Data v zařízení se nemění.',yesLabel:'Odpojit',btnCls:'btn-p'});
+}
+async function diskKonfliktZnovu(){const i=diskInfo();if(!i)return;try{diskKonfliktModal(await diskMeta(i.id));}catch(e){toast(diskChybaTxt(e),'err');}}
+// Po přihlášení: nezměnil se soubor na Disku mezitím jinde?
+async function diskZkontroluj(){
+  const i=diskInfo();if(!i||!diskPrihlasen())return;
+  try{
+    const m=await diskMeta(i.id);
+    if(m.trashed)throw new DiskChyba('nenalezen');
+    diskInfoPis(null,t=>{if(t.disk){t.disk.jenCteni=m.capabilities&&m.capabilities.canEdit===false;delete t.disk.chyba;}});
+    if(String(m.version)===String(i.ver))return;
+    if(i.zmena){diskInfoPis(null,t=>{t.disk.konflikt=true;});toast('Soubor týmu na Disku se změnil a v zařízení máš neuložené změny','err',{text:'Vyřešit',fn:()=>diskKonfliktModal(m)});}
+    else toast(`Na Disku je novější verze týmu (${diskCas(m.modifiedTime)}${diskKdo(m)?', '+diskKdo(m):''})`,'ok',{text:'Načíst',fn:()=>diskNacti(m.id)});
+  }catch(e){if(e.kod==='nenalezen')diskInfoPis(null,t=>{if(t.disk)t.disk.chyba='nenalezen';});}
+  finally{diskIkona();}
+}
+async function diskSouboryModal(){
+  let soubory=[];
+  try{soubory=await diskSeznam();}catch(e){toast(diskChybaTxt(e),'err');return;}
+  const r=tymyCti();
+  const radky=soubory.map(f=>{
+    const t=r&&r.seznam.find(x=>x.disk&&x.disk.id===f.id);
+    return`<button type="button" class="tym-volba" onclick="diskNacti('${tymEsc(f.id)}')"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">${tymEsc(f.name)}</span><span class="tym-sub">změněno ${tymEsc(diskCas(f.modifiedTime))}${diskKdo(f)?' ('+tymEsc(diskKdo(f))+')':''}${t?' · propojený s týmem „'+tymEsc(t.nazev)+'“':''}</span></span></button>`;
+  }).join('');
+  openModal(`${skHubHead('Otevřít tým z Disku')}
+    <div class="tym-volby" style="margin-top:12px">${radky||'<p class="tym-pozn">Na Disku zatím nejsou žádné soubory týmů z Bombita.</p>'}</div>
+    ${DISK_CFG.apiKey?`<div class="sk-rows" style="margin-top:8px">${skHubRow('diskPicker()','users','Sdílené se mnou / jiný soubor…')}</div>`:''}
+    <div class="ma"><button class="btn btn-o" onclick="openDisk()">Zpět</button></div>`);
+}
+// Výběr souborů od Googlu — jediná cesta k souboru, který trenérovi někdo nasdílel.
+function diskPicker(){
+  if(!window.google||!google.picker){toast(diskChybaTxt({kod:'nenacteno'}));diskPickerPriprav();return;}
+  if(!diskPrihlasen()){toast(diskChybaTxt({kod:'odhlasen'}),'err');return;}
+  const sdilene=new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes('application/json').setOwnedByMe(false);
+  const moje=new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes('application/json').setIncludeFolders(true).setOwnedByMe(true);
+  const p=new google.picker.PickerBuilder().addView(sdilene).addView(moje).setOAuthToken(diskTok.token).setDeveloperKey(DISK_CFG.apiKey)
+    .setLocale('cs').setTitle('Vyber soubor týmu Bombito').setCallback(d=>{
+      if(d[google.picker.Response.ACTION]!==google.picker.Action.PICKED)return;
+      const doc=d[google.picker.Response.DOCUMENTS]&&d[google.picker.Response.DOCUMENTS][0];
+      if(doc)diskNacti(doc[google.picker.Document.ID]);
+    });
+  if(DISK_CFG.appId)p.setAppId(DISK_CFG.appId);
+  closeModal();p.build().setVisible(true);
+}
+function diskStart(){
+  if(!isTrener()||!diskNastaveny())return;
+  diskPosledni=JSON.stringify(diskObsah(S));
+  diskIkona();
+  const i=diskInfo();
+  if(i&&navigator.onLine){diskPriprav();if(diskPrihlasen()){diskZkontroluj().then(()=>{const j=diskInfo();if(j&&j.zmena&&j.auto&&!j.konflikt)diskAutoUloz();});}}
+}
+
+tymyInit();load();tymySyncPoLoad();diskStart();tymHlaskaPoStartu();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
 
 </script>
 <script>

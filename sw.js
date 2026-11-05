@@ -1,4 +1,4 @@
-const CACHE = 'bombito-v108';
+const CACHE = 'bombito-v109';
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
   './icons/icon-192.png', './icons/icon-512.png',
   // Kolo 51: Font Awesome pro vzhled Trenéra — uložený v repu, ať ikony fungují i offline.
@@ -31,6 +31,10 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Kolo 104: Google (přihlášení, Disk, výběr souborů) a vše kromě GET jde vždy rovnou
+  // na síť — odpovědi Disku se nesmí cachovat (appka by jinak načítala starý soubor).
+  const u = new URL(e.request.url);
+  if(e.request.method !== 'GET' || /(^|\.)(googleapis\.com|accounts\.google\.com|apis\.google\.com|docs\.google\.com|drive\.google\.com)$/.test(u.hostname) && !/^fonts\./.test(u.hostname)) return;
   // Navigace / index.html: vždy zkus síť první, fallback na cache
   if(e.request.mode === 'navigate' || e.request.url.endsWith('/') || e.request.url.endsWith('index.html')){
     e.respondWith(
