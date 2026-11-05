@@ -1708,6 +1708,36 @@ html.skin-trener .logo-wrap{display:none}
 html.skin-trener .stale-ic{color:var(--warn);font-size:11px}
 html.skin-trener .stale-ic.red,html.skin-trener .stale-note.red{color:var(--danger-ink)}
 html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
+/* Kolo 103: týmy (jen vzhled Trenéra) */
+html.skin-trener #hdrTym{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:2px;padding:3px 10px 3px 9px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;align-self:flex-start;min-width:0}
+html.skin-trener #hdrTym>i{font-size:10px;opacity:.85;flex:none}
+html.skin-trener #hdrTym #hdrTymTxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+html.skin-trener #hdrTym:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.tym-seznam{margin-top:12px;border-top:1px solid var(--line)}
+.tym-radek{display:flex;align-items:center;gap:2px;border-bottom:1px solid var(--line)}
+.tym-hl{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:12px 4px 12px 0;border:0;background:none;color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+.tym-hl:disabled{cursor:default;opacity:1}
+.tym-ic{width:18px;text-align:center;color:var(--ink-faint-ink);font-size:15px;flex:none}
+.tym-radek.akt .tym-ic{color:var(--court-ink)}
+.tym-txt{display:flex;flex-direction:column;min-width:0;gap:2px}
+.tym-nazev{font:600 14px 'DM Sans',sans-serif;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tym-radek.akt .tym-nazev{color:var(--court-ink)}
+.tym-sub{font-size:12px;color:var(--ink-faint-ink);line-height:1.35}
+.tym-warn{font-size:12px;color:var(--danger-ink);font-weight:600;line-height:1.35}
+.tym-akce{flex:none;width:40px;height:40px;border:0;border-radius:10px;background:none;color:var(--ink-soft);cursor:pointer;font-size:14px}
+.tym-akce:hover{background:var(--line)}
+.tym-akce.tym-smaz{color:var(--danger-ink)}
+.tym-pozn{font-size:12.5px;color:var(--ink-faint-ink);line-height:1.5;margin:12px 0 0}
+.tym-chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--ink);line-height:1.4;margin:4px 0 6px;cursor:pointer}
+.tym-chk input{margin-top:2px;width:18px;height:18px;flex:none;accent-color:var(--court)}
+.tym-exp-info{margin:14px 0 10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink);line-height:1.5;overflow-wrap:anywhere}
+.tym-exp-info span{font-size:12px;color:var(--ink-faint-ink)}
+.tym-volby{display:flex;flex-direction:column;gap:8px}
+.tym-volba{display:flex;align-items:flex-start;gap:12px;width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+.tym-volba>i{width:18px;text-align:center;color:var(--ink-soft);margin-top:2px}
+.tym-volba.prim{border-color:var(--court);box-shadow:inset 0 0 0 1px var(--court)}
+.tym-volba.prim>i,.tym-volba.prim .tym-nazev{color:var(--court-ink)}
+.tym-volba .tym-nazev{white-space:normal}
 </style>
 </head>
 <body>
@@ -1717,6 +1747,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
   <div class="hd">
     <h1 onclick="goHome()" style="cursor:pointer" title="Zpět na hlavní stránku"><span class="k-only">🏐 Bombito</span><span class="t-only t-lbl">Bombito</span></h1>
     <input id="subtitleEl" type="text" value="SK Meteor Praha" title="Klikni pro úpravu" onchange="saveSubtitle(this.value)">
+    <button type="button" class="t-only" id="hdrTym" onclick="openTymy()" aria-label="Přepnout tým"><span id="hdrTymTxt"></span><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
   </div>
   <div class="hact">
     <button class="btn btn-o sm" id="navBackBtn" onclick="navBack()" title="Zpět">←</button>
@@ -1748,6 +1779,7 @@ html.skin-trener .stale-note{color:var(--warn);font-size:12.5px}
     <button class="btn btn-a sk-mn-pryc" onclick="openAddPlayer();closeMenu()"><span class="k-only">+ Přidat hráčku</span><span class="t-only t-lbl"><i class="fa-solid fa-user-plus" aria-hidden="true"></i>Přidat hráčku</span></button>
     <button class="btn btn-o sk-mn-pryc" onclick="openGroupTest();closeMenu()"><span class="k-only">⚡ Skupinový test</span><span class="t-only t-lbl"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>Skupinový test</span></button>
     <hr class="sep-line"><div class="mnu-eyebrow sk-mn-pryc">Sezóna a data</div>
+    <button class="btn btn-o hub t-only sk-mn-sd" onclick="openTymy();closeMenu()"><span class="t-lbl"><i class="fa-solid fa-users" aria-hidden="true"></i>Týmy</span><span class="chev"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></button>
     <button class="btn btn-o hub t-only sk-mn-sd" onclick="openSezonaData();closeMenu()"><span class="t-lbl"><i class="fa-solid fa-box-archive" aria-hidden="true"></i>Sezóna a data</span><span class="chev"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></span></button>
     <button class="btn btn-o hub sk-mn-pryc" onclick="openSeasonHub();closeMenu()"><span class="k-only">📦 Sezóna</span><span class="t-only t-lbl"><i class="fa-solid fa-box-archive" aria-hidden="true"></i>Sezóna</span><span class="chev"><span class="i-em">›</span><i class="i-fa fa-solid fa-chevron-right" aria-hidden="true"></i></span></button>
     <button class="btn btn-o hub sk-mn-pryc" onclick="openDataHub();closeMenu()"><span class="k-only">💾 Data a zálohy</span><span class="t-only t-lbl"><i class="fa-solid fa-database" aria-hidden="true"></i>Data a zálohy</span><span class="chev"><span class="i-em">›</span><i class="i-fa fa-solid fa-chevron-right" aria-hidden="true"></i></span></button>
@@ -2188,10 +2220,11 @@ let S={subtitle:"SK Meteor Praha",config:{physical:[],game:[],milestones:[],badg
 const CH={};
 let _modalSnap=null;
 
-function save(){localStorage.setItem("bombito_v4",JSON.stringify(S));if(window.skFabSync)skFabSync();}
+function save(){if(window._tymStop)return;localStorage.setItem("bombito_v4",JSON.stringify(S));if(window.skFabSync)skFabSync();}
 function load(){
   const raw=localStorage.getItem("bombito_v4")||localStorage.getItem("bombito_v3")||localStorage.getItem("bombito_v2");
   if(raw){try{S=JSON.parse(raw);}catch(e){}}
+  if(S&&S._tym)delete S._tym; // Kolo 103: hlavička týmu z exportu se do dat neukládá
   if(!S.players)S.players=[];
   if(!S.activeTab)S.activeTab="physical";
   if(!S.config)S.config={};
@@ -2941,6 +2974,7 @@ function closeSidebar(){document.getElementById("sidebar").classList.remove("ope
 
 function saveSubtitle(v){S.subtitle=v;save();}
 function exportData(){
+  if(isTrener()&&tymyCti()){tymExportModal();return;} // Kolo 103: export jednoho týmu + dotaz na Google Disk
   const json=JSON.stringify(S,null,2);
   const filename='bombito_'+today()+'.json';
   localStorage.setItem('bombito_last_export',Date.now());
@@ -3012,6 +3046,7 @@ function importData(e){
   e.target.value='';
 }
 function confirmImport(filename,d){
+  if(isTrener()&&tymyCti()){tymImportVolba(filename,d);return;} // Kolo 103: kam soubor patří
   const curDate=latestDataDate(S),newDate=latestDataDate(d);
   const curTxt=curDate?fmtDate(curDate):'žádná data';
   const newTxt=newDate?fmtDate(newDate):'žádná data';
@@ -3453,11 +3488,11 @@ function openSeasonHub(){
 // Kolo 80: ve vzhledu Trenéra jedna položka menu „Sezóna a data“ místo dvou.
 function openSezonaData(){
   openModal(`${skHubHead('Sezóna a data')}<div class="sk-grp" style="margin-top:14px">Sezóna</div><div class="sk-rows">${skHubRow('openArchiveWizard()','box-archive','Uzavřít sezónu a archivovat')}${skHubRow('openArchiveView()','folder-open','Archiv sezón')}</div>
-    <div class="sk-grp" style="margin-top:10px">Data a zálohy</div><div class="sk-rows">${skHubRow('exportData();closeModal()','download','Exportovat data (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Importovat data (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
+    <div class="sk-grp" style="margin-top:10px">Data a zálohy</div><div class="sk-rows">${skHubRow('exportData()','download','Exportovat tým (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
 }
 function openDataHub(){
   if(isTrener()){
-    openModal(`${skHubHead('Data a zálohy')}<div class="sk-rows" style="margin-top:14px">${skHubRow('exportData();closeModal()','download','Exportovat data (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Importovat data (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
+    openModal(`${skHubHead('Data a zálohy')}<div class="sk-rows" style="margin-top:14px">${skHubRow('exportData()','download','Exportovat tým (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
     return;
   }
   openModal(`<h2>💾 Data a zálohy</h2>
@@ -3691,6 +3726,7 @@ function render(){
   if(dkv)dkv.style.display="none";
   if(!dkOpen)document.body.classList.remove("dk-on");
   const sub=document.getElementById("subtitleEl");if(sub)sub.value=S.subtitle||"SK Meteor Praha";
+  tymHlavickaSync();
   renderPL();
   if(isTrener()){const sk=document.getElementById('skTabs');if(sk){sk.querySelector('[data-nav="ov"]')?.classList.toggle('nav-bez',!tymTestuje());sk.querySelector('[data-nav="zapasy"]')?.classList.toggle('nav-bez',!realMatches().length);}}
   document.getElementById("emptyState").style.display="none";
@@ -8139,6 +8175,7 @@ function openTournamentMatchPicker(tid,backMid){
 }
 
 function openResetConfirm(){
+  if(isTrener()&&tymyCti())return tymResetTrener();
   openModal('<h2>\uD83D\uDDD1 Resetovat pam\u011b\u0165</h2><div style="background:var(--x-danger-bg);border:1.5px solid var(--red);border-radius:8px;padding:14px;margin-bottom:16px"><p style="color:var(--x-danger-ink);font-weight:700;margin-bottom:6px">\u26A0\uFE0F Tato akce je nevratn\u00e1</p><p style="font-size:0.82rem;color:var(--w);line-height:1.6">V\u0161echna data hr\u00e1\u010dek, testy, z\u00e1pasy a nastaven\u00ed budou trvale smaz\u00e1na z pam\u011bti prohl\u00ed\u017ee\u010de. Pokud nem\u00e1\u0161 exportovan\u00e1 data jako JSON soubor, nep\u016fjde to obnovit.</p></div><p style="font-size:0.85rem;margin-bottom:16px">Opravdu chce\u0161 smazat v\u0161echna data?</p><div style="display:flex;gap:8px"><button class="btn btn-o" style="flex:1" onclick="closeModal()">Ne, zp\u011bt</button><button class="btn btn-d" style="flex:1" onclick="openResetBackupOffer()">Ano, smazat</button></div>');
 }
 function openResetBackupOffer(){
@@ -9412,6 +9449,15 @@ const HELP_DATA=[
 ]},
 
 {title:"Zálohy a data",icon:"💾",qa:[
+{tr:1,q:`Jak mít v aplikaci víc týmů a přepínat mezi nimi?`,
+ a:`Klepni nahoře pod nápisem Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš. Klasický vzhled ukazuje vždy tým, který je zrovna vybraný.`,
+ kw:"tým týmy přepnout přepínání nový tým více týmů družstvo kategorie"},
+{tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
+ a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
+ kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
+{tr:1,q:`Co se stane, když načtu soubor s týmem (import)?`,
+ a:`Aplikace se zeptá, kam soubor patří: buď jím nahradí tým, ze kterého soubor pochází (pozná ho sama), nebo vybraný tým, nebo ho přidá jako nový tým — ostatní týmy zůstanou beze změny. U každé možnosti vidíš, kolik hráček a jak čerstvá data tým teď má, a aplikace varuje, když je soubor starší. Před nahrazením si appka schová předchozí stav týmu, takže jde použít „Vrátit stav před posledním importem“. Starší zálohy z doby před týmy jdou načíst stejně.`,
+ kw:"import načíst soubor nahradit přidat nový tým"},
 {q:`Co je „Export JSON" a k čemu slouží?`,
  a:`Je to záloha ÚPLNĚ VŠECH dat (hráčky, testy, zápasy, turnaje, nastavení...) do jednoho souboru, který aplikace umí kdykoli zase načíst zpátky (Import JSON). Na mobilu aplikace rovnou nabídne systémové sdílení (uložit do souborů, poslat sobě mailem...), na počítači aplikace soubor prostě stáhne. Je to jediná záchranná síť pro data, viz blok „Co aplikace umí a jak s ní začít".`},
 {q:`Jak aplikaci obnovím ze zálohy (Import JSON)?`,
@@ -9520,9 +9566,11 @@ function helpNazev(b){return isTrener()&&b.tt?b.tt:b.title;}
 function helpQaHtml(qa,badge){
   return`<div class="help-qa"><details><summary>${helpTxt(qa.q)}${badge?`<span class="help-badge">${badge}</span>`:""}</summary><div class="help-a">${helpTxt(qa.a)}</div></details></div>`;
 }
+// Kolo 103: otázky s tr:1 jsou jen pro vzhled Trenéra (v klasiku Nápověda beze změny).
+function helpQa(b){return isTrener()?b.qa:b.qa.filter(qa=>!qa.tr);}
 function helpRenderBlocks(){
   return HELP_DATA.map(g=>`<div class="help-group-title">${g.group}</div>${g.blocks.map(b=>
-    `<details class="help-block"><summary>${helpIco(b.icon)}${helpNazev(b)}<span class="help-count">${b.qa.length}</span></summary>${b.qa.map(qa=>helpQaHtml(qa)).join("")}</details>`
+    `<details class="help-block"><summary>${helpIco(b.icon)}${helpNazev(b)}<span class="help-count">${helpQa(b).length}</span></summary>${helpQa(b).map(qa=>helpQaHtml(qa)).join("")}</details>`
   ).join("")}`).join("");
 }
 function helpSearch(query){
@@ -9533,7 +9581,7 @@ function helpSearch(query){
   if(!nq){box.innerHTML=helpRenderBlocks();countEl.textContent="";return;}
   const hits=[];
   HELP_DATA.forEach(g=>g.blocks.forEach(b=>{
-    b.qa.forEach(qa=>{
+    helpQa(b).forEach(qa=>{
       const hay=helpNorm(qa.q+" "+qa.a+" "+(qa.kw||""));
       if(hay.includes(nq))hits.push({qa,blockTitle:helpNazev(b),blockIcon:b.icon});
     });
@@ -10372,7 +10420,285 @@ function testProHracku(druh){
   });
   document.body.appendChild(scrim);document.body.appendChild(w);skFabSync();
 })();
-load();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
+// ══════════════════════════════════════════════════════════
+// TÝMY (Kolo 103) — více týmů, jen ve vzhledu Trenéra
+// ══════════════════════════════════════════════════════════
+// Aktivní tým žije pořád v „bombito_v4“ — klasický vzhled i celý zbytek appky tak
+// fungují beze změny a vidí prostě vybraný tým. Ostatní týmy jsou odložené každý ve svém
+// klíči „bombito_tym_<id>“ (data se tak nikde neukládají dvakrát). K týmu patří i jeho
+// „stav před posledním importem“ (…_pred) a datum poslední zálohy. Přepnutí prohodí
+// klíče a appku načte znovu, ať po předchozím týmu nezůstane nic v paměti.
+const TYMY_KLIC='bombito_tymy',TYM_PREFIX='bombito_tym_';
+function tymNoveId(){return't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function tymyCti(){let r=null;try{r=JSON.parse(localStorage.getItem(TYMY_KLIC)||'null');}catch(e){}return r&&Array.isArray(r.seznam)&&r.seznam.length?r:null;}
+function tymyPis(r){localStorage.setItem(TYMY_KLIC,JSON.stringify(r));}
+function tymEsc(x){return String(x==null?'':x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+// Při prvním spuštění se stávající data stanou prvním týmem (nic se nepřesouvá).
+function tymyInit(){
+  if(tymyCti())return;
+  let nazev='SK Meteor Praha';
+  try{const raw=localStorage.getItem('bombito_v4')||localStorage.getItem('bombito_v3')||localStorage.getItem('bombito_v2');if(raw){const d=JSON.parse(raw);if(d&&d.subtitle)nazev=d.subtitle;}}catch(e){}
+  const id=tymNoveId();
+  try{tymyPis({aktivni:id,seznam:[{id,nazev}]});}catch(e){}
+}
+// Název aktivního týmu = S.subtitle (ten se dál používá v PDF, Wrapped i v klasiku).
+function tymySyncPoLoad(){
+  const r=tymyCti();if(!r)return;
+  const t=r.seznam.find(x=>x.id===r.aktivni);if(!t)return;
+  if(!S.subtitle)S.subtitle=t.nazev;
+  else if(t.nazev!==S.subtitle){t.nazev=S.subtitle;try{tymyPis(r);}catch(e){}}
+}
+function tymAktivni(){const r=tymyCti();return r?r.seznam.find(x=>x.id===r.aktivni)||null:null;}
+function tymNazev(){return S.subtitle||tymAktivni()?.nazev||'Tým';}
+function tymData(id){
+  const r=tymyCti();
+  if(r&&id===r.aktivni)return S;
+  try{return JSON.parse(localStorage.getItem(TYM_PREFIX+id)||'null');}catch(e){return null;}
+}
+function tymHlavickaSync(){
+  const el=document.getElementById('hdrTymTxt');if(el)el.textContent=tymNazev();
+  const b=document.getElementById('hdrTym');if(b)b.title='Tým: '+tymNazev()+' — klikni pro přepnutí';
+}
+function tymDen(ms){const d=new Date(ms);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function tymHracekTxt(n){return n+' '+(n===1?'hráčka':n>=2&&n<=4?'hráčky':'hráček');}
+function tymZapasBezi(){try{return!!localStorage.getItem(lmKey());}catch(e){return false;}}
+
+// ── Přehled týmů ──
+function openTymy(){
+  const r=tymyCti();if(!r){toast('Týmy nejdou načíst','err');return;}
+  const radky=r.seznam.map(t=>{
+    const akt=t.id===r.aktivni,d=tymData(t.id),n=(d&&d.players||[]).length;
+    const nazev=akt?tymNazev():t.nazev;
+    const zal=akt?parseInt(localStorage.getItem('bombito_last_export')||'0'):(t.posledniExport||0);
+    const zalTxt=zal?'záloha '+fmtDate(tymDen(zal)):'zatím bez zálohy';
+    return`<div class="tym-radek${akt?' akt':''}">
+      <button type="button" class="tym-hl" ${akt?'disabled aria-current="true"':`onclick="tymPrepni('${t.id}')"`}>
+        <i class="fa-solid ${akt?'fa-circle-check':'fa-circle'} tym-ic" aria-hidden="true"></i>
+        <span class="tym-txt"><span class="tym-nazev">${tymEsc(nazev)}</span><span class="tym-sub">${tymHracekTxt(n)} · ${zalTxt}${akt?' · vybraný':''}</span></span>
+      </button>
+      <button type="button" class="tym-akce" onclick="tymExportModal('${t.id}')" aria-label="Exportovat tým" title="Exportovat tým"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
+      <button type="button" class="tym-akce" onclick="tymPrejmenujModal('${t.id}')" aria-label="Přejmenovat tým" title="Přejmenovat tým"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
+      ${r.seznam.length>1?`<button type="button" class="tym-akce tym-smaz" onclick="tymSmazModal('${t.id}')" aria-label="Smazat tým" title="Smazat tým"><i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>`:''}
+    </div>`;
+  }).join('');
+  openModal(`${skHubHead('Týmy')}
+    <div class="tym-seznam">${radky}</div>
+    <div class="sk-rows" style="margin-top:6px">${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,application/json" style="display:none" onchange="importData(event)"></label></div>
+    <p class="tym-pozn">Každý tým má vlastní hráčky, zápasy, turnaje, nastavení metrik i zálohu. Vzhled appky je společný.</p>`);
+}
+
+// ── Přepnutí ──
+// smazatStary: aktuální tým se místo odložení zahodí (mazání vybraného týmu).
+function tymPrepni(id,smazatStary){
+  const r=tymyCti();if(!r||id===r.aktivni)return;
+  const cil=r.seznam.find(t=>t.id===id);if(!cil)return;
+  if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
+  const novy=localStorage.getItem(TYM_PREFIX+id);
+  if(novy==null){toast('Data týmu „'+cil.nazev+'“ v zařízení chybí','err');return;}
+  save();
+  const starId=r.aktivni,stary=localStorage.getItem('bombito_v4')||JSON.stringify(S);
+  const predS=localStorage.getItem('bombito_v4_pred_importem');
+  const akt=r.seznam.find(t=>t.id===starId);
+  if(akt){akt.nazev=S.subtitle||akt.nazev;const le=parseInt(localStorage.getItem('bombito_last_export')||'0');if(le)akt.posledniExport=le;else delete akt.posledniExport;}
+  window._tymStop=true; // od teď už nic nesmí přepsat bombito_v4 starým týmem
+  try{
+    if(!smazatStary){
+      localStorage.setItem(TYM_PREFIX+starId,stary);
+      if(predS!=null)localStorage.setItem(TYM_PREFIX+starId+'_pred',predS);
+    }
+    localStorage.setItem('bombito_v4',novy);
+  }catch(e){
+    try{if(!smazatStary){localStorage.removeItem(TYM_PREFIX+starId);localStorage.removeItem(TYM_PREFIX+starId+'_pred');}localStorage.setItem('bombito_v4',stary);}catch(e2){}
+    window._tymStop=false;
+    toast('Na přepnutí týmu není v zařízení dost místa','err');return;
+  }
+  localStorage.removeItem(TYM_PREFIX+id);
+  localStorage.removeItem('bombito_v4_pred_importem');
+  const predN=localStorage.getItem(TYM_PREFIX+id+'_pred');
+  if(predN!=null){try{localStorage.setItem('bombito_v4_pred_importem',predN);}catch(e){}localStorage.removeItem(TYM_PREFIX+id+'_pred');}
+  if(cil.posledniExport)localStorage.setItem('bombito_last_export',String(cil.posledniExport));else localStorage.removeItem('bombito_last_export');
+  if(smazatStary)r.seznam=r.seznam.filter(t=>t.id!==starId);
+  r.aktivni=id;tymyPis(r);
+  try{sessionStorage.setItem('bombito_tym_hlaska',smazatStary?'Tým smazán, vybraný je „'+cil.nazev+'“':'Tým „'+cil.nazev+'“');}catch(e){}
+  // Stejně jako doReset(): okno se zavře a appka se načte až po chvíli — zavření okna si v
+  // historii prohlížeče spotřebuje svůj záznam (BACKNAV) a ten by jinak načtení přerušil.
+  closeModal();setTimeout(()=>location.reload(),300);
+}
+function tymHlaskaPoStartu(){
+  let m=null;try{m=sessionStorage.getItem('bombito_tym_hlaska');sessionStorage.removeItem('bombito_tym_hlaska');}catch(e){}
+  if(m)setTimeout(()=>toast(m+' ✓'),300);
+}
+
+// ── Nový tým ──
+function tymNovyModal(){
+  openModal(`${skHubHead('Nový tým')}
+    <div class="fg" style="margin-top:14px"><label>Název týmu</label><input id="tymNazevIn" type="text" maxlength="60" placeholder="např. SK Meteor U16"></div>
+    <label class="tym-chk"><input type="checkbox" id="tymPrevzit" checked> Převzít nastavení metrik, milníků a odznaků z týmu „${tymEsc(tymNazev())}“</label>
+    <div class="ma"><button class="btn btn-o" onclick="openTymy()">Zpět</button><button class="btn btn-p" onclick="tymNovyUloz()">Vytvořit a přepnout</button></div>`);
+  setTimeout(()=>document.getElementById('tymNazevIn')?.focus(),80);
+}
+function tymPrazdny(nazev,config){
+  return{subtitle:nazev,config:config?JSON.parse(JSON.stringify(config)):{physical:[],game:[],milestones:[],badges:[]},players:[],activeId:null,activeTab:"physical",cmpMode:false,cmpIds:[],lockedNorms:null,normScope:S.normScope||"all",matches:[],tournaments:[],minihry:[]};
+}
+function tymNovyUloz(){
+  const nazev=(document.getElementById('tymNazevIn')?.value||'').trim();
+  if(!nazev){toast('Zadej název týmu','err');return;}
+  if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
+  const prevzit=document.getElementById('tymPrevzit')?.checked;
+  const r=tymyCti();const id=tymNoveId();
+  try{localStorage.setItem(TYM_PREFIX+id,JSON.stringify(tymPrazdny(nazev,prevzit?S.config:null)));}
+  catch(e){toast('V zařízení není dost místa na nový tým','err');return;}
+  r.seznam.push({id,nazev});tymyPis(r);
+  tymPrepni(id);
+}
+
+// ── Přejmenování ──
+function tymPrejmenujModal(id){
+  const r=tymyCti(),t=r&&r.seznam.find(x=>x.id===id);if(!t)return;
+  const cur=id===r.aktivni?tymNazev():t.nazev;
+  openModal(`${skHubHead('Přejmenovat tým')}
+    <div class="fg" style="margin-top:14px"><label>Název týmu</label><input id="tymNazevIn" type="text" maxlength="60" value="${tymEsc(cur)}"></div>
+    <div class="ma"><button class="btn btn-o" onclick="openTymy()">Zpět</button><button class="btn btn-p" onclick="tymPrejmenujUloz('${id}')">Uložit</button></div>`);
+  setTimeout(()=>{const i=document.getElementById('tymNazevIn');if(i){i.focus();i.select();}},80);
+}
+function tymPrejmenujUloz(id){
+  const nazev=(document.getElementById('tymNazevIn')?.value||'').trim();
+  if(!nazev){toast('Zadej název týmu','err');return;}
+  const r=tymyCti(),t=r&&r.seznam.find(x=>x.id===id);if(!t)return;
+  t.nazev=nazev;
+  if(id===r.aktivni){S.subtitle=nazev;save();render();}
+  else{const d=tymData(id);if(d){d.subtitle=nazev;try{localStorage.setItem(TYM_PREFIX+id,JSON.stringify(d));}catch(e){}}}
+  tymyPis(r);tymHlavickaSync();openTymy();toast('Přejmenováno ✓');
+}
+
+// ── Smazání ──
+function tymSmazModal(id){
+  const r=tymyCti(),t=r&&r.seznam.find(x=>x.id===id);if(!t||r.seznam.length<2)return;
+  const akt=id===r.aktivni,nazev=akt?tymNazev():t.nazev;
+  const dalsi=r.seznam.find(x=>x.id!==id);
+  confirmAction(`Smazat tým „${tymEsc(nazev)}“?`,()=>{
+    if(akt){tymPrepni(dalsi.id,true);return;}
+    localStorage.removeItem(TYM_PREFIX+id);localStorage.removeItem(TYM_PREFIX+id+'_pred');
+    r.seznam=r.seznam.filter(x=>x.id!==id);tymyPis(r);
+    toast('Tým smazán');openTymy();
+  },{noteTrener:`Hráčky, zápasy i nastavení týmu se smažou z tohoto zařízení a nepůjde to vrátit. Jestli ho chceš mít, nejdřív si ho exportuj.${akt?` Vybraný bude tým „${tymEsc(dalsi.nazev)}“.`:''}`,yesLabel:'Smazat tým'});
+}
+
+// ── Export jednoho týmu (+ dotaz na Google Disk) ──
+function tymSlug(s){return String(s||'tym').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'tym';}
+function tymExportBalik(id){
+  const r=tymyCti();id=id||r?.aktivni;
+  const t=r&&r.seznam.find(x=>x.id===id);
+  const d=tymData(id);if(!d)return null;
+  const nazev=id===r.aktivni?tymNazev():(t?t.nazev:d.subtitle);
+  const obj=Object.assign({},d,{_tym:{id,nazev,exportovano:new Date().toISOString()}});
+  return{id,nazev,n:(d.players||[]).length,json:JSON.stringify(obj,null,2),filename:'bombito_'+tymSlug(nazev)+'_'+today()+'.json'};
+}
+function tymZaznamExport(id){
+  const r=tymyCti();if(!r)return;
+  if(id===r.aktivni){localStorage.setItem('bombito_last_export',Date.now());document.querySelector('.backup-bubble')?.remove();}
+  else{const t=r.seznam.find(x=>x.id===id);if(t){t.posledniExport=Date.now();tymyPis(r);}}
+}
+function tymUmiSdilet(){
+  try{return!!(navigator.canShare&&navigator.canShare({files:[new File(['{}'],'x.json',{type:'application/json'})]}));}catch(e){return false;}
+}
+let _tymExportId=null;
+function tymExportModal(id){
+  const b=tymExportBalik(id);if(!b){toast('Tým nejde exportovat','err');return;}
+  _tymExportId=b.id;
+  const share=tymUmiSdilet();
+  const radky=share
+    ?skHubRow('tymExportSdilej()','cloud-arrow-up','Uložit na Google Disk')+skHubRow('tymExportSdilej()','share-nodes','Sdílet jinam (soubory, e-mail…)')+skHubRow('tymExportStahni()','download','Jen stáhnout do zařízení')
+    :skHubRow('tymExportStahni(true)','cloud-arrow-up','Stáhnout a otevřít Google Disk')+skHubRow('tymExportStahni()','download','Jen stáhnout do zařízení');
+  openModal(`${skHubHead('Exportovat tým')}
+    <div class="tym-exp-info"><b>${tymEsc(b.nazev)}</b> · ${tymHracekTxt(b.n)}<br><span>${tymEsc(b.filename)}</span></div>
+    <p class="tym-pozn" style="margin-top:0">Chceš zálohu uložit i na Google Disk?</p>
+    <div class="sk-rows">${radky}</div>
+    <p class="tym-pozn">${share?'Sdílení otevře nabídku telefonu — vyber v ní <b>Disk</b> a složku, třeba „Bombito“. Soubor obsahuje jen tenhle tým, takže ho můžeš poslat i někomu dalšímu.':'Na počítači se soubor stáhne a otevře se Google Disk — soubor tam jen přetáhni (třeba do složky „Bombito“).'}</p>`);
+}
+function tymExportSdilej(){
+  const b=tymExportBalik(_tymExportId);if(!b)return;
+  const file=new File([b.json],b.filename,{type:'application/json'});
+  navigator.share({files:[file],title:'Bombito — '+b.nazev,text:'Záloha týmu '+b.nazev+' z aplikace Bombito'})
+    .then(()=>{tymZaznamExport(b.id);closeModal();toast('Záloha týmu sdílena ✓');})
+    .catch(err=>{if(err&&err.name==='AbortError')return;tymExportStahni();});
+}
+function tymExportStahni(disk){
+  const b=tymExportBalik(_tymExportId);if(!b)return;
+  tymZaznamExport(b.id);closeModal();
+  if(disk){try{window.open('https://drive.google.com/drive/my-drive','_blank','noopener');}catch(e){}}
+  fallbackExport(b.json,b.filename);
+}
+
+// ── Import ve vzhledu Trenéra: kam soubor patří ──
+function tymImportVolba(filename,d){
+  const r=tymyCti();if(!r)return;
+  const info=d._tym&&typeof d._tym==='object'?d._tym:null;
+  const zTymu=info?r.seznam.find(t=>t.id===info.id):null;
+  const nazevSouboru=(info&&info.nazev)||d.subtitle||filename.replace(/\.json$/i,'');
+  const newDate=latestDataDate(d);
+  const srovnani=(id)=>{
+    const cur=tymData(id)||{players:[]};const cd=latestDataDate(cur);
+    const older=cd&&newDate&&newDate<cd;
+    return`<span class="tym-sub">teď ${tymHracekTxt((cur.players||[]).length)}, poslední data ${cd?fmtDate(cd):'žádná'}</span>${older?'<span class="tym-warn">⚠ Soubor je STARŠÍ než data v tomhle týmu</span>':''}`;
+  };
+  const volba=(fn,ic,txt,sub,prim)=>`<button type="button" class="tym-volba${prim?' prim':''}" onclick="${fn}"><i class="fa-solid fa-${ic}" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">${txt}</span>${sub}</span></button>`;
+  const aktNazev=tymNazev();
+  let h='';
+  if(zTymu&&zTymu.id!==r.aktivni)h+=volba(`tymImportProved('${zTymu.id}')`,'rotate','Nahradit tým „'+tymEsc(zTymu.nazev)+'“',srovnani(zTymu.id)+'<span class="tym-sub">soubor pochází z tohoto týmu</span>',true);
+  h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni),zTymu&&zTymu.id===r.aktivni||!info&&r.seznam.length===1);
+  h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','<span class="tym-sub">ostatní týmy zůstanou beze změny</span>',info&&!zTymu);
+  openModal(`${skHubHead('Načíst tým ze souboru')}
+    <div class="tym-exp-info"><b>${tymEsc(filename)}</b><br><span>V souboru: ${tymHracekTxt(d.players.length)}, poslední data ${newDate?fmtDate(newDate):'žádná'}${info&&info.nazev?' · tým „'+tymEsc(info.nazev)+'“':''}</span></div>
+    <div class="tym-volby">${h}</div>
+    <p class="tym-pozn">Při nahrazení si appka schová předchozí stav týmu (Vrátit stav před posledním importem).</p>`);
+}
+function tymImportProved(cilId){
+  const d=_pendingImport;if(!d)return;
+  const r=tymyCti();if(!r)return;
+  const info=d._tym&&typeof d._tym==='object'?d._tym:null;
+  delete d._tym;
+  // Soubor z jiného zařízení: tým převezme ID ze souboru, ať se příště pozná sám.
+  const souborId=info&&info.id&&/^[A-Za-z0-9_-]{1,40}$/.test(info.id)&&!r.seznam.some(t=>t.id===info.id)?info.id:null;
+  if(cilId===null){
+    const id=souborId||tymNoveId();
+    const nazev=(info&&info.nazev)||d.subtitle||'Nový tým';
+    if(!d.subtitle)d.subtitle=nazev;
+    if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
+    try{localStorage.setItem(TYM_PREFIX+id,JSON.stringify(d));}catch(e){toast('V zařízení není dost místa na další tým','err');return;}
+    r.seznam.push({id,nazev});tymyPis(r);_pendingImport=null;
+    tymPrepni(id);return;
+  }
+  const t=r.seznam.find(x=>x.id===cilId);if(!t)return;
+  if(cilId===r.aktivni){
+    _pendingImport=d;doImport();
+    const r2=tymyCti(),t2=r2&&r2.seznam.find(x=>x.id===cilId);
+    if(t2){t2.nazev=S.subtitle||t2.nazev;if(souborId){t2.id=souborId;r2.aktivni=souborId;}tymyPis(r2);}
+    tymHlavickaSync();return;
+  }
+  if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
+  const pred=localStorage.getItem(TYM_PREFIX+cilId);
+  try{
+    if(pred!=null)localStorage.setItem(TYM_PREFIX+cilId+'_pred',pred);
+    localStorage.setItem(TYM_PREFIX+cilId,JSON.stringify(d));
+  }catch(e){toast('V zařízení není dost místa','err');return;}
+  if(d.subtitle)t.nazev=d.subtitle;else d.subtitle=t.nazev;
+  tymyPis(r);_pendingImport=null;
+  tymPrepni(cilId);
+}
+
+// ── Reset paměti ve vzhledu Trenéra ──
+function tymResetTrener(){
+  const r=tymyCti(),n=r?r.seznam.length:1;
+  const radky=(n>1?skHubRow('openTymy()','users','Smazat jen jeden tým (v přehledu Týmy)'):'')
+    +skHubRow(`tymExportModal()`,'download','Nejdřív exportovat tým „'+tymEsc(tymNazev())+'“')
+    +skHubRow('doReset()','trash-can',n>1?'Smazat všechno ('+n+' '+(n<=4?'týmy':'týmů')+')':'Smazat všechno','sk-danger');
+  openModal(`${skHubHead('Resetovat paměť')}
+    <p class="tym-pozn" style="margin-top:10px">Reset smaže z tohoto zařízení <b>všechny týmy</b> — hráčky, testy, zápasy, turnaje i nastavení — a nepůjde to vrátit. Každý tým, který chceš zachovat, si nejdřív exportuj.</p>
+    <div class="sk-rows">${radky}</div>`);
+}
+
+tymyInit();load();tymySyncPoLoad();tymHlaskaPoStartu();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
 
 </script>
 <script>
