@@ -711,7 +711,8 @@ html.skin-trener #menuToggle{width:36px;height:36px;padding:0;margin-left:0;bord
 html.skin-trener #menuToggle:hover{background:rgba(255,255,255,.22)}
 html.skin-trener #menuToggle .mh-dot{position:absolute;top:-3px;right:-3px;width:11px;height:11px;margin:0;border:2px solid var(--court);background:var(--chalk)}
 /* Kolo 64: na telefonu místo spodní lišty jen šipka Zpět v hlavičce (iPhone nemá systémové Zpět). */
-@media(max-width:768px){html.skin-trener #hdrFwd{display:none}html.skin-trener #hdrBack:disabled{visibility:hidden}}
+@media(max-width:768px){html.skin-trener #hdrFwd{display:none}html.skin-trener #hdrBack:disabled{display:none}html.skin-trener #hdrBack:disabled~#hdrHelp{margin-left:auto}}
+/* Kolo 105: neaktivní Zpět na telefonu nezabírá místo — štítek týmu vedle nápisu Bombito má víc prostoru. */
 
 /* ── Záložky pod hlavičkou ── */
 html.skin-trener .sk-tabs{display:flex;background:var(--card);border-bottom:1px solid var(--line);flex-shrink:0;position:relative;z-index:140}
@@ -1719,7 +1720,9 @@ html.skin-trener #hdrTym .hdr-disk.pozor{color:#FFD36B}
 .disk-ucet>i{color:var(--court-ink)}
 .disk-ucet>span{flex:1;min-width:0;overflow-wrap:anywhere}
 /* Kolo 103: týmy (jen vzhled Trenéra) */
-html.skin-trener #hdrTym{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:2px;padding:3px 10px 3px 9px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;align-self:flex-start;min-width:0}
+html.skin-trener .hd{flex-direction:row;align-items:center;gap:10px}
+html.skin-trener .hd h1{flex:none}
+html.skin-trener #hdrTym{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:0;padding:3px 10px 3px 9px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;align-self:center;min-width:0}
 html.skin-trener #hdrTym>i{font-size:10px;opacity:.85;flex:none}
 html.skin-trener #hdrTym #hdrTymTxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 html.skin-trener #hdrTym:focus-visible{outline:2px solid #fff;outline-offset:2px}
