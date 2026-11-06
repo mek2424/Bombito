@@ -4458,6 +4458,9 @@ function drawPhys(){
 function buildGame(){
   const s=lS(),pv=pS(),tMap=strengthTMap(gP());
   const p=gP();const attackMerged=!!p?.attackHarderSince;
+  // Kolo 110 (Mek 6. 11.): hráčka bez herního testu, ale s tréninkovou statistikou → jen karta tréninků,
+  // žádné prázdné grafy (pilulky) ani řádky s pomlčkami. Co má data, má přednost před prázdným.
+  if(isTrener()&&p&&!(p.testSessions||[]).some(x=>x.game&&Object.keys(x.game).some(id=>gamePct(gameScore(x.game,id))!=null))&&maTrenink(p))return trKartaHerni(p);
   const herV=id=>x=>{const v=gamePct(gameScore(x?.game,id));return v==null?null:Math.round(v*100);};
   const herPosl=id=>{const v=gamePct(gameScore(s?.game,id));return v==null?null:Math.round(v*100)+'<small>%</small>';};
   const activeRows=[],inactiveRows=[];
@@ -9461,7 +9464,7 @@ const HELP_DATA=[
 
 {title:"Živý zápas — zapisování bodů a příjmu",icon:"🏆",qa:[
 {tr:1,q:`Co je Tréninková statistika a jak se počítá do Overallu?`,
- a:`V oranžovém tlačítku + je „Tréninková statistika“. Vybereš datum a co sledovat (Body, Příjem, nebo Obojí) a zapisuješ stejnou obrazovkou jako u zápasu. Trénink se neuloží mezi zápasy, takže se nepočítá do zápasových statistik, turnajů ani zápasového bloku Overallu. Počítá se do HERNÍHO bloku: příjem stejně jako u zápasů, jen z tréninků, kde měla hráčka aspoň 8 příjmů, a z posledních 3 takových tréninků; body jako body za odehraný set z posledních 3 tréninků. Na kartě hráčky je to vidět na záložce Herní v kartě „Tréninková statistika“ (ztlumený příjem = zatím málo pokusů, do Overallu se nepočítá). Všechny tréninky najdeš na záložce Testy dole v části „Tréninková statistika“ (tlačítko Všechny tréninky) a u hráčky ikonou seznamu v kartě na záložce Herní; mezi záznamy zápasů nejsou.`,
+ a:`V oranžovém tlačítku + je „Tréninková statistika“. Vybereš datum a co sledovat (Body, Příjem, nebo Obojí) a zapisuješ stejnou obrazovkou jako u zápasu. Trénink se neuloží mezi zápasy, takže se nepočítá do zápasových statistik, turnajů ani zápasového bloku Overallu. Počítá se do HERNÍHO bloku: příjem stejně jako u zápasů, jen z tréninků, kde měla hráčka aspoň 8 příjmů, a z posledních 3 takových tréninků; body jako body za odehraný set z posledních 3 tréninků. Na kartě hráčky je to vidět na záložce Herní v kartě „Tréninková statistika“ (dokud hráčka nemá herní test, je na záložce jen tahle karta) (ztlumený příjem = zatím málo pokusů, do Overallu se nepočítá). Všechny tréninky najdeš na záložce Testy dole v části „Tréninková statistika“ (tlačítko Všechny tréninky) a u hráčky ikonou seznamu v kartě na záložce Herní; mezi záznamy zápasů nejsou.`,
  kw:"trénink tréninková statistika příjem body herní blok overall"},
 {tr:1,q:`Naměřil jsem trénink jako zápas — jak ho přesunu do tréninků?`,
  a:`Otevři ten zápas v Záznamech zápasů a dole klepni na „Do tréninků“. Zápas zmizí ze zápasů (i z turnaje, pokud v nějakém byl) a jeho body a příjem se začnou počítat do herního bloku jako tréninková statistika. Hned potom to jde vrátit přes „Vrátit“.`,
