@@ -186,7 +186,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .tabsWrap{position:relative;margin-bottom:16px}
 .tabs{display:flex;border-bottom:2px solid var(--brd);overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-/* Kolo 34: "je čím scrollovat dál" náznak (schválená Varianta 2 z mock-upu) — appka
+/* Kolo 34: "je čím scrollovat dál" náznak (schválená Varianta 2 z mock-upu) — aplikace
    sama schovává scrollbar u .tabs, takže bez tohohle nebylo poznat, že tam ještě
    něco je. wireTabsFade()/updateTabsFade() v JS ho ukazují jen když je opravdu co. */
 .tabsFade{position:absolute;top:0;right:0;bottom:2px;width:28px;display:flex;align-items:center;justify-content:flex-end;color:var(--gm);font-size:0.85rem;opacity:0;pointer-events:none;transition:opacity .15s;background:linear-gradient(to right,transparent,var(--bg) 70%)}
@@ -267,7 +267,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
 .md{background:var(--card);border:1px solid #3a5a3a;border-radius:14px;padding:20px;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;overflow-x:hidden}
 .md h2{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;margin-bottom:14px}
 /* SEZÓNNÍ SHRNUTÍ (Wrapped) — Kolo 29. Vzhled navržen a schválen na Claude Design
-   canvasu (3 kola mock-upů), tady jen přenesený na skutečná CSS proměnná appky
+   canvasu (3 kola mock-upů), tady jen přenesený na skutečná CSS proměnná aplikace
    (--bg/--gl/--acc.. se přesně shodují s barvami z mock-upu, viz Kolo 29 poznámky). */
 .wr-card{--wr-mute:rgba(255,255,255,.4);--wr-mute2:rgba(255,255,255,.5);--wr-mute3:rgba(255,255,255,.35);--wr-faint:#5a6a5a;--wr-line:#16241a;--wr-chipbd:#2a4a2a;--wr-gold-bg:#4d3d10;--wr-text2:#c8d0c8;--wr-eyegreen:#6aaa70;--wr-gold-soft:rgba(232,200,64,.15);--wr-blue:#4a9ee8;position:relative;width:390px;max-width:100%;height:844px;max-height:96vh;background:var(--bg);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 10px 60px rgba(0,0,0,.6);font-family:'DM Sans',sans-serif;color:var(--w)}
 .wr-dots{display:flex;gap:3px;padding:14px 16px 0 16px;flex-shrink:0}
@@ -347,7 +347,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px;min-width:0;height:10
   #sidebar.open{transform:translateX(0);box-shadow:4px 0 30px rgba(0,0,0,.5)}
   #sidebarBackdrop.open{display:block}
   main{padding:13px;padding-bottom:78px}
-  /* Kolo 35: seznam hráček v postranním panelu appka nechávala zajíždět pod pevnou
+  /* Kolo 35: seznam hráček v postranním panelu aplikace nechávala zajíždět pod pevnou
      spodní lištu Zpět/Dopředu (.nav-bottom-bar, z-index nad #sidebar) — poslední
      hráčky tak byly vidět jen z půlky nebo vůbec. Stejná oprava jako main výše. */
   .pl{padding-bottom:78px}
@@ -1724,6 +1724,12 @@ html.skin-trener .lm-karta.zap{border-color:var(--warn);box-shadow:inset 0 0 0 1
 html.skin-trener .lm-karta .live-badge{margin-left:6px}
 .lm-karta-pozor{color:var(--danger-ink)}
 .lm-karta-akce{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+/* Kolo 107: stav pilulkou místo vět */
+.lm-pill{flex:none;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font:600 11.5px 'DM Sans',sans-serif;background:var(--line);color:var(--ink);white-space:nowrap}
+.lm-pill.zap{background:var(--warn);color:var(--warn-bg)}
+.lm-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.tym-pill{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;font:600 11.5px 'DM Sans',sans-serif;background:var(--line);color:var(--ink)}
+.tym-pill.warn{background:var(--warn);color:var(--warn-bg)}
 /* Kolo 104: Google Disk */
 html.skin-trener #hdrTym .hdr-disk{font-size:11px;opacity:.95}
 html.skin-trener #hdrTym .hdr-disk.ceka{opacity:.6}
@@ -1737,7 +1743,7 @@ html.skin-trener #hdrTym .hdr-disk.pozor{color:#FFD36B}
 /* Kolo 103: týmy (jen vzhled Trenéra) */
 html.skin-trener .hd{flex-direction:row;align-items:center;gap:10px}
 html.skin-trener .hd h1{flex:none}
-html.skin-trener #hdrTym{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:0;padding:3px 10px 3px 9px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;align-self:center;min-width:0}
+html.skin-trener #hdrTym{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:0;padding:3px 10px 3px 9px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(0,0,0,.2);color:#fff;font:600 12.5px 'DM Sans',sans-serif;cursor:pointer;align-self:center;min-width:0} /* Kolo 107: tmavší plocha, kontrast 4,5 : 1 */
 html.skin-trener #hdrTym>i{font-size:10px;opacity:.85;flex:none}
 html.skin-trener #hdrTym #hdrTymTxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 html.skin-trener #hdrTym:focus-visible{outline:2px solid #fff;outline-offset:2px}
@@ -1904,12 +1910,12 @@ const COLORS_KLASIK=COLORS.slice();
 const BADGE_COLORS=[CACC,CGREEN,"#4a9ee8","#e87a4a","#c84ae8","#ff6b6b","#4ae8c8","#ffffff","#ff69b4","#ffa500"];
 
 // ═══ LEGENDY GRAFŮ: PUNTÍKY MÍSTO OBDÉLNÍČKŮ ═══
-// Globální nastavení pro Chart.js — týká se úplně všech grafů v appce, ne jen Porovnání.
+// Globální nastavení pro Chart.js — týká se úplně všech grafů v aplikaci, ne jen Porovnání.
 // Chart.js normálně bere barvu výplně puntíku/čtverečku v legendě přímo z dataset.backgroundColor.
 // Jenže spousta grafů tu má backgroundColor záměrně (částečně) průhledné — výplň plochy pod
 // čárou nebo radarem — takže by puntík vyšel vybledlý nebo úplně neviditelný. Proto: pokud je
 // barva výplně "slabá" (transparent / nízká alfa), nahradí se plnou barvou z ohraničení
-// (to appka vždy nastavuje natvrdo a neprůhledně). Grafy, co mají plnou barvu rovnou ve výplni
+// (to aplikace vždy nastavuje natvrdo a neprůhledně). Grafy, co mají plnou barvu rovnou ve výplni
 // (např. bodový graf v Zápase), zůstanou beze změny.
 function _weakFill(c){
   if(!c||c==='transparent')return true;
@@ -1929,7 +1935,7 @@ Chart.defaults.plugins.legend.labels.generateLabels=chart=>{
   return items;
 };
 // Kolo 25: barvy os/mřížky přes globální Chart.js defaults (úkol #20), stejný princip
-// jako legenda výš — appka měla CGRID/CTICK jako pojmenované konstanty už od začátku,
+// jako legenda výš — aplikace měla CGRID/CTICK jako pojmenované konstanty už od začátku,
 // ale skoro každý graf si `grid:{color:CGRID},ticks:{color:CTICK}` psal znovu ručně.
 // Nastaveno tu JEDNOU, každý jednotlivý graf to teď dědí, pokud si výslovně nenastaví
 // jinak (PDF export má schválně svou vlastní světlou paletu pro tištěnou stránku,
@@ -1990,7 +1996,7 @@ function gameAbbr(m){
   return m.label.split(' ')[0];
 }
 // Aktuálně platná varianta útoku pro danou hráčku — "utok_cil" (těžší), pokud má
-// nastavené datum přechodu (p.attackHarderSince), jinak "utok_pole" (lehčí). Appka
+// nastavené datum přechodu (p.attackHarderSince), jinak "utok_pole" (lehčí). Aplikace
 // tohle používá všude, kde se útok na cíl/do pole zobrazuje jako JEDNA věc, ne dvě
 // samostatné metriky vedle sebe (Poslední výsledky, grafové karty, Přehled týmu).
 function activeAttackMetricId(p){return p?.attackHarderSince?"utok_cil":"utok_pole";}
@@ -2348,7 +2354,7 @@ function load(){
   const seen={}; S.matches.forEach(m=>{seen[m.id]=m;});
   S.matches=Object.values(seen).filter(m=>m.finished!==false||!m._autosave);
   // Kolo 19 — jednorázový zpětný backfill: staré zápasy bez tournamentId,
-  // co sdílí stejné datum, appka při prvním načtení po aktualizaci spojí
+  // co sdílí stejné datum, aplikace při prvním načtení po aktualizaci spojí
   // do turnaje (stejná logika jako autoAssignTournament, jen hromadně).
   // Idempotentní — zápasy, co už tournamentId mají, se nepřeskupují, takže
   // se to nespustí znovu při dalších načteních ani nepřepíše ruční úpravy.
@@ -2363,10 +2369,10 @@ function load(){
       group.forEach(m=>{m.tournamentId=tid;});
     });
   }
-  // MINIHRY — zpětný backfill: appka po zapnutí funkce doplní minihry pro existující
+  // MINIHRY — zpětný backfill: aplikace po zapnutí funkce doplní minihry pro existující
   // testování/zápasy/uzavřené turnaje, co je ještě nemají. Idempotentní (mhAdd níž
   // kontroluje duplicity přes type+refId), takže běží klidně při každém načtení.
-  // Omezeno na aktuální sezónu — jinak by po zapnutí appka jednorázově zaplavila
+  // Omezeno na aktuální sezónu — jinak by po zapnutí aplikace jednorázově zaplavila
   // seznam Minihry i starými odehranými akcemi z minulých sezón.
   {
     const mhStart=currentSeasonStart();
@@ -2452,14 +2458,14 @@ function normPlayers(){
 // sezóny (S.seasons už obsahuje tu právě zavíranou, currentSeasonStart() proto ukazuje
 // na její konec) vyšla z prázdné množiny — sezóna, co se dopočítává, ještě žádné svoje
 // "nové" zápasy nemá. Wrapped proto vždycky žádá 'all', ať dostane normu ze stabilní,
-// kompletní historie bez ohledu na to, kdy přesně appka Wrapped počítá.
+// kompletní historie bez ohledu na to, kdy přesně aplikace Wrapped počítá.
 // Odolný odhad mu/sigma pro normu syrových/neomezených metrik (fyzické testy s normou,
 // dopočítaný výskok, body na zápas — NE herní testy ani příjem, ty jsou procenta s
 // přirozeným stropem a mají jiný druh ochrany, viz shrinkPct níž). Bez tohohle by jeden
 // extrémní výkon jedné hráčky (ať už nahoru, nebo dolů) nafoukl sigmu a přes ni stlačil
 // T-skóre všech ostatních, i když se jich to netýká — viz diskuze v konverzaci. Postup:
 // napřed předběžný ořezaný odhad (ať se ho extrém sám nezmocní), podle něj najít hodnoty
-// přes 3 odchylky (appka stejný práh používá u kontroly podezřelých hodnot, Kolo 46), ty
+// přes 3 odchylky (aplikace stejný práh používá u kontroly podezřelých hodnot, Kolo 46), ty
 // z finálního výpočtu mu/sigma vynechat. Hráčka samotná se ale VŽDY skóruje svojí
 // SKUTEČNOU hodnotou (tRaw dostává raw val, ne tohle) — mění se jen sdílená norma.
 function robustMuSigma(vals){
@@ -2637,7 +2643,7 @@ function overallPhysRaw(sess,norms,p){
 // Spolehlivostní uhlazení (shrinkage) pro procentuální metriky s proměnným počtem pokusů
 // (herní testy, příjem) — JEN pro Overall a to, co se z něj odvozuje (rozpad, graf v čase,
 // Wrapped, minihry, odznak ⚡/🧪); tabulky, karta hráčky, pavouk a T-score vývoj v čase
-// zůstávají na syrových procentech beze změny, appka je nikde neukazuje uhlazené. Princip:
+// zůstávají na syrových procentech beze změny, aplikace je nikde neukazuje uhlazené. Princip:
 // procento z málo pokusů se přitáhne blíž k typickému týmovému průměru dané metriky (mu),
 // čím míň pokusů za ním stojí, tím silněji — "k" je počet virtuálních pokusů na úrovni
 // průměru, co se do výpočtu přidá. Hodně pokusů → skoro beze změny, málo pokusů → výrazně
@@ -2649,7 +2655,7 @@ function shrinkPct(rawPct,n,priorPct,k){
   if(priorPct==null)return rawPct;
   return(rawPct*n+priorPct*k)/(n+k);
 }
-// Kolo 24: herní blok odděleně od fyzického (dřív appka obojí míchala plochým průměrem
+// Kolo 24: herní blok odděleně od fyzického (dřív aplikace obojí míchala plochým průměrem
 // v jedné funkci, viz výš) — stejná vstupní data, jen vlastní T-skórovaný průměr.
 function overallGameRaw(sess,norms,p){
   if(!sess)return{vals:[],n:0,total:0};
@@ -2806,10 +2812,10 @@ function overallForPlayer(p,norms,maxCovered){
 }
 // ═══ Kolo 23: rozpad Overallu po kliknutí + odznak zápasový/testovací typ ═══
 // Práh 10 bodů na SUROVÉM T-skóre (ne na přeškálovaném 40–99 zobrazení) je záměrně —
-// appka T-skóre staví jako 50+10×z, takže rozdíl přesně 10 bodů = přesně 1 směrodatná
+// aplikace T-skóre staví jako 50+10×z, takže rozdíl přesně 10 bodů = přesně 1 směrodatná
 // odchylka z definice. Není to práh vycucaný z prstu. Min. 3 zápasy je stejná
-// spolehlivostní hranice jako jinde v appce (Forma, pásmo kolísání) — jedna náhoda
-// ze dvou zápasů nemá appku opravňovat cokoli o hráčce tvrdit.
+// spolehlivostní hranice jako jinde v aplikaci (Forma, pásmo kolísání) — jedna náhoda
+// ze dvou zápasů nemá aplikaci opravňovat cokoli o hráčce tvrdit.
 // Kolo 24: porovnává se zápasy vs. HERNÍ testy (ne vs. celý dřívější test blok) — fyzické
 // testy jsou obecná atletická veličina, ne herní dovednost, takže nejsou dobrý referenční
 // bod na otázku "hraje v zápasech líp/hůř, než by se dalo čekat z jejích herních testů".
@@ -2824,7 +2830,7 @@ function matchGapBadge(ov){
 }
 // Kolo 40 (úkol #55): tenký graf Overallu v čase na kartě hráčky — stejná myšlenka jako
 // pdfOverallHtml() v PDF exportu (Kolo 37), ale jen JEDNA křivka (aktuální scope tým/databáze,
-// appka scope stejně všude jinde v appce taky neukazuje obě najednou), appčiny tmavé barvy
+// aplikace scope stejně všude jinde v aplikaci taky neukazuje obě najednou), appčiny tmavé barvy
 // místo PDF světlé stránky. Datumy = testování + zápasy, kde má hráčka body/příjem — stejná
 // logika jako v PDF. Historie je vždycky ÚPLNÁ bez ohledu na sezónní hranici (Kolo 38) —
 // overallAt() je "k datu" rodina funkcí, sezónní scoping se jí netýká, viz komentáře tam.
@@ -3044,11 +3050,11 @@ function showExportModal(json){
   // 4. Poslední záchrana: ukáž JSON v textarei pro ruční kopírování
   openModal('<h2>📋 Záloha dat</h2><p style="font-size:0.8rem;color:var(--gm);margin-bottom:10px">Zkopíruj tento text a ulož ho např. do Poznámek.</p><textarea style="width:100%;height:180px;background:var(--x-input);border:1px solid var(--brd);color:var(--w);font-size:0.6rem;border-radius:6px;padding:8px;font-family:monospace" readonly>'+json+'</textarea><div class="ma"><button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>');
 }
-// Kolo 46: appka dřív před importem ukazovala jen počet hráček v souboru — snadno se
-// tak přehlédlo, že soubor je STARŠÍ než data, co appka má právě teď (typicky při
-// střídání appky mezi telefonem a počítačem). latestDataDate appka bere jako nejnovější
-// datum, co appka v datech vůbec najde (testování, zápasy, poznámky, archivace sezóny) —
-// funguje i na starší zálohy appky, appka pro to nepotřebuje žádné nové pole navíc.
+// Kolo 46: aplikace dřív před importem ukazovala jen počet hráček v souboru — snadno se
+// tak přehlédlo, že soubor je STARŠÍ než data, co aplikace má právě teď (typicky při
+// střídání aplikace mezi telefonem a počítačem). latestDataDate aplikace bere jako nejnovější
+// datum, co aplikace v datech vůbec najde (testování, zápasy, poznámky, archivace sezóny) —
+// funguje i na starší zálohy aplikace, aplikace pro to nepotřebuje žádné nové pole navíc.
 function latestDataDate(st){
   let max=null;
   (st.players||[]).forEach(p=>{
@@ -3333,12 +3339,12 @@ function commitNewTest(payload){
   p.testSessions.sort((a,b)=>a.date.localeCompare(b.date));
   save();closeModal();renderDetail();toast("Test uložen ✓");
 }
-// Kolo 46: appka nemá jak poznat obsahovou chybu (žádný test to nezkontroluje sám),
+// Kolo 46: aplikace nemá jak poznat obsahovou chybu (žádný test to nezkontroluje sám),
 // ale umí aspoň upozornit na hodnotu, co je nápadně mimo obvyklé rozmezí — typicky
-// překlep (chybějící desetinná čárka, přebytečná nula). Práh |z|>3 appka bere ze
-// stejné T-skórové škály, kterou appka jinde zobrazuje jako T 20–80 (viz Overall) —
-// tři směrodatné odchylky je appce dost neobvyklé, aby se appka radši zeptala, ne
-// aby appka rovnou blokovala zápis (může to být i skutečný, jen výjimečný výkon).
+// překlep (chybějící desetinná čárka, přebytečná nula). Práh |z|>3 aplikace bere ze
+// stejné T-skórové škály, kterou aplikace jinde zobrazuje jako T 20–80 (viz Overall) —
+// tři směrodatné odchylky je aplikaci dost neobvyklé, aby se aplikace radši zeptala, ne
+// aby aplikace rovnou blokovala zápis (může to být i skutečný, jen výjimečný výkon).
 // Vyžaduje aspoň 5 hodnot v poolu (norms[m.id].n), jinak by mu/sigma byly nespolehlivé.
 let _pendingTest=null; // {kind:'add', payload} nebo {kind:'edit', idx, data}
 function suspiciousTestValues(physical){
@@ -3778,7 +3784,7 @@ function render(){
 // "Krok" v historii = velké přepnutí obrazovky (hráčka / Domů / Přehled
 // týmu / Porovnání). Přepínání tabů uvnitř jedné hráčky historii NEmění
 // (viz switchTab — volá jen renderDetail(), nikdy render()/pushHistory()).
-// Historie žije jen v paměti (ne v S/localStorage) — po každém startu appky
+// Historie žije jen v paměti (ne v S/localStorage) — po každém startu aplikace
 // se, stejně jako S.activeId, začíná od nuly na Domů.
 // ══════════════════════════════════════════════════════════
 let NAV_HIST=[],NAV_POS=-1,NAV_SUPPRESS=false;
@@ -3862,7 +3868,7 @@ function updateNavButtons(){
 }
 // Domovská obrazovka (Kolo 26) — nahrazuje obsah #emptyState, když není vybraná
 // hráčka, není zapnuté Porovnání a není otevřený Přehled týmu. Stejný princip jako
-// zbytek appky: skutečná data přes overallForPlayer()/activeNorms(), žádná zvlášť
+// zbytek aplikace: skutečná data přes overallForPlayer()/activeNorms(), žádná zvlášť
 // počítaná logika. Prázdný tým (0 aktivních hráček) dostane zpátky původní statickou
 // zprávu "Vyber nebo přidej hráčku".
 // Kolo 78 (Mek 28. 10.): řazení karet na Domů. Fyzické/Herní = průměr T-skóre bloku ve stejné škále jako Overall,
@@ -4060,7 +4066,7 @@ function renderDetail(){
   if(isTrener()){lepikSbalTlacitka(el);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(el.isConnected)lepikSbalTlacitka(el);});}
 }
 // Kolo 34 (schválená Varianta 2 z mock-upu): na mobilu se taby nevejdou do šířky a
-// appka je nechává potichu scrollovat (schovaný scrollbar) — bez náznaku, že jde
+// aplikace je nechává potichu scrollovat (schovaný scrollbar) — bez náznaku, že jde
 // scrollovat dál, se poslední tab dá snadno přehlédnout (reálně nahlášeno uživatelem
 // pro tab "📋 Zápas"). tabsFade se ukáže, jen když má řádek tabů opravdu co skrytého
 // napravo, a sama zmizí, jakmile se doscrolluje na konec.
@@ -4119,8 +4125,8 @@ function buildPhys(){
   // (viz komentář u activeRows.push) — grafová karta se proto NEŘÍDÍ showGraph/active
   // vlastní syrové metriky dosah_vyskoku (ta má schválně showGraph:false, protože
   // graf SUROVÉHO "dosahu z výskoku" sám o sobě nikoho nezajímá — zajímá dopočítaný
-  // rozdíl). Stejný princip appka už měla v PDF exportu (`renderPDFCharts`), jen tady
-  // v appce chyběl — vedlejší oprava, Kolo 17.
+  // rozdíl). Stejný princip aplikace už měla v PDF exportu (`renderPDFCharts`), jen tady
+  // v aplikaci chyběl — vedlejší oprava, Kolo 17.
   const vysPosl=calcVys(s),gp=gP();
   const vysCard=grafKarta(grafNadpis('vyskok','Výskok — dopočítaný (cm)',vysPosl!=null?czc(vysPosl)+'<small>cm</small>':null,grafZmena(gp,x=>calcVys(x),false,'cm')),'ch_vys',(gp?.testSessions||[]).some(x=>calcVys(x)!=null),grafJedno(gp,x=>calcVys(x),false,'cm'));
   const chs=grafyPrazdneNakonec([vysCard,...S.config.physical.filter(m=>m.id!=="dosah_vyskoku"&&m.active!==false&&m.showGraph!==false&&metPlati(m,gP())).map(m=>
@@ -4340,7 +4346,7 @@ function buildGame(){
   S.config.game.forEach(m=>{if(!metPlati(m,gP()))return;
     // Útok na cíl / Útok do pole: hráčka je vždy jen na JEDNÉ variantě (viz
     // activeAttackMetricId) — řádek té druhé se tu vůbec neukazuje, ani ztlumený
-    // pod "Vypnuté metriky" (to je pro jinou věc — vypnuté v nastavení appky).
+    // pod "Vypnuté metriky" (to je pro jinou věc — vypnuté v nastavení aplikace).
     if(m.id==="utok_pole"&&attackMerged)return;
     if(m.id==="utok_cil"&&!attackMerged)return;
     const isA=m.active!==false;
@@ -4353,7 +4359,7 @@ function buildGame(){
     (isA?activeRows:inactiveRows).push(row);
   });
   const rows=activeRows.join("")+(inactiveRows.length?`<details class="inactive-metrics"><summary>Vypnuté metriky (${inactiveRows.length})</summary>${inactiveRows.join("")}</details>`:"");
-  // Útok na cíl / Útok do pole: appka ukazuje vždy jen JEDNU kartu podle toho, na
+  // Útok na cíl / Útok do pole: aplikace ukazuje vždy jen JEDNU kartu podle toho, na
   // které variantě hráčka zrovna je (activeAttackMetricId) — ne obě vedle sebe.
   // Dokud nemá nastavený přechod, je to karta "Útok do pole" (s tlačítkem na
   // označení přechodu); od data přechodu ji nahradí sloučená karta "Útok na cíl"
@@ -4407,7 +4413,7 @@ function drawGame(){
 // (a tedy různou surovou úspěšnost), takže se NEPŘEVÁDÍ vzorcem mezi sebou — místo
 // toho se obě vynesou jako T-skóre (každá vůči vlastní normě), což je srovnatelné.
 // Sessions před datem přechodu čtou utok_pole (lehčí), od data přechodu utok_cil
-// (těžší) — ale appka to teď kreslí jako JEDEN nepřerušený dataset (ne dvě série
+// (těžší) — ale aplikace to teď kreslí jako JEDEN nepřerušený dataset (ne dvě série
 // vedle sebe s mezerou): barva jednotlivých ÚSEKŮ čáry (Chart.js `segment`) se mění
 // podle varianty, a bod přesně v místě přechodu dostane hvězdičku — "povýšení" je
 // tak vizuálně jasné, ale datově/technicky je to pořád jedna spojitá věc.
@@ -4517,7 +4523,7 @@ function buildSpider(){
 // Kolo 21 — najde, kterou variantu útoku má KONKRÉTNÍ session skutečně
 // naměřenou: přednostně tu, na které je hráčka teď (activeAttackMetricId),
 // jinak tu druhou. Díky "jinak tu druhou" funguje správně i "Předchozí"
-// session z doby těsně před přechodem, co by jinak appka nutila na variantu,
+// session z doby těsně před přechodem, co by jinak aplikace nutila na variantu,
 // kterou tehdy vůbec neměla — přesně okrajový případ, co Kolo 20 řešení
 // (vynechat celou nepoužitou osu) nemělo jak podchytit.
 function sessionAttackMetric(sess,p){
@@ -4537,9 +4543,9 @@ function spiderData(sess,norms,p){
   const pD=[...physM.map(m=>tScore(sess.physical?.[m.id],norms[m.id])),tScore(vys,norms["vyskok"])];
   // Kolo 21 — Útok jako jedna sloučená osa "Útok" (nahrazuje Kolo 20 řešení,
   // co jednu z os podle hráčky úplně schovávalo). Obě definice (utok_cil i
-  // utok_pole) se sloučí do jednoho slotu na místě té první z nich; appka pro
+  // utok_pole) se sloučí do jednoho slotu na místě té první z nich; aplikace pro
   // KAŽDOU session zvlášť dohledá skutečnou variantu (sessionAttackMetric),
-  // ne jen podle aktuálního stavu hráčky. `atkIdx`/`atkVariant` appka vrací
+  // ne jen podle aktuálního stavu hráčky. `atkIdx`/`atkVariant` aplikace vrací
   // navíc, aby si mkRadar()/cmpRadar() mohly na ten jeden bod nastavit
   // hvězdu a zlatou barvu, když jde o těžší variantu — viz tam.
   const isAtk=id=>id==="utok_cil"||id==="utok_pole";
@@ -4565,11 +4571,11 @@ function mkRadar(id,labels,cur,prev,atk){
   // Kolo 86 (Mek): ve vzhledu Trenéra pavouk bez jediné hodnoty (všechny osy 0) jako nízká karta.
   if(isTrener()&&!(cur||[]).some(v=>v>0)){grafPrazdny(cv);return;}
   const threshold=((75-20)/60*100);
-  // Kolo 21 — na ose "Útok" (atk.idx) appka odliší těžší variantu (utok_cil)
+  // Kolo 21 — na ose "Útok" (atk.idx) aplikace odliší těžší variantu (utok_cil)
   // hvězdou a zlatou barvou, bez ohledu na to, jestli T-skóre zrovna překročilo
   // práh "legendy" — je to signál o OBTÍŽNOSTI, ne o VÝKONU. Lehčí varianta i
   // ostatní osy se chovají jako dřív (zlatě jen nad prahem). `atk` je volitelný
-  // (fyzický pavouk ho vůbec neposílá) — bez něj se appka chová přesně jako dřív.
+  // (fyzický pavouk ho vůbec neposílá) — bez něj se aplikace chová přesně jako dřív.
   const atkIdx=atk?.idx??-1;
   const isCilAt=(i,variant)=>i===atkIdx&&variant==="utok_cil";
   const ptColors=(cur||[]).map((v,i)=>isCilAt(i,atk?.curVariant)?CACC:(v>=threshold?CACC:CGREEN));
@@ -4587,7 +4593,7 @@ function mkRadar(id,labels,cur,prev,atk){
   // "Průměr" (Kolo 18) — referenční prstenec přesně na T=50, tj. průměr AKTUÁLNÍHO
   // referenčního poolu (Tým/Databáze, podle scopeChip). T-skóre je z definice
   // postavené tak, že průměr poolu vždy vychází na 50 na téhle 0–100 zobrazovací
-  // ose — appka proto nic nedopočítává navíc, jen nakreslí plochý dataset "50"
+  // ose — aplikace proto nic nedopočítává navíc, jen nakreslí plochý dataset "50"
   // na všech osách. Když se přepne scope (viz toggleNormScope), tenhle prstenec
   // se NEHÝBE (pořád 50) — mění se `cur`/`prev`, tedy vidíš, jak se hráčka vůči
   // téhle stejné referenci posouvá. Bez výplně, tečkovaně, bez legendy (viz filter).
@@ -4595,7 +4601,7 @@ function mkRadar(id,labels,cur,prev,atk){
   // ověřeno pixel-sample testem, že jinak splývá pod translucentní výplní Aktuální.
   ds.push({label:"Průměr",data:labels.map(()=>50),borderColor:CLEG,backgroundColor:"transparent",borderWidth:1.5,borderDash:[3,3],pointRadius:0});
   // Popisek osy "Útok" zlatě, jen když se v grafu fakticky ukazuje hvězda —
-  // stejná podmínka appka používá i na vysvětlivku pod grafem (viz buildGame).
+  // stejná podmínka aplikace používá i na vysvětlivku pod grafem (viz buildGame).
   const hasStar=atkIdx>=0&&(atk?.curVariant==="utok_cil"||atk?.prevVariant==="utok_cil");
   const tr=isTrener(),zlate=(cur||[]).some((v,i)=>v>=threshold&&!isCilAt(i,atk?.curVariant));
   const leg=tr?[[grLegSw('plna',CGREEN),'Aktuální test'],prev&&[grLegSw('cark','#555'),'Předchozí test'],'prumerR',zlate&&'zlatyBod',hasStar&&'hvezdaR']:[];
@@ -4659,11 +4665,11 @@ function buildMil(){
   const legend=MIL_STAGES.map(s=>`<div>${milIco(s.n)} ${s.full}</div>`).join("");
   return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><details class="mil-summary"><summary>${summary}</summary><div class="mil-leg">${legend}</div></details>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
 }
-// Kolo 47: appka dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
-// jednoho testování (jedna poznámka na session) — appka neměla žádné volné, datované
-// poznámky k samotné hráčce (postřehy z tréninku, co appka s hráčkou probrala apod.).
+// Kolo 47: aplikace dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
+// jednoho testování (jedna poznámka na session) — aplikace neměla žádné volné, datované
+// poznámky k samotné hráčce (postřehy z tréninku, co aplikace s hráčkou probrala apod.).
 // Zobrazeno jako druhá karta hned pod Milníky, protože obojí je nečíselný/kvalitativní
-// záznam o hráčce — appka je řadí od nejnovější, žádné omezení počtu.
+// záznam o hráčce — aplikace je řadí od nejnovější, žádné omezení počtu.
 function buildPlayerNotesCard(p){
   if(isTrener())return''; // Kolo 70: všechny poznámky jsou v Deníčku (hlavička lepíku tam vede)
   const notes=[...(p.notes||[])].reverse();
@@ -4949,7 +4955,7 @@ function drawCmp(sel,norms){
   function cmpRadar(id,lk,dk){
     const cv=document.getElementById(id);if(!cv)return;
     const f=spiderData(lS(sel[0]),norms,sel[0]);if(!f){grafPrazdny(cv);return;}
-    // Kolo 21 — Porovnání teď taky ukazuje jen jednu osu "Útok" (dřív appka
+    // Kolo 21 — Porovnání teď taky ukazuje jen jednu osu "Útok" (dřív aplikace
     // schválně nechávala obě, protože při vyloučení jedné z nich podle JEDNÉ
     // hráčky by se rozjely osy mezi datasety — se sloučenou osou z Kola 21 už
     // je osa vždycky stejná pro všechny, mění se jen bod na ní). Platí jen pro
@@ -5034,11 +5040,11 @@ function tBadgeStyle(t){
 }
 
 // ═══ PDF v2 (Kolo 5) — dvě referenční čáry (tým/databáze) na kartách + Overall v čase ═══
-// Appka pro jednu kartu potřebuje SROVNÁNÍ PODLE OBOU NOREM najednou (šedá čárkovaná
+// Aplikace pro jednu kartu potřebuje SROVNÁNÍ PODLE OBOU NOREM najednou (šedá čárkovaná
 // čára = nejlepší z týmu, zlatá = nejlepší v celé databázi), ale S.normScope je globální
 // přepínač jedné aktivní normy — proto se tady na chvilku přehodí tam a zpět a hned zase
 // vrátí zpátky. Nic jiného (save/render/toast) se přitom nevolá, takže to nemá žádný
-// vedlejší efekt na zbytek appky — uživatel svůj přepínač 👥/🗃 najde po exportu beze změny.
+// vedlejší efekt na zbytek aplikace — uživatel svůj přepínač 👥/🗃 najde po exportu beze změny.
 function pdfBestOther(roster,cutoff,getVal,excludeId,lowerBetter){
   let best=null;
   roster.forEach(pl=>{
@@ -5288,7 +5294,7 @@ function pdfLinePctSvg(pts){
   return`<svg viewBox="0 0 200 60" width="100%" height="46" preserveAspectRatio="none"><polygon points="${poly}" fill="#1a4d8a18"/><polyline points="${mainPts}" fill="none" stroke="#1a4d8a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>${circles}</svg>`;
 }
 function pdfZapasyHtml(p){
-  // Kolo 38: jen zápasy AKTUÁLNÍ sezóny (na rozdíl od zbytku appky — mirrorovaná
+  // Kolo 38: jen zápasy AKTUÁLNÍ sezóny (na rozdíl od zbytku aplikace — mirrorovaná
   // buildZapasTab() na živém tabu 📋 Zápas dál ukazuje celou kariéru hráčky beze změny).
   const seasonStart=currentSeasonStart();
   const matches=(S.matches||[]).filter(m=>m.date>=seasonStart&&m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
@@ -5435,7 +5441,7 @@ function printPDF(){
 }
 
 // Pozn. (Kolo 5): dřívější renderPDFTop5()/renderPDFCharts() (Top 5 T-skóre + samostatná
-// mřížka Chart.js grafů) appka zrušila — nový PDF v2 výš (pdfPhysCardsHtml/pdfGameCardsHtml)
+// mřížka Chart.js grafů) aplikace zrušila — nový PDF v2 výš (pdfPhysCardsHtml/pdfGameCardsHtml)
 // ukazuje graf u KAŽDÉ karty rovnou, takže samostatná sekce grafů byla duplicitní.
 
 // ══════════════════════════════════════════════
@@ -5578,7 +5584,7 @@ function restorePlayer(id){
   if(!p)return;
   delete p.archived;
   // Kolo 36 (úkol #47): odebrat hráčku i ze seznamu playerIds staré sezóny, ze které
-  // se obnovuje — dřív tam zůstávala navždy zapsaná, takže když appka později vytvořila
+  // se obnovuje — dřív tam zůstávala navždy zapsaná, takže když aplikace později vytvořila
   // nový záznam sezóny (typicky když zbylo aktivních jen pár hráček), vypadalo to
   // v Archivu jako matoucí duplicita — hráčka "patřila" do dvou sezón najednou.
   // Historie staré sezóny (Wrapped shrnutí i cokoli jiného) zůstává beze změny — jen
@@ -5611,7 +5617,7 @@ function sessionAtOrBefore(p,cutoff){
   return list.length?list[list.length-1]:null;
 }
 // Nejstarší datum, ke kterému už o hráčce něco víme (test nebo zápas), nejpozději "upTo".
-// Používá se jako náhradní počáteční bod pro "růst za sezónu", když appka nemá žádná
+// Používá se jako náhradní počáteční bod pro "růst za sezónu", když aplikace nemá žádná
 // data přímo k datu začátku sezóny (typicky úplně první archivovaná sezóna vůbec,
 // kde "začátek" = prázdný řetězec, nebo hráčka, která do týmu přišla až v jejím průběhu).
 function playerEarliestDataDate(p,upTo){
@@ -5672,7 +5678,7 @@ function overallMatchRawAtJenPrijem(p,norms,cutoff){
 // (mhTestTop3Rows/mhTestImprovedRows) umí u hráčky otestované na začátku nové sezóny, ale ještě
 // PŘED jejím prvním zápasem té sezóny, tiše dopočítat Zápasy ze zápasů staré sezóny — a živá
 // karta hráčky by ve stejný okamžik žádné Zápasy neukázala (seasonRealMatches je prázdná).
-// Reálně nalezeno a rozebráno na datech uživatele (Antonie Šmejcová, srpen/září 2026) — appka
+// Reálně nalezeno a rozebráno na datech uživatele (Antonie Šmejcová, srpen/září 2026) — aplikace
 // jí v minihře napočítala Zápasy ze 3 zápasů PŘED začátkem sezóny, zatímco její karta ve stejnou
 // chvíli by Zápasy měla úplně prázdné. Uživatel zvolil opravit to JEN pro minihru, graf a Wrapped
 // beze změny (viz komentář u overallAt výš).
@@ -5842,9 +5848,9 @@ function computeSeasonWrappedJadro(si){
   const matchInfo=seasonMatchRecords(roster,start,end);
   const realMs=realMatches().filter(m=>m.date>=start&&m.date<=end);
   // Kolo 40 (úkol #55): tenká křivka průběhu týmového průměru Overallu napříč CELOU sezónou
-  // (ne jen start/konec, jak už appka měla) — datumy = sjednocení testování + zápasů celého
+  // (ne jen start/konec, jak už aplikace měla) — datumy = sjednocení testování + zápasů celého
   // rosteru uvnitř sezóny, v každém bodě průměr overallAt() přes hráčky, co k tomu datu mají
-  // nějaké skóre (stejný "graceful partial average" princip appka používá i jinde).
+  // nějaké skóre (stejný "graceful partial average" princip aplikace používá i jinde).
   const teamDates=new Set();
   roster.forEach(p=>(p.testSessions||[]).forEach(s=>{if(s.date>=start&&s.date<=end)teamDates.add(s.date);}));
   realMs.forEach(m=>teamDates.add(m.date));
@@ -5952,7 +5958,7 @@ function wcTeamGrowth(w){
   }
   const up=w.team.delta>=0;
   const lineColor=up?'#3db84a':'#d05555'; // = var(--gl)/var(--red), literal hex pro SVG
-  // Kolo 40: tenká křivka průběhu (ne jen start/konec) — jen když appka má aspoň 2 body,
+  // Kolo 40: tenká křivka průběhu (ne jen start/konec) — jen když aplikace má aspoň 2 body,
   // jinak by čára byla jen zbytečná rovná spojnice týchž dvou čísel co jsou nad ní vypsaná.
   const tl=w.team.timeline||[];
   let curveHtml='';
@@ -6904,7 +6910,7 @@ function drawTsTimeline(p,norms){
 // AUTO-BACKUP REMINDER
 // ═══════════════════════════════════════════════
 function showBackupBubble(label){
-  if(document.querySelector('.backup-bubble'))return; // appka neukazuje dvě bubliny najednou
+  if(document.querySelector('.backup-bubble'))return; // aplikace neukazuje dvě bubliny najednou
   const banner=document.createElement('div');
   banner.className='backup-bubble';
   banner.innerHTML=`<span style="flex:1;min-width:180px">💾 ${label}</span><button class="btn btn-a sm" onclick="exportData();localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">⬇ Exportovat</button><button class="btn btn-gray sm" onclick="localStorage.setItem('bombito_last_export',Date.now());this.closest('div').remove()">Připomenout později</button>`;
@@ -6919,10 +6925,10 @@ function checkBackupReminder(){
   const label=(last?`Poslední záloha před ${days} ${days===1?'dnem':days<5?'dny':'dny'}`:'Zatím bez zálohy')+' — doporučujeme exportovat data';
   showBackupBubble(label);
 }
-// Kolo 46: appka teď připomene zálohu i mimo 7denní kalendář — hned po chvíli, kdy
+// Kolo 46: aplikace teď připomene zálohu i mimo 7denní kalendář — hned po chvíli, kdy
 // přibude hodně cenných dat najednou (uzavřený turnaj/sezóna), bez ohledu na to, kolik
 // dní od poslední zálohy uplynulo. Nenahrazuje kalendářní připomínku výš, jen ji doplňuje
-// (showBackupBubble sama zařídí, že appka nikdy neukáže obě bubliny najednou).
+// (showBackupBubble sama zařídí, že aplikace nikdy neukáže obě bubliny najednou).
 function nudgeBackupAfterMilestone(reason){
   showBackupBubble(`${reason} — dobrá chvíle na zálohu dat`);
 }
@@ -7900,7 +7906,7 @@ function showMatchSetStats(mid,setIdx){
 // TURNAJE (Kolo 19) — seskupování zápasů, forma hráček
 // ══════════════════════════════════════════════════════════
 // Turnaj je volný "štítek": S.tournaments=[{id,name}], zápas má nepovinné
-// m.tournamentId. Appka ho sama navrhne, jakmile najde dva zápasy se
+// m.tournamentId. Aplikace ho sama navrhne, jakmile najde dva zápasy se
 // stejným datem (autoAssignTournament, volané z finishMatch) — ale je to
 // jen návrh: turnaj jde kdykoli přejmenovat i ručně doplnit o zápas z
 // jiného data (vícedenní turnaj), viz openTournamentDetail.
@@ -7910,12 +7916,12 @@ function realMatches(){return (S.matches||[]).filter(m=>m.finished!==false&&!m._
 
 // Datum začátku AKTUÁLNÍ (ještě neuzavřené) sezóny — stejná konvence jako seasonRange()
 // pro už uzavřené sezóny (Kolo 29): datum poslední uzavřené sezóny, nebo "" (= úplný
-// začátek), pokud appka ještě žádnou sezónu neuzavřela.
+// začátek), pokud aplikace ještě žádnou sezónu neuzavřela.
 function currentSeasonStart(){return(S.seasons&&S.seasons.length)?S.seasons[S.seasons.length-1].date:"";}
 // Reálné zápasy jen z AKTUÁLNÍ (ještě neuzavřené) sezóny (Kolo 38) — použito jen tam, kde
-// appka počítá "jak na tom hráčka/tým JE TEĎ" (živé Overall skóre, jeho norma, PDF sekce
+// aplikace počítá "jak na tom hráčka/tým JE TEĎ" (živé Overall skóre, jeho norma, PDF sekce
 // Zápasy), aby zápasy z minulé, už uzavřené sezóny nezkreslovaly aktuální hodnocení. Zbytek
-// appky (živý tab 📋 Zápas, knihovna zápasů, Turnaje/forma, Wrapped) zůstává na realMatches()
+// aplikace (živý tab 📋 Zápas, knihovna zápasů, Turnaje/forma, Wrapped) zůstává na realMatches()
 // beze změny — to jsou buď záměrně celoživotní/historické pohledy, nebo mají svoje vlastní,
 // jiné datové hranice (sezóna při Wrapped přes seasonRange(), turnaj u formy).
 function seasonRealMatches(){const start=currentSeasonStart();return realMatches().filter(m=>m.date>=start);}
@@ -7931,10 +7937,10 @@ function tournamentDateRange(tid){
 }
 
 // Volá se po dohrání zápasu (finishMatch). Pokud na stejné datum už
-// existuje jiný dohraný zápas, appka je spojí do společného turnaje —
+// existuje jiný dohraný zápas, aplikace je spojí do společného turnaje —
 // založí ho, pokud ještě neexistuje.
 function autoAssignTournament(match){
-  if(match.tournamentId)return; // appka/uživatel už přiřadila dřív
+  if(match.tournamentId)return; // aplikace/uživatel už přiřadila dřív
   if(match.samostatny)return; // Kolo 63: spuštěno s vypnutým přepínačem Turnaj = schválně samostatný
   const sameDate=realMatches().filter(m=>m.id!==match.id&&m.date===match.date);
   if(!sameDate.length)return;
@@ -7949,7 +7955,7 @@ function autoAssignTournament(match){
 }
 
 // Pokud turnaji po odebrání/přesunu zápasu zbyde 0-1 zápasů, přestává dávat
-// smysl jako "turnaj" (je to pak jen samostatný zápas) — appka ho tiše zruší,
+// smysl jako "turnaj" (je to pak jen samostatný zápas) — aplikace ho tiše zruší,
 // zápas(y) zůstanou uložené, jen se rozpojí.
 function cleanupTournamentIfEmpty(tid){
   if(!tid)return;
@@ -8046,10 +8052,10 @@ function playerReceptionPool(p,matches){
 // literatury (Winkelman: výkon ≠ učení) i podle zkušenosti trenéra šum, ne trend, proto
 // průměr z víc zápasů; strop na `cap` zase brání tomu, aby staré zápasy zbytečně táhly
 // číslo. Od Kola 38 navíc `seasonRealMatches()` místo `realMatches()` — zápasy z MINULÉ,
-// už uzavřené sezóny se do průměru nové sezóny vůbec nepočítají (appka mezitím dostala
-// pojem sezóny přes S.seasons, Kolo 29 — dřívější poznámka "appka sezóny nemá" už neplatí).
-// Na úplném začátku nové sezóny appka počítá klidně i jen z hrstky zápasů (bez vlastního
-// minima) — stejně jako jinde appka nízkou spolehlivost neblokuje, jen ji tiše promítne do
+// už uzavřené sezóny se do průměru nové sezóny vůbec nepočítají (aplikace mezitím dostala
+// pojem sezóny přes S.seasons, Kolo 29 — dřívější poznámka "aplikace sezóny nemá" už neplatí).
+// Na úplném začátku nové sezóny aplikace počítá klidně i jen z hrstky zápasů (bez vlastního
+// minima) — stejně jako jinde aplikace nízkou spolehlivost neblokuje, jen ji tiše promítne do
 // menšího `matchCount` (viz overallMatchRaw), který drží prahy jako OVERALL_GAP_MIN_MATCHES.
 function playerRecentMatchAvg(p,type,cap){
   const ms=seasonRealMatches().filter(m=>playerMatchMetric(p,m,type)!=null)
@@ -8349,7 +8355,7 @@ function closeModalConfirm(msg){
 // Datový model: S.minihry = [{id,type:'test'|'zapas'|'turnaj',refId,date,played,playedAt,answers}]
 // refId = datum testování / id zápasu / id turnaje — spolu s type drží dedupe (mhExists,
 // viz load() výš). Nic se dopředu nepočítá ani neukládá — predikce i odhalení se vždycky
-// počítají naživo z aktuálních dat (stejně jako zbytek appky normy/T-skóre nikdy nezamrazuje,
+// počítají naživo z aktuálních dat (stejně jako zbytek aplikace normy/T-skóre nikdy nezamrazuje,
 // viz activeNorms), takže se minihra "nerozjede", i když si ji trenér nechá pár dní ležet.
 
 function mhExists(type,refId){return(S.minihry||[]).some(x=>x.type===type&&x.refId===refId);}
@@ -8373,8 +8379,8 @@ function updateMhDot(){
 }
 function mhSortedList(){return(S.minihry||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));}
 
-// ---- sdílené UI kousky (stejné třídy jako zbytek appky — .card/.me/.ml/.tr/.match-card…,
-// jen pár nových `mh-*` tříd pro věci, co appka dřív neměla — otázky, terčík na tip) ----
+// ---- sdílené UI kousky (stejné třídy jako zbytek aplikace — .card/.me/.ml/.tr/.match-card…,
+// jen pár nových `mh-*` tříd pro věci, co aplikace dřív neměla — otázky, terčík na tip) ----
 function mhNumCircle(n,active,size){
   size=size||26;
   const bg=active?'var(--x-acc-bg)':'var(--x-chip)',bd=active?'var(--acc)':'var(--x-chip-brd)',fg=active?'var(--acc)':'var(--x-muted)';
@@ -8630,7 +8636,7 @@ function tRawInverse(t,normObj){
 // Stejná identita metrik jako overallPhysRaw/overallGameRaw (Kolo 24), jen si navíc
 // drží KTEROU metriku a její surovou hodnotu — outlier detekce potřebuje vědět,
 // KTERÁ konkrétní disciplína vyčnívá, ne jen souhrnné zprůměrované číslo.
-// Bere hráčku `p` navíc kvůli Útoku na cíl/do pole — appka je (stejně jako všude jinde,
+// Bere hráčku `p` navíc kvůli Útoku na cíl/do pole — aplikace je (stejně jako všude jinde,
 // viz activeAttackMetricId) čte jako JEDNU disciplínu, ne dvě, takže potřebuje vědět, na
 // které variantě hráčka zrovna je.
 function metricTScoresForCategory(p,sess,norms,category){
@@ -8659,7 +8665,7 @@ function metricTScoresForCategory(p,sess,norms,category){
   }
   return out;
 }
-// Leave-one-out: pro každou metriku porovná appka její T-skóre s průměrem T-skóre
+// Leave-one-out: pro každou metriku porovná aplikace její T-skóre s průměrem T-skóre
 // VŠECH OSTATNÍCH metrik TÉ SAMÉ hráčky ve STEJNÉ kategorii (fyzické a herní se podle
 // zadání nemíchá) — "dev" = o kolik je metrika nad/pod hráččin vlastní standard.
 function playerBestDeviation(p,sess,norms,category){
@@ -8698,11 +8704,11 @@ function mhFindNeedsWork(date,norms){
   });
   return win;
 }
-// Fyzické (vč. dopočítaného Výskoku) + herní metriky, v tomhle pořadí appka hledá
-// změnu jedničky — kdyby jich náhodou vyšlo víc najednou, appka nabídne jen první
+// Fyzické (vč. dopočítaného Výskoku) + herní metriky, v tomhle pořadí aplikace hledá
+// změnu jedničky — kdyby jich náhodou vyšlo víc najednou, aplikace nabídne jen první
 // nalezenou (jednička v disciplíně je příležitostná OTÁZKA, ne samostatná minihra).
-// Útok na cíl/do pole appka sloučí do jedné "Útok" disciplíny (activeAttackMetricId) —
-// jinak by hráččin přechod na těžší variantu appka mylně přečetla jako "ztrátu jedničky".
+// Útok na cíl/do pole aplikace sloučí do jedné "Útok" disciplíny (activeAttackMetricId) —
+// jinak by hráččin přechod na těžší variantu aplikace mylně přečetla jako "ztrátu jedničky".
 function mhMetricCatalog(){
   const phys=S.config.physical.filter(m=>m.active!==false&&m.spider!==false&&m.id!=="dosah_vyskoku")
     .map(m=>({id:m.id,label:m.label,unit:m.unit,lowerBetter:!!m.lowerBetter,cat:'physical'}));
@@ -8722,8 +8728,8 @@ function mhMetricValue(p,sess,metric){
   const pct=gamePct(gameScore(sess.game,gid));
   return pct==null?null:Math.round(pct*100);
 }
-// Lídryně disciplíny k danému datu — appka bere u KAŽDÉ hráčky její NEJNOVĚJŠÍ session
-// (stejná logika jako "současný stav" všude jinde v appce, viz lS/overallAt), ne osobní
+// Lídryně disciplíny k danému datu — aplikace bere u KAŽDÉ hráčky její NEJNOVĚJŠÍ session
+// (stejná logika jako "současný stav" všude jinde v aplikaci, viz lS/overallAt), ne osobní
 // rekord za celou historii. exclusive=true → jen session PŘED cutoff (pro "kdo vedl těsně
 // před dnešním testem"), exclusive=false → včetně cutoff (pro "kdo vede po dnešku").
 function mhLeaderAt(metric,exclusive,cutoff){
@@ -8742,7 +8748,7 @@ function mhFindDisciplineChange(date){
   const metrics=mhMetricCatalog();
   for(const metric of metrics){
     const prev=mhLeaderAt(metric,true,date);
-    if(!prev)continue; // appka nemá koho srovnávat (např. úplně první test týmu) — přeskočit
+    if(!prev)continue; // aplikace nemá koho srovnávat (např. úplně první test týmu) — přeskočit
     const curr=mhLeaderAt(metric,false,date);
     if(curr&&curr.p.id!==prev.p.id)return{metric,prev,curr};
   }
@@ -8752,7 +8758,7 @@ function mhBuildTestQuestions(date){
   const norms=activeNorms();
   const pool=mhTestParticipants(date).map(p=>({id:p.id,label:playerLabel(p)}));
   const qs=[];
-  // Méně než 3 účastnice → "TOP 3" nejde ani doplnit (viz mhPickSlot), appka otázku
+  // Méně než 3 účastnice → "TOP 3" nejde ani doplnit (viz mhPickSlot), aplikace otázku
   // pro tenhle test tiše vynechá — stejný princip jako u ostatních podmíněných otázek.
   if(pool.length>=3){
     qs.push({key:'top3',type:'rank3',title:'Kdo byla v TOP 3 podle Overallu?',
@@ -8960,7 +8966,7 @@ function mhBuildTurnajQuestions(tid){
   if(recv.length)qs.push({key:'reception',type:'single',title:'Kdo měla nejlepší příjem za turnaj?',
     pool:recv.map(r=>({id:r.p.id,label:playerLabel(r.p)}))});
   // Otázka se ptá jen tehdy, když je opravdu koho tipovat — samotné "Nikdo" jako jediná
-  // možnost by nebyl tip, ale jistota (appka to tak nahlásila jako reálný nález, opraveno).
+  // možnost by nebyl tip, ale jistota (aplikace to tak nahlásila jako reálný nález, opraveno).
   const formaUp=forma.filter(x=>x.state==='up');
   if(formaUp.length){
     qs.push({key:'forma',type:'single',title:'Kdo skončila v 🔥 Formě?',
@@ -8988,16 +8994,16 @@ function mhRenderTurnajReveal(mh){
 // Struktura a rozsah schváleny uživatelem předem (seznam otázek, titulky).
 // Každá otázka: q (otázka), a (odpověď, HTML dovoleno), kw (nepovinná skrytá
 // synonyma pro fulltextové hledání — nezobrazují se, jen se prohledávají).
-// Cílový čtenář appku v životě neviděl a není technicky/matematicky zdatný —
-// odpovědi proto vysvětlují úplně od základu, s přesnou textací z appky.
+// Cílový čtenář aplikaci v životě neviděl a není technicky/matematicky zdatný —
+// odpovědi proto vysvětlují úplně od základu, s přesnou textací z aplikace.
 // ═══════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════
 // NÁPOVĚDA — obsah (Kolo 44). 5 makroskupin, 23 tematických bloků, 130 otázek.
 // Struktura a rozsah schváleny uživatelem předem (seznam otázek, titulky).
 // Každá otázka: q (otázka), a (odpověď, HTML dovoleno), kw (nepovinná skrytá
 // synonyma pro fulltextové hledání — nezobrazují se, jen se prohledávají).
-// Cílový čtenář appku v životě neviděl a není technicky/matematicky zdatný —
-// odpovědi proto vysvětlují úplně od základu, s přesnou textací z appky.
+// Cílový čtenář aplikaci v životě neviděl a není technicky/matematicky zdatný —
+// odpovědi proto vysvětlují úplně od základu, s přesnou textací z aplikace.
 // ═══════════════════════════════════════════════════════════════
 const HELP_DATA=[
 {group:"Začínáme",blocks:[
@@ -9331,7 +9337,7 @@ const HELP_DATA=[
 
 {title:"Živý zápas — zapisování bodů a příjmu",icon:"🏆",qa:[
 {tr:1,q:`Zapomněl jsem ukončit zápas — jak to poznám?`,
- a:`Dokud je zápas rozehraný a jeho obrazovka zavřená, ukazuje se pod záložkami lišta s červenou tečkou „Rozehraný zápas vs …“ s tlačítkem Pokračovat. Když se zápas hrál jiný den nebo se do něj přes 3 hodiny nic nezapsalo, lišta zežloutne („Zápas není ukončený“) a nabídne rovnou „Ukončit“; po otevření appky se navíc jednou zeptá, jestli zápas ukončit a uložit, pokračovat, nebo zahodit. Rozehraný zápas je vidět i nahoře v Záznamech zápasů a na záložce Zápasy (karta LIVE). Do statistik, Overallu a turnaje se zápas počítá až po ukončení.`,
+ a:`Dokud je zápas rozehraný a jeho obrazovka zavřená, ukazuje se pod záložkami lišta s červenou tečkou, soupeřem, pilulkou s číslem setu a tlačítkem Pokračovat. Když se zápas hrál jiný den nebo se do něj přes 3 hodiny nic nezapsalo, lišta zežloutne, žlutá pilulka ukáže, kdy se naposledy zapisovalo, a lišta nabídne rovnou „Ukončit“; po otevření aplikace se navíc jednou zeptá, jestli zápas ukončit a uložit, pokračovat, nebo zahodit. Rozehraný zápas je vidět i nahoře v Záznamech zápasů a na záložce Zápasy (karta LIVE). Do statistik, Overallu a turnaje se zápas počítá až po ukončení. „Zahodit“ zápas smaže úplně, nic z něj se neuloží.`,
  kw:"zapomenutý neukončený rozehraný zápas live upozornění připomínka ukončit"},
 {q:`Jak založím nový zápas?`,
  a:`V menu ⋮ klikni na „🏆 Spustit zápas", zadej soupeře, datum, co chceš aplikací sledovat (mode — viz další otázka) a volitelně poznámku. Aplikace po potvrzení „Zahájit zápas" rovnou otevře živou obrazovku pro zapisování.`},
@@ -9492,20 +9498,23 @@ const HELP_DATA=[
 
 {title:"Zálohy a data",icon:"💾",qa:[
 {tr:1,q:`Jak mít v aplikaci víc týmů a přepínat mezi nimi?`,
- a:`Klepni nahoře pod nápisem Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš. Klasický vzhled ukazuje vždy tým, který je zrovna vybraný.`,
+ a:`Klepni nahoře vedle nápisu Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vybraný tým má v seznamu zatržítko. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš. Klasický vzhled ukazuje vždy tým, který je zrovna vybraný.`,
  kw:"tým týmy přepnout přepínání nový tým více týmů družstvo kategorie"},
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
- a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
+ a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
  kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
 {tr:1,q:`Jak propojím tým s Google Diskem?`,
- a:`Klepni nahoře na název týmu → „Google Disk“ (nebo v Exportu „Propojit tým s Google Diskem“) a přihlas se Googlem. Pak „Uložit tým na Disk“ — appka na Disku vytvoří složku Bombito a v ní soubor „Bombito – název týmu.json“. Od té chvíle se změny ukládají na Disk samy (asi 15 vteřin po poslední změně), dokud jsi přihlášený a online; vypnout to jde zaškrtávátkem „Ukládat změny na Disk automaticky“. Ikonka mráčku vedle názvu týmu ukazuje stav: plný mráček = uloženo, mráček se šipkou = změny čekají (třeba na přihlášení), vykřičník = něco je potřeba vyřešit. Google drží přihlášení zhruba hodinu — pak appka ukládá dál do zařízení a po dalším přihlášení pošle na Disk, co chybí. Appka na Disku vidí jen soubory, které sama vytvořila nebo které jsi v ní sám vybral.`,
+ a:`Přímé propojení s Diskem zatím v aplikaci není zapnuté — tým na Disk ulož přes Export. Až bude zapnuté: klepni nahoře na název týmu → „Google Disk“ (nebo v Exportu „Propojit tým s Google Diskem“) a přihlas se Googlem. Pak „Uložit tým na Disk“ — aplikace na Disku vytvoří složku Bombito a v ní soubor „Bombito – název týmu.json“. Od té chvíle se změny ukládají na Disk samy (asi 15 vteřin po poslední změně), dokud jsi přihlášený a online; vypnout to jde zaškrtávátkem „Ukládat změny na Disk automaticky“. Ikonka mráčku vedle názvu týmu ukazuje stav: plný mráček = uloženo, mráček se šipkou = změny čekají (třeba na přihlášení), vykřičník = něco je potřeba vyřešit. Google drží přihlášení zhruba hodinu — pak aplikace ukládá dál do zařízení a po dalším přihlášení pošle na Disk, co chybí. Aplikace na Disku vidí jen soubory, které sama vytvořila nebo které jsi v ní sám vybral.`,
  kw:"google disk drive propojení automatické ukládání cloud mráček přihlášení"},
 {tr:1,q:`Jak sdílím tým s kolegou přes Google Disk?`,
- a:`Ve „Google Disk“ klepni na „Otevřít na Disku a sdílet“ a soubor kolegovi nasdílej jako na Disku obvykle (s právem úprav, jestli má do týmu i zapisovat). Kolega v Bombitu (vzhled Trenéra) otevře „Google Disk“ → „Otevřít tým z Disku…“ → „Sdílené se mnou“, vybere soubor a přidá ho jako nový tým. Od té chvíle oba ukládáte do stejného souboru. Když soubor mezitím změní někdo jiný, appka nic nepřepíše a zeptá se, jestli načíst verzi z Disku, nebo ji přepsat svými daty. Sdílí se vždycky jen ten jeden tým.`,
+ a:`Ve „Google Disk“ klepni na „Otevřít na Disku a sdílet“ a soubor kolegovi nasdílej jako na Disku obvykle (s právem úprav, jestli má do týmu i zapisovat). Kolega v Bombitu (vzhled Trenéra) otevře „Google Disk“ → „Otevřít tým z Disku…“ → „Sdílené se mnou“, vybere soubor a přidá ho jako nový tým. Od té chvíle oba ukládáte do stejného souboru. Když soubor mezitím změní někdo jiný, aplikace nic nepřepíše a zeptá se, jestli načíst verzi z Disku, nebo ji přepsat svými daty. Sdílí se vždycky jen ten jeden tým.`,
  kw:"sdílení kolega trenér google disk společný tým"},
 {tr:1,q:`Co se stane, když načtu soubor s týmem (import)?`,
- a:`Aplikace se zeptá, kam soubor patří: buď jím nahradí tým, ze kterého soubor pochází (pozná ho sama), nebo vybraný tým, nebo ho přidá jako nový tým — ostatní týmy zůstanou beze změny. U každé možnosti vidíš, kolik hráček a jak čerstvá data tým teď má, a aplikace varuje, když je soubor starší. Před nahrazením si appka schová předchozí stav týmu, takže jde použít „Vrátit stav před posledním importem“. Starší zálohy z doby před týmy jdou načíst stejně.`,
+ a:`Aplikace se zeptá, kam soubor patří: buď jím nahradí tým, ze kterého soubor pochází (pozná ho sama), nebo vybraný tým, nebo ho přidá jako nový tým — ostatní týmy zůstanou beze změny. U každé možnosti vidíš, kolik hráček a jak čerstvá data tým teď má. Pilulka „z tohoto týmu“ označí tým, ze kterého soubor pochází, „prázdný“ tým bez dat a žlutá „soubor je starší“ varuje, že by se nahrazením vrátila starší data. Před nahrazením si aplikace schová předchozí stav týmu, takže jde použít „Vrátit stav před posledním importem“. Starší zálohy z doby před týmy jdou načíst stejně.`,
  kw:"import načíst soubor nahradit přidat nový tým"},
+{tr:1,q:`Co smaže Resetovat paměť, když mám víc týmů?`,
+ a:`Reset smaže z tohoto zařízení všechny týmy — hráčky, testy, zápasy, turnaje i nastavení — a vrátit to nejde. Každý tým, který chceš zachovat, si nejdřív exportuj (okno Resetu na to má řádek). Jen jeden tým smažeš v přehledu Týmy ikonou koše.`,
+ kw:"reset smazat všechno paměť týmy vymazat"},
 {q:`Co je „Export JSON" a k čemu slouží?`,
  a:`Je to záloha ÚPLNĚ VŠECH dat (hráčky, testy, zápasy, turnaje, nastavení...) do jednoho souboru, který aplikace umí kdykoli zase načíst zpátky (Import JSON). Na mobilu aplikace rovnou nabídne systémové sdílení (uložit do souborů, poslat sobě mailem...), na počítači aplikace soubor prostě stáhne. Je to jediná záchranná síť pro data, viz blok „Co aplikace umí a jak s ní začít".`},
 {q:`Jak aplikaci obnovím ze zálohy (Import JSON)?`,
@@ -9581,14 +9590,14 @@ const HELP_DATA=[
 // Kolo 44 — obsáhlá nápověda rozdělená do tématických bloků (viz HELP_DATA výš) s živým
 // full-textovým vyhledáváním napříč otázkami i odpověďmi (case/diakritika insensitive,
 // plus skryté klíčové slovo `kw` u některých otázek pro synonyma jako „norma"→T-skóre).
-// Bez hledání appka ukáže bloky sbalené (stejný `<details>` princip jako u „Vypnuté
-// metriky"), s hledáním appka bloky schová a ukáže jen plochý seznam nalezených otázek
-// se štítkem bloku, ve kterém appka otázku našla. Otevírá se přes openModal() jako
+// Bez hledání aplikace ukáže bloky sbalené (stejný `<details>` princip jako u „Vypnuté
+// metriky"), s hledáním aplikace bloky schová a ukáže jen plochý seznam nalezených otázek
+// se štítkem bloku, ve kterém aplikace otázku našla. Otevírá se přes openModal() jako
 // všechny ostatní podobrazovky menu (Minihry, Nastavení, Sezóna, Data a zálohy...).
 function helpNorm(s){
   // NFD rozloží písmena s diakritikou na základní písmeno + samostatnou značku (0x0300–0x036f
-  // v tabulce Unicode) — tímhle cyklem appka tyhle značky odfiltruje, takže třeba „průměr"
-  // i „prumer" appka při hledání vyhodnotí jako to samé (viz Nápověda, blok „Pohyb v appce").
+  // v tabulce Unicode) — tímhle cyklem aplikace tyhle značky odfiltruje, takže třeba „průměr"
+  // i „prumer" aplikace při hledání vyhodnotí jako to samé (viz Nápověda, blok „Pohyb v aplikaci").
   const norm=(s||"").toString().normalize("NFD");
   let out="";
   for(let i=0;i<norm.length;i++){
@@ -10474,7 +10483,7 @@ function testProHracku(druh){
 // Trenér často zavře obrazovku živého zápasu a zapomene ho ukončit. Dokud zápas běží, ukazuje
 // se pod záložkami lišta LIVE (Pokračovat / Ukončit). „Zapomenutý“ = hraný jiný den než dnes,
 // nebo poslední zápis (či založení) je starší než LM_ZAPOMENUTY_MS — lišta je pak výraznější
-// a appka se po otevření jednou zeptá, co se zápasem.
+// a aplikace se po otevření jednou zeptá, co se zápasem.
 const LM_ZAPOMENUTY_MS=3*3600*1000;
 function lmRozehrany(){if(!LM)loadLM();return LM&&!LM.finished?LM:null;}
 function lmPosledniAkce(m){
@@ -10494,7 +10503,9 @@ function lmKdy(m){
   const h=Math.round(min/60);if(h<24)return'před '+h+' h';
   return fmtDate(tymDen(t));
 }
-function lmSetTxt(m){const n=(m.sets||[]).length,z=(m.sets||[]).reduce((s,x)=>s+(x.actions||[]).length,0);return n+'. set · '+z+' '+(z===1?'zápis':z>=2&&z<=4?'zápisy':'zápisů');}
+// Kolo 107: místo „1. set · 5 zápisů“ jen pilulka s číslem setu; zapomenutý zápas = žlutá pilulka s časem.
+function lmSetTxt(m){return Math.max(1,(m.sets||[]).length)+'. set';}
+function lmPillHtml(m,z){return z?'<span class="lm-pill zap"><i class="fa-solid fa-clock" aria-hidden="true"></i>'+lmKdy(m)+'</span>':'<span class="lm-pill">'+lmSetTxt(m)+'</span>';}
 function lmEsc(x){return String(x==null?'':x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function lmBarSync(){
   const el=document.getElementById('lmBar');if(!el)return;
@@ -10502,23 +10513,23 @@ function lmBarSync(){
   if(!m||document.getElementById('liveOverlay')){el.classList.remove('on');el.innerHTML='';return;}
   const z=lmZapomenuty(m);
   el.className='t-only on'+(z?' zap':'');
-  el.innerHTML=`<span class="lm-bar-dot" aria-hidden="true"></span><span class="lm-bar-txt"><b>${z?'Zápas není ukončený':'Rozehraný zápas'}</b> vs ${lmEsc(m.opponent)} · ${z?'naposledy '+lmKdy(m):lmSetTxt(m)}</span>
+  el.innerHTML=`<span class="lm-bar-dot" aria-hidden="true"></span><span class="lm-bar-txt" title="${z?'Zápas není ukončený':'Rozehraný zápas'}"><b>vs ${lmEsc(m.opponent)}</b></span>${lmPillHtml(m,z)}
     <button type="button" class="lm-bar-b" onclick="openLiveScreen()">Pokračovat</button>${z?'<button type="button" class="lm-bar-b prim" onclick="lmUkoncit()">Ukončit</button>':''}`;
 }
 function lmUkoncit(){closeModal();if(!lmRozehrany())return;if(!document.getElementById('liveOverlay'))openLiveScreen();finishMatch();}
 function lmZahodit(){closeModal();if(!lmRozehrany())return;if(!document.getElementById('liveOverlay'))openLiveScreen();zahoditZapas();}
-// Po otevření appky jednou (pro každý zápas jen jednou za otevření prohlížeče).
+// Po otevření aplikace jednou (pro každý zápas jen jednou za otevření prohlížeče).
 function lmPripomenPoStartu(){
   const m=isTrener()?lmRozehrany():null;if(!m||!lmZapomenuty(m))return;
   try{if(sessionStorage.getItem('bombito_lm_pripomenuto')===m.id)return;sessionStorage.setItem('bombito_lm_pripomenuto',m.id);}catch(e){}
   setTimeout(()=>{
     if(document.getElementById('modal').style.display!=='none'||document.getElementById('liveOverlay'))return;
     openModal(`${skHubHead('Zápas není ukončený')}
-      <p class="tym-pozn" style="margin-top:10px">Zápas <b>vs ${lmEsc(m.opponent)}</b> (${fmtDate(m.date)}) je pořád rozehraný — naposledy se zapisovalo ${lmKdy(m)}. Dokud ho neukončíš, nepočítá se do statistik, Overallu ani turnaje.</p>
+      <div class="tym-exp-info"><b>vs ${lmEsc(m.opponent)}</b> · ${fmtDate(m.date)}<div class="lm-pills" style="margin-top:6px">${lmPillHtml(m,true)}<span class="lm-pill">${lmSetTxt(m)}</span></div></div>
       <div class="tym-volby" style="margin-top:12px">
-        <button type="button" class="tym-volba prim" onclick="lmUkoncit()"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Ukončit a uložit zápas</span><span class="tym-sub">${lmSetTxt(m)}</span></span></button>
+        <button type="button" class="tym-volba prim" onclick="lmUkoncit()"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Ukončit a uložit zápas</span></span></button>
         <button type="button" class="tym-volba" onclick="closeModal();openLiveScreen()"><i class="fa-solid fa-play" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Pokračovat v zápase</span></span></button>
-        <button type="button" class="tym-volba" onclick="lmZahodit()"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Zahodit zápas</span><span class="tym-sub">nic z něj se neuloží</span></span></button>
+        <button type="button" class="tym-volba" onclick="lmZahodit()"><i class="fa-solid fa-trash-can" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Zahodit zápas</span></span></button>
       </div>
       <div class="ma"><button class="btn btn-o" onclick="closeModal()">Později</button></div>`);
   },900);
@@ -10529,7 +10540,7 @@ function lmKartaHtml(vModalu){
   const z=lmZapomenuty(m),pre=vModalu?'closeModal();':'';
   return`<div class="match-card lm-karta${z?' zap':''}" onclick="${pre}openLiveScreen()">
     <div class="match-card-head"><span class="match-card-opp">vs ${lmEsc(m.opponent)}</span><span class="live-badge">LIVE</span><span class="match-card-date">${fmtDate(m.date)}</span></div>
-    <div style="font-size:0.8rem;color:var(--gm)">${z?'<b class="lm-karta-pozor">Není ukončený</b> · naposledy '+lmKdy(m)+' · ':''}${lmSetTxt(m)}</div>
+    <div class="lm-pills">${z?lmPillHtml(m,true):''}<span class="lm-pill">${lmSetTxt(m)}</span></div>
     <div class="lm-karta-akce"><button class="btn btn-o sm" onclick="event.stopPropagation();${pre}openLiveScreen()">Pokračovat</button><button class="btn btn-p sm" onclick="event.stopPropagation();lmUkoncit()">Ukončit zápas</button></div>
   </div>`;
 }
@@ -10537,11 +10548,11 @@ function lmKartaHtml(vModalu){
 // ══════════════════════════════════════════════════════════
 // TÝMY (Kolo 103) — více týmů, jen ve vzhledu Trenéra
 // ══════════════════════════════════════════════════════════
-// Aktivní tým žije pořád v „bombito_v4“ — klasický vzhled i celý zbytek appky tak
+// Aktivní tým žije pořád v „bombito_v4“ — klasický vzhled i celý zbytek aplikace tak
 // fungují beze změny a vidí prostě vybraný tým. Ostatní týmy jsou odložené každý ve svém
 // klíči „bombito_tym_<id>“ (data se tak nikde neukládají dvakrát). K týmu patří i jeho
 // „stav před posledním importem“ (…_pred) a datum poslední zálohy. Přepnutí prohodí
-// klíče a appku načte znovu, ať po předchozím týmu nezůstane nic v paměti.
+// klíče a aplikaci načte znovu, ať po předchozím týmu nezůstane nic v paměti.
 const TYMY_KLIC='bombito_tymy',TYM_PREFIX='bombito_tym_';
 function tymNoveId(){return't'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 function tymyCti(){let r=null;try{r=JSON.parse(localStorage.getItem(TYMY_KLIC)||'null');}catch(e){}return r&&Array.isArray(r.seznam)&&r.seznam.length?r:null;}
@@ -10588,7 +10599,7 @@ function openTymy(){
     return`<div class="tym-radek${akt?' akt':''}">
       <button type="button" class="tym-hl" ${akt?'disabled aria-current="true"':`onclick="tymPrepni('${t.id}')"`}>
         <i class="fa-solid ${akt?'fa-circle-check':'fa-circle'} tym-ic" aria-hidden="true"></i>
-        <span class="tym-txt"><span class="tym-nazev">${tymEsc(nazev)}</span><span class="tym-sub">${tymHracekTxt(n)} · ${zalTxt}${t.disk&&diskNastaveny()?' · na Disku':''}${akt?' · vybraný':''}</span></span>
+        <span class="tym-txt"><span class="tym-nazev">${tymEsc(nazev)}</span><span class="tym-sub">${tymHracekTxt(n)} · ${zalTxt}${t.disk&&diskNastaveny()?' · na Disku':''}</span></span>
       </button>
       <button type="button" class="tym-akce" onclick="tymExportModal('${t.id}')" aria-label="Exportovat tým" title="Exportovat tým"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
       <button type="button" class="tym-akce" onclick="tymPrejmenujModal('${t.id}')" aria-label="Přejmenovat tým" title="Přejmenovat tým"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>
@@ -10597,8 +10608,7 @@ function openTymy(){
   }).join('');
   openModal(`${skHubHead('Týmy')}
     <div class="tym-seznam">${radky}</div>
-    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,application/json" style="display:none" onchange="importData(event)"></label></div>
-    <p class="tym-pozn">Každý tým má vlastní hráčky, zápasy, turnaje, nastavení metrik i zálohu. Vzhled appky je společný.</p>`);
+    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,application/json" style="display:none" onchange="importData(event)"></label></div>`);
 }
 
 // ── Přepnutí ──
@@ -10634,7 +10644,7 @@ function tymPrepni(id,smazatStary){
   if(smazatStary)r.seznam=r.seznam.filter(t=>t.id!==starId);
   r.aktivni=id;tymyPis(r);
   try{sessionStorage.setItem('bombito_tym_hlaska',smazatStary?'Tým smazán, vybraný je „'+cil.nazev+'“':'Tým „'+cil.nazev+'“');}catch(e){}
-  // Stejně jako doReset(): okno se zavře a appka se načte až po chvíli — zavření okna si v
+  // Stejně jako doReset(): okno se zavře a aplikace se načte až po chvíli — zavření okna si v
   // historii prohlížeče spotřebuje svůj záznam (BACKNAV) a ten by jinak načtení přerušil.
   closeModal();setTimeout(()=>location.reload(),300);
 }
@@ -10727,9 +10737,7 @@ function tymExportModal(id){
     :skHubRow('tymExportStahni(true)','cloud-arrow-up','Stáhnout a otevřít Google Disk')+skHubRow('tymExportStahni()','download','Jen stáhnout do zařízení'));
   openModal(`${skHubHead('Exportovat tým')}
     <div class="tym-exp-info"><b>${tymEsc(b.nazev)}</b> · ${tymHracekTxt(b.n)}<br><span>${tymEsc(b.filename)}</span></div>
-    <p class="tym-pozn" style="margin-top:0">Chceš zálohu uložit i na Google Disk?</p>
-    <div class="sk-rows">${radky}</div>
-    <p class="tym-pozn">${share?'Sdílení otevře nabídku telefonu — vyber v ní <b>Disk</b> a složku, třeba „Bombito“. Soubor obsahuje jen tenhle tým, takže ho můžeš poslat i někomu dalšímu.':'Na počítači se soubor stáhne a otevře se Google Disk — soubor tam jen přetáhni (třeba do složky „Bombito“).'}</p>`);
+    <div class="sk-rows">${radky}</div>`);
 }
 function tymExportSdilej(){
   const b=tymExportBalik(_tymExportId);if(!b)return;
@@ -10755,21 +10763,20 @@ function tymImportVolba(filename,d){
   const srovnani=(id)=>{
     const cur=tymData(id)||{players:[]};const cd=latestDataDate(cur);
     const older=cd&&newDate&&newDate<cd;
-    return`<span class="tym-sub">teď ${tymHracekTxt((cur.players||[]).length)}, poslední data ${cd?fmtDate(cd):'žádná'}</span>${older?'<span class="tym-warn">⚠ Soubor je STARŠÍ než data v tomhle týmu</span>':''}`;
+    return`<span class="tym-sub">teď ${tymHracekTxt((cur.players||[]).length)}, poslední data ${cd?fmtDate(cd):'žádná'}</span>${older?'<span class="tym-pill warn"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> soubor je starší</span>':''}`;
   };
   const volba=(fn,ic,txt,sub,prim)=>`<button type="button" class="tym-volba${prim?' prim':''}" onclick="${fn}"><i class="fa-solid fa-${ic}" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">${txt}</span>${sub}</span></button>`;
   const aktNazev=tymNazev();
   let h='';
-  if(zTymu&&zTymu.id!==r.aktivni)h+=volba(`tymImportProved('${zTymu.id}')`,'rotate','Nahradit tým „'+tymEsc(zTymu.nazev)+'“',srovnani(zTymu.id)+'<span class="tym-sub">soubor pochází z tohoto týmu</span>',true);
+  if(zTymu&&zTymu.id!==r.aktivni)h+=volba(`tymImportProved('${zTymu.id}')`,'rotate','Nahradit tým „'+tymEsc(zTymu.nazev)+'“',srovnani(zTymu.id)+'<span class="tym-pill">z tohoto týmu</span>',true);
   // Prázdný vybraný tým (třeba úplně nové zařízení) se rovnou nahradí, ať nevzniká prázdný tým navíc.
   const prazdny=!S.players.length&&!(S.matches||[]).length&&!(S.tournaments||[]).length;
   const nahraditAkt=zTymu&&zTymu.id===r.aktivni||!zTymu&&(prazdny||!info&&r.seznam.length===1);
-  h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni)+(prazdny?'<span class="tym-sub">tým je zatím prázdný</span>':''),nahraditAkt);
-  h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','<span class="tym-sub">ostatní týmy zůstanou beze změny</span>',!nahraditAkt&&!(zTymu&&zTymu.id!==r.aktivni));
+  h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni)+(prazdny?'<span class="tym-pill">prázdný</span>':''),nahraditAkt);
+  h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','',!nahraditAkt&&!(zTymu&&zTymu.id!==r.aktivni));
   openModal(`${skHubHead('Načíst tým ze souboru')}
     <div class="tym-exp-info"><b>${tymEsc(filename)}</b><br><span>V souboru: ${tymHracekTxt(d.players.length)}, poslední data ${newDate?fmtDate(newDate):'žádná'}${info&&info.nazev?' · tým „'+tymEsc(info.nazev)+'“':''}</span></div>
-    <div class="tym-volby">${h}</div>
-    <p class="tym-pozn">Při nahrazení si appka schová předchozí stav týmu (Vrátit stav před posledním importem).</p>`);
+    <div class="tym-volby">${h}</div>`);
 }
 function tymImportProved(cilId){
   const d=_pendingImport;if(!d)return;
@@ -10813,21 +10820,22 @@ function tymResetTrener(){
   const r=tymyCti(),n=r?r.seznam.length:1;
   const radky=(n>1?skHubRow('openTymy()','users','Smazat jen jeden tým (v přehledu Týmy)'):'')
     +skHubRow(`tymExportModal()`,'download','Nejdřív exportovat tým „'+tymEsc(tymNazev())+'“')
-    +skHubRow('doReset()','trash-can',n>1?'Smazat všechno ('+n+' '+(n<=4?'týmy':'týmů')+')':'Smazat všechno','sk-danger');
+    +skHubRow('tymResetPotvrd()','trash-can',n>1?'Smazat všechno ('+n+' '+(n<=4?'týmy':'týmů')+')':'Smazat všechno','sk-danger');
   openModal(`${skHubHead('Resetovat paměť')}
-    <p class="tym-pozn" style="margin-top:10px">Reset smaže z tohoto zařízení <b>všechny týmy</b> — hráčky, testy, zápasy, turnaje i nastavení — a nepůjde to vrátit. Každý tým, který chceš zachovat, si nejdřív exportuj.</p>
-    <div class="sk-rows">${radky}</div>`);
+    <div class="sk-rows" style="margin-top:10px">${radky}</div>`);
 }
+// Kolo 107: varování je v potvrzení, ne v odstavci okna.
+function tymResetPotvrd(){const r=tymyCti(),n=r?r.seznam.length:1;confirmAction(n>1?'Smazat z tohoto zařízení všech '+n+' '+(n<=4?'týmy':'týmů')+'?':'Smazat všechna data z tohoto zařízení?',doReset,{yesLabel:'Smazat všechno'});}
 
 // ══════════════════════════════════════════════════════════
 // GOOGLE DISK (Kolo 104) — propojení týmu se souborem na Disku, jen vzhled Trenéra
 // ══════════════════════════════════════════════════════════
-// Každý tým může mít svůj soubor „Bombito – <tým>.json“ ve složce Bombito na Disku. Appka
+// Každý tým může mít svůj soubor „Bombito – <tým>.json“ ve složce Bombito na Disku. Aplikace
 // používá jen oprávnění drive.file — vidí výhradně soubory, které sama vytvořila nebo které
 // trenér sám vybral (sdílené od kolegy přes výběr souborů Googlu). Propojení (ID souboru,
 // verze, automatické ukládání) je uložené u týmu v seznamu týmů v tomhle zařízení; soubor
 // na Disku má stejný obsah jako ruční export, takže jde načíst i obyčejným importem.
-// Přihlášení drží Google jen hodinu — potom appka ukládá dál lokálně, ikona v hlavičce
+// Přihlášení drží Google jen hodinu — potom aplikace ukládá dál lokálně, ikona v hlavičce
 // ukáže, že se čeká na přihlášení, a po přihlášení se neuložené změny pošlou.
 const DISK_CFG=(()=>{const d={clientId:'',apiKey:'',appId:''};try{const o=JSON.parse(localStorage.getItem('bombito_disk_cfg')||'null');if(o&&typeof o==='object')Object.assign(d,o);}catch(e){}return d;})();
 const DISK_SCOPE='https://www.googleapis.com/auth/drive.file';
@@ -10844,7 +10852,7 @@ function diskOdhlasLokalne(){diskTok=null;try{sessionStorage.removeItem(DISK_TOK
 let diskTC=null,diskTCcek=null,diskGisP=null,diskPickerP=null,diskBezi=false,diskTm=null,diskSeq=0,diskPosledni=null;
 
 function diskSkript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=()=>res();s.onerror=()=>{s.remove();rej(new DiskChyba('sit'));};document.head.appendChild(s);});}
-// Knihovnu Googlu appka načte dopředu (při otevření okna Disku), aby klepnutí na „Přihlásit“
+// Knihovnu Googlu aplikace načte dopředu (při otevření okna Disku), aby klepnutí na „Přihlásit“
 // otevřelo okno Googlu hned — jinak by ho prohlížeč zablokoval jako vyskakovací okno.
 function diskPriprav(){
   if(!diskNastaveny())return Promise.resolve(false);
@@ -10873,8 +10881,8 @@ function diskPrihlas(){
 }
 function diskChybaTxt(e){
   return{odhlasen:'Přihlášení ke Googlu vypršelo — přihlas se znovu',sit:'Nejde se spojit s Googlem — jsi online?',nenalezen:'Soubor na Disku nebyl nalezen (je smazaný nebo ti ho přestali sdílet)',
-    pristup:'K souboru na Disku nemáš přístup pro úpravy',prihlaseni:'Přihlášení ke Googlu se nepovedlo',zavreno:'Přihlášení bylo zrušeno',opravneni:'Bez povolení přístupu k souborům appka na Disk ukládat nemůže',
-    nenacteno:'Chvilku, appka ještě načítá Google — zkus to znovu',neplatny:'Soubor nevypadá jako záloha Bombito'}[e&&e.kod]||('Chyba Google Disku'+(e&&e.status?' ('+e.status+')':''));
+    pristup:'K souboru na Disku nemáš přístup pro úpravy',prihlaseni:'Přihlášení ke Googlu se nepovedlo',zavreno:'Přihlášení bylo zrušeno',opravneni:'Bez povolení přístupu k souborům aplikace na Disk ukládat nemůže',
+    nenacteno:'Chvilku, aplikace ještě načítá Google — zkus to znovu',neplatny:'Soubor nevypadá jako záloha Bombito'}[e&&e.kod]||('Chyba Google Disku'+(e&&e.status?' ('+e.status+')':''));
 }
 async function diskFetch(url,o){
   o=o||{};
@@ -11012,9 +11020,9 @@ function diskOknoOtevrene(){return document.getElementById('modal').style.displa
 function diskKonfliktModal(cur){
   const kdo=diskKdo(cur);
   openModal(`${skHubHead('Soubor na Disku se změnil')}
-    <p class="tym-pozn" style="margin-top:10px">Soubor <b>${tymEsc(cur.name)}</b> na Disku někdo změnil ${tymEsc(diskCas(cur.modifiedTime))}${kdo?' ('+tymEsc(kdo)+')':''} — od chvíle, kdy ho tohle zařízení naposledy uložilo nebo načetlo. Co s tím?</p>
+    <div class="tym-exp-info"><b>${tymEsc(cur.name)}</b><br><span>změněno ${tymEsc(diskCas(cur.modifiedTime))}${kdo?' ('+tymEsc(kdo)+')':''}</span></div>
     <div class="tym-volby" style="margin-top:12px">
-      <button type="button" class="tym-volba prim" onclick="diskNacti('${cur.id}')"><i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Načíst verzi z Disku</span><span class="tym-sub">tvoje změny od posledního uložení se zahodí (zůstanou ve „Vrátit stav před posledním importem“)</span></span></button>
+      <button type="button" class="tym-volba prim" onclick="diskNacti('${cur.id}')"><i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Načíst verzi z Disku</span><span class="tym-sub">změny z tohoto zařízení se zahodí</span></span></button>
       <button type="button" class="tym-volba" onclick="closeModal();diskUloz({prepsat:true})"><i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Přepsat Disk daty z tohoto zařízení</span><span class="tym-sub">změny na Disku se ztratí</span></span></button>
     </div>`);
 }
@@ -11039,7 +11047,7 @@ function diskPoImportu(tymId){
 
 // ── Okno „Google Disk“ ──
 function openDisk(){
-  if(!diskNastaveny()){openModal(`${skHubHead('Google Disk')}<p class="tym-pozn" style="margin-top:10px">Propojení s Google Diskem ještě není v téhle verzi appky nastavené. Zatím jde tým uložit na Disk přes Export (sdílení).</p>`);return;}
+  if(!diskNastaveny()){openModal(`${skHubHead('Google Disk')}<div class="sk-rows" style="margin-top:10px">${skHubRow('tymExportModal()','cloud-arrow-up','Uložit na Disk přes Export')}</div>`);return;}
   diskPriprav().then(ok=>{if(ok&&diskPrihlasen())diskPickerPriprav();});
   const st=diskStav(),pr=diskPrihlasen(),info=diskInfo(),nazev=tymNazev();
   let h=`${skHubHead('Google Disk')}<div id="diskModal" hidden></div>`;
@@ -11047,20 +11055,19 @@ function openDisk(){
   h+=`<div class="sk-grp" style="margin-top:14px">Účet Google</div>`;
   h+=pr
     ?`<div class="disk-ucet"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>${st.ucet?'Přihlášen(a): <b>'+tymEsc(st.ucet)+'</b>':'Přihlášen(a)'}</span><button type="button" class="sk-ghost" onclick="diskOdhlas()">Odhlásit</button></div>`
-    :`<div class="sk-rows">${skHubRow('diskPrihlasKlik()','right-to-bracket','Přihlásit se Googlem')}</div><p class="tym-pozn" style="margin-top:6px">Google drží přihlášení zhruba hodinu, pak se appka zeptá znovu. Appka vidí na Disku jen svoje soubory týmů.</p>`;
+    :`<div class="sk-rows">${skHubRow('diskPrihlasKlik()','right-to-bracket','Přihlásit se Googlem')}</div>`;
   h+=`<div class="sk-grp" style="margin-top:14px">Tým „${tymEsc(nazev)}“</div>`;
   if(info){
     const stav=diskBezi?'ukládám…':info.konflikt?'<span class="tym-warn">soubor na Disku se mezitím změnil</span>':info.jenCteni?'<span class="tym-warn">soubor máš jen pro čtení</span>':info.zmena?'změny zatím nejsou na Disku':'všechno uloženo';
     h+=`<div class="tym-exp-info" style="margin-top:0"><b>${tymEsc(info.nazev||'soubor na Disku')}</b><br><span>naposledy uloženo/načteno ${tymEsc(diskCas(info.mt))} · ${stav}</span></div>
-      <label class="tym-chk"><input type="checkbox" ${info.auto?'checked':''} ${info.jenCteni?'disabled':''} onchange="diskAutoNastav(this.checked)"> Ukládat změny na Disk automaticky (když jsi přihlášený a online)</label>`;
+      <label class="tym-chk"><input type="checkbox" ${info.auto?'checked':''} ${info.jenCteni?'disabled':''} onchange="diskAutoNastav(this.checked)"> Ukládat změny na Disk automaticky</label>`;
     h+=pr?`<div class="sk-rows">${info.konflikt?skHubRow('diskKonfliktZnovu()','triangle-exclamation','Vyřešit rozdíl s Diskem','sk-danger'):''}${info.jenCteni?'':skHubRow('diskUloz()','cloud-arrow-up','Uložit na Disk teď')}${skHubRow(`diskNacti('${info.id}')`,'cloud-arrow-down','Načíst z Disku')}${info.link?skHubRow(`window.open('${tymEsc(info.link)}','_blank','noopener')`,'share-nodes','Otevřít na Disku a sdílet'):''}${skHubRow('diskOdpoj()','link-slash','Odpojit tým od Disku')}</div>`
       :`<div class="sk-rows">${skHubRow('diskOdpoj()','link-slash','Odpojit tým od Disku')}</div>`;
   }else{
-    h+=`<p class="tym-pozn" style="margin-top:0">Tým zatím není s Diskem propojený.</p>`;
+    h+=`<span class="tym-pill">nepropojený</span>`;
     if(pr)h+=`<div class="sk-rows">${skHubRow('diskUloz()','cloud-arrow-up','Uložit tým na Disk (složka Bombito)')}</div>`;
   }
-  if(pr)h+=`<div class="sk-grp" style="margin-top:14px">Jiné soubory</div><div class="sk-rows">${skHubRow('diskSouboryModal()','folder-open','Otevřít tým z Disku…')}</div>
-    <p class="tym-pozn" style="margin-top:6px">Sdílení: otevři soubor na Disku a sdílej ho kolegovi. Ten ho v Bombitu načte přes „Otevřít tým z Disku…“ → „Sdílené se mnou“ a jeho změny se pak ukládají do stejného souboru.</p>`;
+  if(pr)h+=`<div class="sk-grp" style="margin-top:14px">Jiné soubory</div><div class="sk-rows">${skHubRow('diskSouboryModal()','folder-open','Otevřít tým z Disku…')}</div>`;
   openModal(h);
 }
 function diskPrihlasKlik(){

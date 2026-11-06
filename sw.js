@@ -1,4 +1,4 @@
-const CACHE = 'bombito-v111';
+const CACHE = 'bombito-v112'; // Kolo 107
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
   './icons/icon-192.png', './icons/icon-512.png',
   // Kolo 51: Font Awesome pro vzhled Trenéra — uložený v repu, ať ikony fungují i offline.
@@ -9,12 +9,12 @@ const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
 
 self.addEventListener('install', e => {
   // Cachovat každý soubor ZVLÁŠŤ, ne přes jedno cache.addAll(ASSETS) — addAll je
-  // všechno-nebo-nic, takže kdyby chyběl třeba jen jeden z icons/*.png (appka je
+  // všechno-nebo-nic, takže kdyby chyběl třeba jen jeden z icons/*.png (aplikace je
   // nedodává v balíčku, spravuje si je uživatel sám ve svém nasazení), celá instalace
-  // service workera by selhala a appka by pak nefungovala offline VŮBEC, ani pro
-  // index.html/chart.umd.min.js, které appka sama spolehlivě dodává. Selhání jednoho
+  // service workera by selhala a aplikace by pak nefungovala offline VŮBEC, ani pro
+  // index.html/chart.umd.min.js, které aplikace sama spolehlivě dodává. Selhání jednoho
   // souboru se teď jen zaloguje a zbytek se stejně nacachuje. (Kolo 30, oprava reálně
-  // nahlášené chyby "appka nefunguje offline".)
+  // nahlášené chyby "aplikace nefunguje offline".)
   e.waitUntil(
     caches.open(CACHE).then(c => Promise.all(
       ASSETS.map(url => c.add(url).catch(err => console.warn('SW: nepodařilo se nacachovat', url, err)))
@@ -32,7 +32,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   // Kolo 104: Google (přihlášení, Disk, výběr souborů) a vše kromě GET jde vždy rovnou
-  // na síť — odpovědi Disku se nesmí cachovat (appka by jinak načítala starý soubor).
+  // na síť — odpovědi Disku se nesmí cachovat (aplikace by jinak načítala starý soubor).
   const u = new URL(e.request.url);
   if(e.request.method !== 'GET' || /(^|\.)(googleapis\.com|accounts\.google\.com|apis\.google\.com|docs\.google\.com|drive\.google\.com)$/.test(u.hostname) && !/^fonts\./.test(u.hostname)) return;
   // Navigace / index.html: vždy zkus síť první, fallback na cache
