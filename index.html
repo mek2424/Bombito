@@ -4460,7 +4460,8 @@ function buildGame(){
   const p=gP();const attackMerged=!!p?.attackHarderSince;
   // Kolo 110 (Mek 6. 11.): hráčka bez herního testu, ale s tréninkovou statistikou → jen karta tréninků,
   // žádné prázdné grafy (pilulky) ani řádky s pomlčkami. Co má data, má přednost před prázdným.
-  if(isTrener()&&p&&!(p.testSessions||[]).some(x=>x.game&&Object.keys(x.game).some(id=>gamePct(gameScore(x.game,id))!=null))&&maTrenink(p))return trKartaHerni(p);
+  // Kolo 111 (Mek 6. 11.): totéž bez tréninku — místo prázdných grafů a pomlček jen nízká karta s tlačítkem na herní test.
+  if(isTrener()&&p&&!(p.testSessions||[]).some(x=>x.game&&Object.keys(x.game).some(id=>gamePct(gameScore(x.game,id))!=null)))return maTrenink(p)?trKartaHerni(p):`<div class="card ov-prazdne"><div class="no-data">Žádný herní test</div><button class="btn btn-o sm" onclick="openAddTest('her')"><i class="fa-solid fa-bullseye" aria-hidden="true"></i> Herní test</button></div>`;
   const herV=id=>x=>{const v=gamePct(gameScore(x?.game,id));return v==null?null:Math.round(v*100);};
   const herPosl=id=>{const v=gamePct(gameScore(s?.game,id));return v==null?null:Math.round(v*100)+'<small>%</small>';};
   const activeRows=[],inactiveRows=[];
