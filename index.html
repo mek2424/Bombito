@@ -1079,6 +1079,7 @@ html.skin-trener .zap-odkazy{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1
 html.skin-trener .zap-vse{width:100%;margin-top:2px}
 /* Kolo 86 (Mek): v Testech je přepínač normy až pod tabulkou */
 html.skin-trener .sk-norm-dole{margin-top:14px}
+html.skin-trener .sk-norm-row.sk-norm-dole{margin-top:28px;padding-top:16px;border-top:1px solid var(--line)} /* Kolo 109: odsazená a oddělená norma */
 html.skin-trener .zap-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 @media(max-width:600px){html.skin-trener .zap-sum{grid-template-columns:repeat(2,1fr)}}
 html.skin-trener .zap-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px 12px;text-align:center}
@@ -2566,6 +2567,9 @@ function computeNorms(matchScope){
     norms[key]={mu:stat.mu,sigma:stat.sigma,n:vals.length,lowerBetter:false};
   });
   norms.body_set=bodySetNorma(pool,matches);
+  // Kolo 109: normy tréninkové statistiky (příjem a body za set) pro herní blok.
+  const trL=matchScope==='all'?treninky():seasonTreninky();
+  norms.prijem_tr=trPrijemNorma(pool,trL);norms.body_tr=bodySetNorma(pool,trL);
   norms.milniky=milNorma();
   return norms;
 }
@@ -2665,8 +2669,10 @@ function shrinkPct(rawPct,n,priorPct,k){
 }
 // Kolo 24: herní blok odděleně od fyzického (dřív aplikace obojí míchala plochým průměrem
 // v jedné funkci, viz výš) — stejná vstupní data, jen vlastní T-skórovaný průměr.
-function overallGameRaw(sess,norms,p){
-  if(!sess)return{vals:[],n:0,total:0};
+function overallGameRaw(sess,norms,p,cutoff,sezona){
+  // Kolo 109: tréninková statistika patří do herního bloku, i když hráčka ještě nemá herní test.
+  const tr=sess||!ovZap()?trHerniVals(p,norms,cutoff,sezona):{vals:[],total:0};
+  if(!sess)return{vals:tr.vals,n:tr.vals.length,total:tr.total};
   const gaM=S.config.game.filter(m=>m.active!==false&&metPlati(m,p));
   const vals=[];
   gaM.forEach(m=>{
@@ -2677,7 +2683,8 @@ function overallGameRaw(sess,norms,p){
       vals.push(tRaw(shrunk,norms[m.id]));
     }
   });
-  return{vals,n:vals.length,total:gaM.length};
+  vals.push(...tr.vals);
+  return{vals,n:vals.length,total:gaM.length+tr.total};
 }
 // Přeškáluje průměrné T-skóre (typicky 20–80) na "fifácké" 40–99, stejná logika ořezu jako tScore().
 function overallDisplay(tAvg){
@@ -2763,6 +2770,55 @@ function bodySetT(p,ms,norms){
   const ref=nm.poz[bodySk(p)]??nm.mu;
   return tRaw(shrinkPct(r.rate,r.n,ref,SHRINK_K_BODY_SET)-ref+nm.mu,nm);
 }
+// ══════════════════════════════════════════════════════════
+// TRÉNINKOVÁ STATISTIKA (Kolo 109) — výpočet do herního bloku Overallu
+// ══════════════════════════════════════════════════════════
+// Mek 6. 11.: tréninkovou statistiku (body / příjem / obojí, stejná obrazovka jako živý zápas) chce
+// v herním bloku, ne mezi zápasy. Uloží se zvlášť do S.treninky, takže zápasové statistiky, turnaje,
+// Wrapped ani klasik ji nevidí. Příjem se počítá stejně jako u zápasů (sdružené pokusy, shrinkPct),
+// jen z tréninků, kde měla hráčka aspoň TR_MIN_PRIJEM příjmů, a z posledních TR_CAP takových tréninků.
+// Body = body za odehraný set jako u zápasů (bodySetPool), z posledních TR_CAP tréninků s body.
+const TR_CAP=3, TR_MIN_PRIJEM=8;
+function treninky(){return(S.treninky||[]).filter(t=>t&&t.finished!==false&&Array.isArray(t.sets));}
+function seasonTreninky(){const st=currentSeasonStart();return treninky().filter(t=>t.date>=st);}
+function trSeznam(cutoff,sezona){
+  if(!cutoff)return seasonTreninky();
+  let l=treninky().filter(t=>t.date<=cutoff);
+  if(sezona){const st=currentSeasonStart();l=l.filter(t=>t.date>=st);}
+  return l;
+}
+function trPocet(p,t,typ){let n=0;t.sets.forEach(s=>s.actions.forEach(a=>{if(a.pid===p.id&&a.type===typ)n++;}));return n;}
+function trPrijemMs(p,l){return l.filter(t=>trPocet(p,t,'prijem')>=TR_MIN_PRIJEM).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,TR_CAP);}
+function trBodyMs(p,l){return l.filter(t=>trPocet(p,t,'body')>0).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,TR_CAP);}
+function trPrijemPool(p,l){return playerReceptionPool(p,trPrijemMs(p,l));}
+function trPrijemNorma(players,l){
+  const vals=players.map(p=>trPrijemPool(p,l)).filter(Boolean).map(x=>x.avg);
+  if(vals.length<2)return null;
+  const mu=mean(vals);return{mu,sigma:std(vals,mu),n:vals.length,lowerBetter:false};
+}
+function trPrijemT(p,l,norms){
+  const nm=norms&&norms.prijem_tr!==undefined?norms.prijem_tr:trPrijemNorma(normPlayers(),seasonTreninky());
+  if(!nm)return null;
+  const pool=trPrijemPool(p,l);if(!pool)return null;
+  return tRaw(shrinkPct(pool.avg,pool.n,nm.mu,SHRINK_K_PRIJEM),nm);
+}
+function trBodyT(p,l,norms){
+  if(jenPrijem(p))return null;
+  const nm=norms&&norms.body_tr!==undefined?norms.body_tr:bodySetNorma(normPlayers(),seasonTreninky());
+  if(!nm)return null;
+  const r=bodySetPool(p,trBodyMs(p,l));if(!r)return null;
+  const ref=nm.poz[bodySk(p)]??nm.mu;
+  return tRaw(shrinkPct(r.rate,r.n,ref,SHRINK_K_BODY_SET)-ref+nm.mu,nm);
+}
+// Hodnoty do herního bloku; total = kolik tréninkových metrik tým v tom období měří.
+function trHerniVals(p,norms,cutoff,sezona){
+  const l=trSeznam(cutoff,sezona);if(!l.length)return{vals:[],total:0};
+  const vals=[];let total=0;
+  if(l.some(t=>t.mode!=='body')){total++;const v=trPrijemT(p,l,norms);if(v!=null)vals.push(v);}
+  if(!jenPrijem(p)&&l.some(t=>t.mode!=='prijem')){total++;const v=trBodyT(p,l,norms);if(v!=null)vals.push(v);}
+  return{vals,total};
+}
+function maTrenink(p){return seasonTreninky().some(t=>t.sets.some(s=>s.actions.some(a=>a.pid===p.id)));}
 function overallMatchRaw(p,norms){
   const vals=[];
   const bodyT=jenPrijem(p)?null:bodySetT(p,ovBodyMs(seasonRealMatches(),p),norms);
@@ -4245,7 +4301,7 @@ function grafRada(p,getV){
 }
 // Kolo 89 (revize N1–N3): co má hráčka a tým za data. Jen vzhled Trenéra.
 function maFyz(p){return(p.testSessions||[]).some(x=>x.physical&&Object.values(x.physical).some(v=>v!=null&&v!==''));}
-function maHer(p){return(p.testSessions||[]).some(x=>x.game&&Object.keys(x.game).some(id=>gamePct(gameScore(x.game,id))!=null));}
+function maHer(p){return(p.testSessions||[]).some(x=>x.game&&Object.keys(x.game).some(id=>gamePct(gameScore(x.game,id))!=null))||isTrener()&&maTrenink(p);} // Kolo 109: i tréninková statistika
 function maZap(p){return realMatches().some(m=>playerMatchMetric(p,m,'body')!=null||playerMatchMetric(p,m,'prijem')!=null);}
 function maMil(p){return milAktivni(p).some(m=>milStage(p,m.id)>0);}
 function tabMaData(p,id){return id==='physical'?maFyz(p):id==='game'?maHer(p):id==='spider'?maFyz(p)||maHer(p):id==='zapas'?maZap(p):id==='milestones'?maMil(p):true;}
@@ -4442,7 +4498,7 @@ function buildGame(){
     return grafKarta(grafNadpis(m.id,`${m.label} (%)`,herPosl(m.id),grafZmena(p,x=>{const v=gamePct(gameScore(x.game,m.id));return v==null?null:Math.round(v*100);},false,'%')),'ch_ga_'+m.id,(p?.testSessions||[]).some(x=>gamePct(gameScore(x.game,m.id))!=null),grafJedno(p,herV(m.id),false,'%'));
   });
   const chs=grafyPrazdneNakonec(chsVse).join("");
-  return`<div class="g2 gr-prvni"><div><div class="card"><h3>Poslední výsledky &nbsp;<span class="sk-vysv" style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div></div><div>${chs}</div></div>`;
+  return`<div class="g2 gr-prvni"><div><div class="card"><h3>Poslední výsledky &nbsp;<span class="sk-vysv" style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${rows||'<div class="no-data">Přidej první test</div>'}</div>${isTrener()?trKartaHerni(p):''}</div><div>${chs}</div></div>`;
 }
 function drawGame(){
   const p=gP();if(!p)return;
@@ -5710,7 +5766,7 @@ function overallMatchRawAt(p,norms,cutoff){
 function overallAt(p,norms,cutoff){
   const sess=ovZap()?null:sessionAtOrBefore(p,cutoff);
   const phys=overallPhysRaw(sess,norms,p);
-  const game=overallGameRaw(sess,norms,p);
+  const game=overallGameRaw(sess,norms,p,cutoff);
   const match=overallMatchRawAt(p,norms,cutoff);
   const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
   const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
@@ -5761,7 +5817,7 @@ function overallMatchRawAtSeason(p,norms,cutoff){
 function overallAtSeason(p,norms,cutoff){
   const sess=sessionAtOrBefore(p,cutoff);
   const phys=overallPhysRaw(sess,norms,p);
-  const game=overallGameRaw(sess,norms,p);
+  const game=overallGameRaw(sess,norms,p,cutoff,true);
   const match=overallMatchRawAtSeason(p,norms,cutoff);
   const physAvg=phys.n?phys.vals.reduce((a,b)=>a+b,0)/phys.n:null;
   const gameAvg=game.n?game.vals.reduce((a,b)=>a+b,0)/game.n:null;
@@ -6647,7 +6703,7 @@ function renderOverview(){
   drzScrollTabulky(el,()=>renderOverviewObsah(el));
 }
 function renderOverviewObsah(el){
-  if(isTrener()&&!tymTestuje()){el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">📊 Testy</h2><div class="card ov-prazdne"><div class="no-data">Žádné testy</div><button class="btn btn-o sm" onclick="openGroupTest()"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> Skupinový test</button></div>`;return;}
+  if(isTrener()&&!tymTestuje()){el.innerHTML=`<h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:10px">📊 Testy</h2><div class="card ov-prazdne"><div class="no-data">Žádné testy</div><button class="btn btn-o sm" onclick="openGroupTest()"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> Skupinový test</button></div>${trSekceHtml()}`;return;}
   const pozOn=isTrener()&&getActiveP().some(p=>pozHracky(p).length);
   if(!pozOn)ovPoz=null;
   const active=getActiveP();
@@ -6780,7 +6836,7 @@ function renderOverviewObsah(el){
     <h2 style="font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:2px;margin-bottom:4px">📊 ${isTrener()?'Testy':'Přehled týmu'}</h2>
     ${isTrener()?``:`<p style="font-size:0.78rem;color:var(--gm);margin-bottom:14px">Klikni na název sloupce pro řazení · Klikni na jméno pro detail hráčky · Klepni na Overall pro rozpad na fyzické/herní/zápasy · <span style="color:var(--acc)">●</span> = bez testu / stará data · <sup style="color:var(--acc)">*</sup> = overall dopočítán z neúplných dat (méně metrik než nejtestovanější hráčka) · 🎯/▫️ ve sloupci Útok = těžší/lehčí varianta · ⚡/🧪 u jména = v zápasech výrazně lepší/horší, než herní testy naznačují<br>Norma pro Overall a T-skóre: <b>${S.normScope==="current"?"👥 Aktuální tým":"🗃 Celá databáze"}</b> (${normPlayers().length} hráček)</p>`}
     ${isTrener()?`<div class="tab-zobr-row">${pozOn?tabPozHtml('testy'):''}${tabZobrHtml('testy',cols.filter(c=>c.id!=='name').map(c=>[c.id,c.nazev]),true)}</div>${tabZobrStyl('testy','#ovView')}`:pozOn?pozFiltrHtml(ovPoz,'ovPozNastav',true):''}
-    <div class="ov-wrap"><table class="ov-tbl${isTrener()&&tabZobr('testy').komp?' ov-komp':''}"><thead><tr>${heads}</tr></thead><tbody>${trows||`<tr><td colspan="${cols.length}" style="color:var(--gm)">Žádná hráčka s touhle pozicí</td></tr>`}</tbody></table></div>${isTrener()?`<div class="sk-norm-row sk-norm-dole"><i class="fa-solid fa-users" aria-hidden="true"></i><span id="skNormLbl">Norma</span><div class="sk-kapsle" role="group" aria-labelledby="skNormLbl"><button type="button" aria-pressed="${S.normScope==="current"}" onclick="if(S.normScope!=='current')toggleNormScope()">Aktuální tým</button><button type="button" aria-pressed="${S.normScope!=="current"}" onclick="if(S.normScope==='current')toggleNormScope()">Celá databáze</button></div><span class="sk-norm-n">${normPlayers().length} hráček</span></div>`:''}`;
+    <div class="ov-wrap"><table class="ov-tbl${isTrener()&&tabZobr('testy').komp?' ov-komp':''}"><thead><tr>${heads}</tr></thead><tbody>${trows||`<tr><td colspan="${cols.length}" style="color:var(--gm)">Žádná hráčka s touhle pozicí</td></tr>`}</tbody></table></div>${isTrener()?trSekceHtml():''}${isTrener()?`<div class="sk-norm-row sk-norm-dole"><i class="fa-solid fa-users" aria-hidden="true"></i><span id="skNormLbl">Norma</span><div class="sk-kapsle" role="group" aria-labelledby="skNormLbl"><button type="button" aria-pressed="${S.normScope==="current"}" onclick="if(S.normScope!=='current')toggleNormScope()">Aktuální tým</button><button type="button" aria-pressed="${S.normScope!=="current"}" onclick="if(S.normScope==='current')toggleNormScope()">Celá databáze</button></div><span class="sk-norm-n">${normPlayers().length} hráček</span></div>`:''}`;
 }
 
 // ═══ Kolo 67: ZÁPASY — statistiky týmu ze zápasů aktuální sezóny (Mek 27. 10.) ═══
@@ -7033,7 +7089,7 @@ function openLiveMatch(src){
   loadLM();
   if(LM && !LM.finished){
     openModal(`<h2>🏆 Zápas probíhá</h2>
-      <p style="color:var(--gm);margin-bottom:16px">Máš rozehraný zápas <b>vs ${LM.opponent}</b> (${fmtDate(LM.date)}). Chceš pokračovat nebo začít nový?</p>
+      <p style="color:var(--gm);margin-bottom:16px">Máš rozehraný zápis <b>${lmNazev(LM)}</b> (${fmtDate(LM.date)}). Chceš pokračovat nebo začít nový?</p>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button class="btn btn-p" onclick="closeModal();openLiveScreen()">▶ Pokračovat v zápase</button>
         <button class="btn btn-d" onclick="closeModal();startNewMatch('${src||''}')">+ Nový zápas (zahodit rozehraný)</button>
@@ -7139,7 +7195,7 @@ function openLiveScreen(){
     <div style="background:var(--green-dark,var(--x-live-hd));padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;border-bottom:2px solid var(--g)">
       <button onclick="closeLiveScreen()" style="background:transparent;border:none;color:var(--w);font-size:1.1rem;cursor:pointer;padding:4px 8px">✕</button>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px">🏆 vs ${LM.opponent}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px">${LM.trenink?'Tréninková statistika':'🏆 vs '+LM.opponent}</div>
         <div class="sk-11" style="font-size:0.62rem;color:var(--x-sub);letter-spacing:1px">${fmtDate(LM.date)} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[LM.mode]}</div>
       </div>
       <span class="live-badge">LIVE</span>
@@ -7154,7 +7210,7 @@ function openLiveScreen(){
 
 // Kolo 67: rozehraný zápas spuštěný omylem (nebo na zkoušku) jde zahodit, nic se z něj neuloží.
 function zahoditZapas(){
-  confirmAction('Zahodit rozehraný zápas?',()=>{
+  confirmAction(LM&&LM.trenink?'Zahodit trénink?':'Zahodit rozehraný zápas?',()=>{
     // Kolo 106: zahodit i průběžnou zálohu (každých 5 zápisů v S.matches), ať nestraší v Záznamech.
     const zid=LM&&LM.id;if(zid&&S.matches){const n=S.matches.length;S.matches=S.matches.filter(m=>!(m.id===zid&&m.finished===false));if(S.matches.length!==n)save();}
     localStorage.removeItem(lmKey());LM=null;
@@ -7274,7 +7330,7 @@ function renderLiveContent(){
     actDiv.innerHTML=`<button class="btn btn-p" style="flex:1" onclick="closeSet()">✔ Ukončit set</button>`;
   } else if(!LM.finished){
     actDiv.innerHTML=`<button class="btn btn-o" style="flex:1" onclick="addNewSet()">+ Další set</button>
-      <button class="btn btn-a" style="flex:1" onclick="finishMatch()">🏁 Ukončit zápas</button>`;
+      <button class="btn btn-a" style="flex:1" onclick="finishMatch()">🏁 ${LM&&LM.trenink?'Ukončit trénink':'Ukončit zápas'}</button>`;
   } else {
     actDiv.innerHTML=`<button class="btn btn-o" style="flex:1" onclick="closeLiveScreen()">✕ Zavřít</button>`;
   }
@@ -7359,7 +7415,7 @@ function addAction(pid, type, value){
 }
 
 function autoBackupMatch(){
-  if(!LM||LM.finished)return;
+  if(!LM||LM.finished||LM.trenink)return; // Kolo 109: trénink se průběžně nezálohuje mezi zápasy
   const snapshot={...JSON.parse(JSON.stringify(LM)),_autosave:true};
   upsertMatch(snapshot);
   save();
@@ -7401,9 +7457,11 @@ function addNewSet(){
 }
 
 function finishMatch(){
-  confirmAction('Ukončit zápas?',()=>{
-    LM.finished=true;autoAssignTournament(LM);upsertMatch(LM);
-    mhAdd('zapas',LM.id,LM.date);updateMhDot();save();
+  confirmAction(LM&&LM.trenink?'Ukončit trénink?':'Ukončit zápas?',()=>{
+    LM.finished=true;
+    if(LM.trenink)trUloz(LM); // Kolo 109
+    else{autoAssignTournament(LM);upsertMatch(LM);mhAdd('zapas',LM.id,LM.date);updateMhDot();}
+    save();
     localStorage.removeItem(lmKey());
     const finished=JSON.parse(JSON.stringify(LM));LM=null;
     renderLiveContent();showMatchSummary(finished);
@@ -7448,10 +7506,10 @@ function showMatchSummary(match){
   const potmStatStr=m.mode==='body'?`Body: ${potmScore>0?'+':''}${Math.round(potmScore)}`
     :m.mode==='prijem'?`Příjem: ${Math.round(potmScore)}%`
     :`Kombinovaný index: ${Math.round(potmScore)}`;
-  const potmHtml=potm?`<div class="potm"><div class="potm-title">⭐ Hráčka zápasu</div><div class="potm-name">${potm.name}</div><div class="potm-stats">${potmStatStr}</div></div>`:'';
+  const potmHtml=potm?`<div class="potm"><div class="potm-title">⭐ ${m.trenink?'Hráčka tréninku':'Hráčka zápasu'}</div><div class="potm-name">${potm.name}</div><div class="potm-stats">${potmStatStr}</div></div>`:'';
   const tourHtml=m.tournamentId?`<div style="text-align:center;margin-bottom:10px"><button class="btn btn-o sm" onclick="closeModal();openTournamentDetail('${m.tournamentId}','${m.id}')">🏟 Zobrazit turnaj a formu hráček</button></div>`:'';
   const allPlayers=active.filter(p=>allActions.some(a=>a.pid===p.id));
-  openMatchStatsModal("🏁 Zápas ukončen — vs "+m.opponent,m.sets,allPlayers,false,potmHtml+tourHtml,true,m.mode);
+  openMatchStatsModal(m.trenink?"🏁 Trénink ukončen":"🏁 Zápas ukončen — vs "+m.opponent,m.sets,allPlayers,false,potmHtml+tourHtml,true,m.mode);
 }
 // Kolo 20 — pomocník pro návrat z detailu turnaje zpět na souhrn zápasu
 // (viz openTournamentDetail's backMid). Zápas v tu chvíli už je uložený
@@ -7469,6 +7527,7 @@ function showMatchSummaryById(mid){
 const LCH={};
 
 function drawLiveCharts(set){
+  if(!LM)return; // Kolo 109: zápis mezitím ukončený, není co kreslit
   const wrap=document.getElementById('liveCharts');
   if(!wrap)return;
   const active=getActiveP();
@@ -7798,7 +7857,7 @@ function openMatchStatsModal(title, sets, players, isSet, extraHtml, closeScreen
   const closeBtn=closeScreenOnClose
     ?`<button class="btn btn-p" onclick="closeModal();closeLiveScreen()">Zavřít zápas</button>`
     :`<button class="btn btn-p" onclick="closeModal()">Zavřít</button>`;
-  const nextBtn=isSet?`<button class="btn btn-o" onclick="closeModal();addNewSet()">+ Další set</button><button class="btn btn-a" onclick="closeModal();finishMatch()">🏁 Ukončit zápas</button>`:'';
+  const nextBtn=isSet?`<button class="btn btn-o" onclick="closeModal();addNewSet()">+ Další set</button><button class="btn btn-a" onclick="closeModal();finishMatch()">🏁 ${LM&&LM.trenink?'Ukončit trénink':'Ukončit zápas'}</button>`:'';
 
   openModal(`<h2>${title}</h2>
     ${extraHtml||''}
@@ -7877,20 +7936,20 @@ function openMatchDetail(mid){
 }
 
 function openMatchStats(mid){
-  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
+  const m=najdiZapis(mid);if(!m)return;
   const allPlayers=[...getActiveP(),...S.players.filter(p=>p.archived)];
   const withData=allPlayers.filter(p=>m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
   const allActions=m.sets.flatMap(s=>s.actions);
   // Kolo 97 (revize F6): ve vzhledu Trenéra turnaj v podtitulku (odkaz), dole Vyjmout z turnaje a Smazat.
   const tur=isTrener()&&m.tournamentId&&(S.tournaments||[]).find(x=>x.id===m.tournamentId);
-  openModal(`<h2>📊 vs ${m.opponent}</h2>
+  openModal(`<h2>${m.trenink?'📊 Tréninková statistika':'📊 vs '+m.opponent}</h2>
     <div style="font-size:0.78rem;color:var(--gm);margin-bottom:12px">${fmtDate(m.date)} · ${setyTxt(m.sets.length,'setů')} · ${{body:'⚡ Body',prijem:'📥 Příjem',oboji:'📊 Obojí'}[m.mode]}${tur?` · <button type="button" class="zs-tur" onclick="closeModal();openTournamentDetail('${tur.id}')"><i class="fa-solid fa-trophy" aria-hidden="true"></i>${tur.name}</button>`:''}</div>
     <div class="set-tabs" style="margin-bottom:12px" id="statsSetTabs">
       ${m.sets.map((s,i)=>`<div class="set-tab" onclick="showMatchSetStats('${mid}',${i})">${s.closed?'✓ ':''}Set ${s.num}</div>`).join('')}
       <div class="set-tab active" onclick="showMatchTotal('${mid}')">Celkem</div>
     </div>
     <div id="statsContent"></div>
-    <div class="ma">${isTrener()?`${tur&&!tur.closed?`<button class="btn btn-o" onclick="zapVyjmout('${mid}')"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Vyjmout z turnaje</button>`:''}<button class="btn btn-d" onclick="deleteMatch('${mid}')"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Smazat</button>`:''}<button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
+    <div class="ma">${isTrener()?`${tur&&!tur.closed?`<button class="btn btn-o" onclick="zapVyjmout('${mid}')"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Vyjmout z turnaje</button>`:''}${m.trenink?'':`<button class="btn btn-o" onclick="zapDoTreninku('${mid}')"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Do tréninků</button>`}<button class="btn btn-d" onclick="${m.trenink?'trSmazat':'deleteMatch'}('${mid}')"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Smazat</button>`:''}<button class="btn btn-p" onclick="closeModal()">Zavřít</button></div>`);
   setTimeout(()=>renderMatchStats(m, allActions, withData, m.mode),80);
 }
 
@@ -7945,7 +8004,7 @@ function renderMatchStats(m, actions, players, mode){
 }
 
 function showMatchTotal(mid){
-  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
+  const m=najdiZapis(mid);if(!m)return;
   const allPlayers=[...getActiveP(),...S.players.filter(p=>p.archived)];
   const withData=allPlayers.filter(p=>m.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
   const tabs=document.querySelectorAll('#statsSetTabs .set-tab');
@@ -7954,7 +8013,7 @@ function showMatchTotal(mid){
 }
 
 function showMatchSetStats(mid,setIdx){
-  const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
+  const m=najdiZapis(mid);if(!m)return;
   const set=m.sets[setIdx];if(!set)return;
   const allPlayers=[...getActiveP(),...S.players.filter(p=>p.archived)];
   const withData=allPlayers.filter(p=>set.actions.some(a=>a.pid===p.id));
@@ -9401,6 +9460,12 @@ const HELP_DATA=[
 {group:"Zápasy a turnaje",blocks:[
 
 {title:"Živý zápas — zapisování bodů a příjmu",icon:"🏆",qa:[
+{tr:1,q:`Co je Tréninková statistika a jak se počítá do Overallu?`,
+ a:`V oranžovém tlačítku + je „Tréninková statistika“. Vybereš datum a co sledovat (Body, Příjem, nebo Obojí) a zapisuješ stejnou obrazovkou jako u zápasu. Trénink se neuloží mezi zápasy, takže se nepočítá do zápasových statistik, turnajů ani zápasového bloku Overallu. Počítá se do HERNÍHO bloku: příjem stejně jako u zápasů, jen z tréninků, kde měla hráčka aspoň 8 příjmů, a z posledních 3 takových tréninků; body jako body za odehraný set z posledních 3 tréninků. Na kartě hráčky je to vidět na záložce Herní v kartě „Tréninková statistika“ (ztlumený příjem = zatím málo pokusů, do Overallu se nepočítá). Všechny tréninky najdeš na záložce Testy dole v části „Tréninková statistika“ (tlačítko Všechny tréninky) a u hráčky ikonou seznamu v kartě na záložce Herní; mezi záznamy zápasů nejsou.`,
+ kw:"trénink tréninková statistika příjem body herní blok overall"},
+{tr:1,q:`Naměřil jsem trénink jako zápas — jak ho přesunu do tréninků?`,
+ a:`Otevři ten zápas v Záznamech zápasů a dole klepni na „Do tréninků“. Zápas zmizí ze zápasů (i z turnaje, pokud v nějakém byl) a jeho body a příjem se začnou počítat do herního bloku jako tréninková statistika. Hned potom to jde vrátit přes „Vrátit“.`,
+ kw:"přesunout zápas trénink převést naměřený"},
 {tr:1,q:`Zapomněl jsem ukončit zápas — jak to poznám?`,
  a:`Dokud je zápas rozehraný a jeho obrazovka zavřená, ukazuje se pod záložkami lišta s červenou tečkou, soupeřem, pilulkou s číslem setu a tlačítkem Pokračovat. Když se zápas hrál jiný den nebo se do něj přes 3 hodiny nic nezapsalo, lišta zežloutne, žlutá pilulka ukáže, kdy se naposledy zapisovalo, a lišta nabídne rovnou „Ukončit“; po otevření aplikace se navíc jednou zeptá, jestli zápas ukončit a uložit, pokračovat, nebo zahodit. Rozehraný zápas je vidět i nahoře v Záznamech zápasů a na záložce Zápasy (karta LIVE). Do statistik, Overallu a turnaje se zápas počítá až po ukončení. „Zahodit“ zápas smaže úplně, nic z něj se neuloží.`,
  kw:"zapomenutý neukončený rozehraný zápas live upozornění připomínka ukončit"},
@@ -10523,7 +10588,7 @@ function testProHracku(druh){
     <button type="button" class="sk-fab-item" data-a="zapas"><span class="sk-fab-ico"><i class="fa-solid fa-play" aria-hidden="true"></i></span><span class="sk-fab-lbl">Spustit zápas</span></button>`;
     // Kolo 80: nad zápasem ostatní „přidat“ (nejčastější nejblíž tlačítku).
     const it=(a,fa,lbl)=>`<button type="button" class="sk-fab-item sk-fab-dalsi" data-a="${a}"><span class="sk-fab-ico"><i class="fa-solid fa-${fa}" aria-hidden="true"></i></span><span class="sk-fab-lbl">${lbl}</span></button>`;
-    menu.insertAdjacentHTML('afterbegin',it('hracka','user-plus','Přidat hráčku')+it('skupina','clipboard-check','Skupinový test')+it('fyz','wave-square','Fyzický test')+it('her','bullseye','Herní test')+'<span class="sk-fab-mezera" aria-hidden="true"></span>');
+    menu.insertAdjacentHTML('afterbegin',it('hracka','user-plus','Přidat hráčku')+it('skupina','clipboard-check','Skupinový test')+it('fyz','wave-square','Fyzický test')+it('her','bullseye','Herní test')+it('trenink','chart-column','Tréninková statistika')+'<span class="sk-fab-mezera" aria-hidden="true"></span>');
     const pol=[...menu.querySelectorAll('.sk-fab-item')];pol.forEach((b,i)=>{b.style.setProperty('--z',i);b.style.setProperty('--o',pol.length-1-i);});
   };
   const nastav=o=>{if(o){kresli();void menu.offsetWidth;}w.classList.toggle('open',o);scrim.classList.toggle('show',o);btn.setAttribute('aria-expanded',String(o));};
@@ -10536,12 +10601,114 @@ function testProHracku(druh){
     if(b.dataset.a==='zapas'){nastav(false);openLiveMatch('fab');}
     else if(b.dataset.a==='hracka'){nastav(false);openAddPlayer();}
     else if(b.dataset.a==='skupina'){nastav(false);openGroupTest();}
+    else if(b.dataset.a==='trenink'){nastav(false);openTrenink();} // Kolo 109
     else if(b.dataset.a==='fyz'||b.dataset.a==='her'){nastav(false);testProHracku(b.dataset.a);}
     else if(aktivniTurnaj())vypnoutTurnaj();
     else{nastav(false);zapnoutTurnajOkno();}
   });
   document.body.appendChild(scrim);document.body.appendChild(w);skFabSync();
 })();
+// ══════════════════════════════════════════════════════════
+// TRÉNINKOVÁ STATISTIKA (Kolo 109) — spuštění, uložení, přehled (jen vzhled Trenéra)
+// ══════════════════════════════════════════════════════════
+// Zapisuje se stejnou obrazovkou jako živý zápas (LM s trenink:true), lišta LIVE i připomínka platí taky.
+const TR_MODY=[['body','⚡ Body'],['prijem','📥 Příjem'],['oboji','📊 Obojí']];
+function openTrenink(){
+  loadLM();
+  if(LM&&!LM.finished){toast('Nejdřív ukonči rozehraný zápis','err');openLiveScreen();return;}
+  const radia=TR_MODY.map(([v,l])=>`<label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:0.85rem"><input type="radio" name="trMode" value="${v}"${v==='prijem'?' checked':''} style="width:auto"> ${l}</label>`).join('');
+  openModal(`${skHubHead('Tréninková statistika')}
+    <div class="fg" style="margin-top:12px"><label>Datum</label><input id="trDate" type="date" value="${today()}"></div>
+    <div class="fg"><label>Sledovat</label><div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${radia}</div></div>
+    <div class="fg"><label>Poznámka (volitelně)</label><textarea id="trNote" placeholder="Cvičení, podmínky…"></textarea></div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="createTrenink()">Spustit</button></div>`);
+}
+function createTrenink(){
+  const date=document.getElementById('trDate').value||today();
+  const mode=document.querySelector('input[name="trMode"]:checked')?.value||'prijem';
+  const note=document.getElementById('trNote').value.trim()||undefined;
+  LM={id:'t_'+Date.now(),date,opponent:'Trénink',note,mode,sets:[newSet(1)],activeSet:0,finished:false,trenink:true};
+  saveLM();closeModal();openLiveScreen();
+}
+function trUloz(m){
+  if(!S.treninky)S.treninky=[];
+  const c=JSON.parse(JSON.stringify(m));delete c._autosave;c.trenink=true;
+  const i=S.treninky.findIndex(x=>x.id===c.id);if(i>=0)S.treninky[i]=c;else S.treninky.push(c);
+}
+function najdiZapis(id){return(S.matches||[]).find(x=>x.id===id)||(S.treninky||[]).find(x=>x.id===id);}
+function lmNazev(m){return m&&m.trenink?'Trénink':'vs '+lmEsc(m&&m.opponent);}
+// Už naměřený „zápas“, který byl ve skutečnosti trénink, jde přesunout (s Vrátit).
+function zapDoTreninku(mid){
+  confirmAction('Přesunout do tréninků?',()=>{
+    const snap=undoSnapshot();
+    const m=(S.matches||[]).find(x=>x.id===mid);if(!m)return;
+    const tid=m.tournamentId;
+    S.matches=S.matches.filter(x=>x.id!==mid);
+    delete m.tournamentId;delete m.samostatny;
+    trUloz(m);
+    if(tid)cleanupTournamentIfEmpty(tid);
+    mhUklid();updateMhDot();save();closeModal();rerenderCurrent();
+    if(snap)offerUndo(snap,'Přesunuto do tréninků');else toast('Přesunuto do tréninků');
+  },{yesLabel:'Přesunout',noteTrener:'Hned potom to ještě půjde vrátit.',btnCls:'btn-p'});
+}
+function trSmazat(id){
+  confirmAction('Smazat tréninkovou statistiku?',()=>{
+    const snap=undoSnapshot();
+    S.treninky=(S.treninky||[]).filter(t=>t.id!==id);
+    save();closeModal();rerenderCurrent();
+    if(snap)offerUndo(snap,'Tréninková statistika smazána');else toast('Smazáno');
+  },undoOpts());
+}
+function trSouhrn(t){
+  const a=t.sets.flatMap(s=>s.actions);
+  const n=new Set(a.map(x=>x.pid)).size;
+  const body=a.filter(x=>x.type==='body').reduce((s,x)=>s+x.value,0);
+  const rv=a.filter(x=>x.type==='prijem').map(x=>x.value);
+  const pr=rv.length?recvPct(rv.reduce((s,v)=>s+v,0)/rv.length):null;
+  return{n,body,pr};
+}
+function trKartyHtml(vModalu,max){
+  const l=treninky().slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,max||1e9);
+  if(!l.length)return'';
+  const pre=vModalu?'closeModal();':'';
+  return`<div class="sk-grp" style="margin-top:14px">Tréninková statistika</div>`+l.map(t=>{
+    const x=trSouhrn(t);
+    return`<div class="match-card tr-karta" onclick="${pre}openMatchStats('${t.id}')">
+      <div class="match-card-head"><span class="match-card-opp">Trénink</span><span class="match-card-date">${fmtDate(t.date)}</span><span class="match-card-mode">${(TR_MODY.find(m=>m[0]===t.mode)||TR_MODY[2])[1]}</span></div>
+      <div class="lm-pills">${t.mode!=='prijem'?`<span class="lm-pill">${x.body>0?'+':''}${x.body} b.</span>`:''}${x.pr!=null?`<span class="lm-pill">${x.pr} %</span>`:''}<span class="lm-pill"><i class="fa-solid fa-user" aria-hidden="true"></i>${x.n}</span><span class="lm-pill">${t.sets.length} ${t.sets.length===1?'set':t.sets.length<=4?'sety':'setů'}</span></div>
+    </div>`;
+  }).join('');
+}
+// Záložka Testy: poslední 3 tréninky a tlačítko na všechny (trénink není zápas, Mek 6. 11.).
+function trSekceHtml(){
+  if(!treninky().length)return'';
+  return`<div class="tr-sekce" style="margin-top:14px">${trKartyHtml(false,3)}<button class="btn btn-o sm zap-vse" onclick="openTreninky()"><i class="fa-solid fa-chart-column" aria-hidden="true"></i> Všechny tréninky</button></div>`;
+}
+function openTreninky(){
+  openModal(`${skHubHead('Tréninková statistika')}
+    <div style="max-height:66vh;overflow-y:auto;margin-top:12px">${trKartyHtml(true).replace(/^<div class="sk-grp"[^>]*>[^<]*<\/div>/,'')}</div>`);
+}
+// Karta na záložce Herní: tréninkový příjem a body (aktuální sezóna). Ztlumený řádek = zatím se nepočítá
+// do Overallu (málo příjmů v tréninku).
+function trKartaHerni(p){
+  if(!p||!maTrenink(p))return'';
+  const l=seasonTreninky(),norms=activeNorms(),rows=[];
+  const sl=l.filter(t=>t.sets.some(s=>s.actions.some(a=>a.pid===p.id)));
+  const prOk=trPrijemPool(p,l),prVse=playerReceptionPool(p,sl.filter(t=>trPocet(p,t,'prijem')>0).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,TR_CAP));
+  const pr=prOk||prVse;
+  if(pr){
+    const t=prOk?trPrijemT(p,l,norms):null;
+    rows.push(`<div class="gi${prOk?'':' inactive'}"><span class="t-only m-ic${t>=STRENGTH_T?' on':''}"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i></span><div class="gl2">Příjem</div>${t>=STRENGTH_T?`<span class="t-only m-t">T ${t}</span>`:''}<div class="sb"><div class="sf" style="width:${pr.avg||0}%"></div></div><div class="sc"><span style="font-size:1rem;font-family:'Bebas Neue',sans-serif;color:var(--gl)">${pr.avg}%</span><span style="font-size:0.7rem;color:var(--gm);margin-left:4px">${pr.n}×</span></div></div>`);
+  }
+  const bo=jenPrijem(p)?null:bodySetPool(p,trBodyMs(p,l));
+  if(bo){
+    const t=trBodyT(p,l,norms),w=t==null?0:Math.max(0,Math.min(100,(t-20)/60*100));
+    const r=Math.round(bo.rate*10)/10;
+    rows.push(`<div class="gi"><span class="t-only m-ic${t>=STRENGTH_T?' on':''}"><i class="fa-solid fa-star" aria-hidden="true"></i></span><div class="gl2">Body za set</div>${t>=STRENGTH_T?`<span class="t-only m-t">T ${t}</span>`:''}<div class="sb"><div class="sf" style="width:${w}%"></div></div><div class="sc"><span style="font-size:1rem;font-family:'Bebas Neue',sans-serif;color:var(--gl)">${r>0?'+':''}${czc(r)}</span><span style="font-size:0.7rem;color:var(--gm);margin-left:4px">${bo.n} ${bo.n===1?'set':bo.n<=4?'sety':'setů'}</span></div></div>`);
+  }
+  if(!rows.length)return'';
+  return`<div class="card tr-herni"><h3 class="gr-h"><i class="fa-solid fa-chart-column" aria-hidden="true" style="margin-right:6px"></i><span class="gr-n">Tréninková statistika</span><button type="button" class="sk-ghost" onclick="openTreninky()" aria-label="Tréninky" title="Tréninky"><i class="fa-solid fa-list" aria-hidden="true"></i></button></h3>${rows.join('')}</div>`;
+}
 // ══════════════════════════════════════════════════════════
 // ROZEHRANÝ ZÁPAS (Kolo 106) — připomínka a karta v záznamech, jen vzhled Trenéra
 // ══════════════════════════════════════════════════════════
@@ -10578,7 +10745,7 @@ function lmBarSync(){
   if(!m||document.getElementById('liveOverlay')){el.classList.remove('on');el.innerHTML='';return;}
   const z=lmZapomenuty(m);
   el.className='t-only on'+(z?' zap':'');
-  el.innerHTML=`<span class="lm-bar-dot" aria-hidden="true"></span><span class="lm-bar-txt" title="${z?'Zápas není ukončený':'Rozehraný zápas'}"><b>vs ${lmEsc(m.opponent)}</b></span>${lmPillHtml(m,z)}
+  el.innerHTML=`<span class="lm-bar-dot" aria-hidden="true"></span><span class="lm-bar-txt" title="${z?'Zápas není ukončený':'Rozehraný zápas'}"><b>${lmNazev(m)}</b></span>${lmPillHtml(m,z)}
     <button type="button" class="lm-bar-b" onclick="openLiveScreen()">Pokračovat</button>${z?'<button type="button" class="lm-bar-b prim" onclick="lmUkoncit()">Ukončit</button>':''}`;
 }
 function lmUkoncit(){closeModal();if(!lmRozehrany())return;if(!document.getElementById('liveOverlay'))openLiveScreen();finishMatch();}
@@ -10589,8 +10756,8 @@ function lmPripomenPoStartu(){
   try{if(sessionStorage.getItem('bombito_lm_pripomenuto')===m.id)return;sessionStorage.setItem('bombito_lm_pripomenuto',m.id);}catch(e){}
   setTimeout(()=>{
     if(document.getElementById('modal').style.display!=='none'||document.getElementById('liveOverlay'))return;
-    openModal(`${skHubHead('Zápas není ukončený')}
-      <div class="tym-exp-info"><b>vs ${lmEsc(m.opponent)}</b> · ${fmtDate(m.date)}<div class="lm-pills" style="margin-top:6px">${lmPillHtml(m,true)}<span class="lm-pill">${lmSetTxt(m)}</span></div></div>
+    openModal(`${skHubHead(m.trenink?'Trénink není ukončený':'Zápas není ukončený')}
+      <div class="tym-exp-info"><b>${lmNazev(m)}</b> · ${fmtDate(m.date)}<div class="lm-pills" style="margin-top:6px">${lmPillHtml(m,true)}<span class="lm-pill">${lmSetTxt(m)}</span></div></div>
       <div class="tym-volby" style="margin-top:12px">
         <button type="button" class="tym-volba prim" onclick="lmUkoncit()"><i class="fa-solid fa-flag-checkered" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Ukončit a uložit zápas</span></span></button>
         <button type="button" class="tym-volba" onclick="closeModal();openLiveScreen()"><i class="fa-solid fa-play" aria-hidden="true"></i><span class="tym-txt"><span class="tym-nazev">Pokračovat v zápase</span></span></button>
@@ -10601,12 +10768,12 @@ function lmPripomenPoStartu(){
 }
 // Karta rozehraného zápasu nahoře v Záznamech zápasů a na záložce Zápasy.
 function lmKartaHtml(vModalu){
-  const m=isTrener()?lmRozehrany():null;if(!m)return'';
+  const m=isTrener()?lmRozehrany():null;if(!m||m.trenink)return''; // Kolo 109
   const z=lmZapomenuty(m),pre=vModalu?'closeModal();':'';
   return`<div class="match-card lm-karta${z?' zap':''}" onclick="${pre}openLiveScreen()">
-    <div class="match-card-head"><span class="match-card-opp">vs ${lmEsc(m.opponent)}</span><span class="live-badge">LIVE</span><span class="match-card-date">${fmtDate(m.date)}</span></div>
+    <div class="match-card-head"><span class="match-card-opp">${lmNazev(m)}</span><span class="live-badge">LIVE</span><span class="match-card-date">${fmtDate(m.date)}</span></div>
     <div class="lm-pills">${z?lmPillHtml(m,true):''}<span class="lm-pill">${lmSetTxt(m)}</span></div>
-    <div class="lm-karta-akce"><button class="btn btn-o sm" onclick="event.stopPropagation();${pre}openLiveScreen()">Pokračovat</button><button class="btn btn-p sm" onclick="event.stopPropagation();lmUkoncit()">Ukončit zápas</button></div>
+    <div class="lm-karta-akce"><button class="btn btn-o sm" onclick="event.stopPropagation();${pre}openLiveScreen()">Pokračovat</button><button class="btn btn-p sm" onclick="event.stopPropagation();lmUkoncit()">${m.trenink?'Ukončit trénink':'Ukončit zápas'}</button></div>
   </div>`;
 }
 
