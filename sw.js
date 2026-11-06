@@ -1,6 +1,6 @@
-const CACHE = 'bombito-v116'; // Kolo 111
+const CACHE = 'bombito-v117'; // Kolo 112
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
-  './icons/icon-192.png', './icons/icon-512.png',
+  './icons/bombito-192.png', './icons/bombito-512.png',
   // Kolo 51: Font Awesome pro vzhled Trenéra — uložený v repu, ať ikony fungují i offline.
   './fa/css/fontawesome.min.css', './fa/css/solid.min.css', './fa/css/regular.min.css',
   './fa/webfonts/fa-solid-900.woff2', './fa/webfonts/fa-regular-400.woff2',
@@ -35,6 +35,17 @@ self.addEventListener('fetch', e => {
   // na síť — odpovědi Disku se nesmí cachovat (aplikace by jinak načítala starý soubor).
   const u = new URL(e.request.url);
   if(e.request.method !== 'GET' || /(^|\.)(googleapis\.com|accounts\.google\.com|apis\.google\.com|docs\.google\.com|drive\.google\.com)$/.test(u.hostname) && !/^fonts\./.test(u.hostname)) return;
+  // Kolo 112: manifest síť první — změna ikony nebo názvu se tak dostane i do nainstalované aplikace.
+  // Bez sítě uložený manifest (nikdy ne index.html).
+  if(u.pathname.endsWith('manifest.json')){
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if(res && res.status === 200){ const clone = res.clone(); caches.open(CACHE).then(c => c.put(e.request, clone)); }
+        return res;
+      }).catch(() => caches.match(e.request).then(cached => cached || Response.error()))
+    );
+    return;
+  }
   // Navigace / index.html: vždy zkus síť první, fallback na cache
   if(e.request.mode === 'navigate' || e.request.url.endsWith('/') || e.request.url.endsWith('index.html')){
     e.respondWith(
