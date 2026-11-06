@@ -1728,6 +1728,14 @@ html.skin-trener .lm-karta .live-badge{margin-left:6px}
 .lm-pill{flex:none;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font:600 11.5px 'DM Sans',sans-serif;background:var(--line);color:var(--ink);white-space:nowrap}
 .lm-pill.zap{background:var(--warn);color:var(--warn-bg)}
 .lm-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+/* Kolo 108: (C) kapitánky — písmeno ve velikosti ikony */
+.bdg-c{display:inline-block;font:800 1em/1 'DM Sans',sans-serif;letter-spacing:0;font-style:normal}
+/* Kolo 108: listování hráčkami — karta přijede ze strany tažení */
+@keyframes swZleva{from{transform:translateX(-28px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes swZprava{from{transform:translateX(28px);opacity:.3}to{transform:none;opacity:1}}
+html.skin-trener #playerDetail.sw-l{animation:swZprava .2s ease-out}
+html.skin-trener #playerDetail.sw-r{animation:swZleva .2s ease-out}
+@media (prefers-reduced-motion:reduce){html.skin-trener #playerDetail.sw-l,html.skin-trener #playerDetail.sw-r{animation:none}}
 .tym-pill{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;font:600 11.5px 'DM Sans',sans-serif;background:var(--line);color:var(--ink)}
 .tym-pill.warn{background:var(--warn);color:var(--warn-bg)}
 /* Kolo 104: Google Disk */
@@ -4014,6 +4022,59 @@ function goHome(){
 }
 
 function selectPlayer(id){_detailToTop=true;S.activeId=id;S.activeTab=vychoziTab(id);closeSidebar();const ov=document.getElementById("ovView");if(ov&&ov.style.display!=="none")ov.style.display="none";setNavActive(null);render();}
+// Kolo 108 (Mek 6. 11.): na otevřené hráčce tažením prstu doleva/doprava další/předchozí hráčka,
+// v pořadí jako na Domů (řazení i filtr pozice). Záložka zůstane, když ji má i další hráčka.
+// Historie Zpět se nemnoží: listování nahradí záznam hráčky, Zpět pak vede tam, odkud jsi přišel.
+function domuPoradiIds(){
+  const active=getActiveP();if(!active.length)return[];
+  const norms=activeNorms(),ovMax=teamMaxCovered(active,norms);
+  const ovs=active.map(p=>({p,ov:overallForPlayer(p,norms,ovMax)}));
+  const vse=domuSerad(ovs).map(x=>x.p);
+  const filtr=ovPoz?vse.filter(p=>pozHracky(p).includes(ovPoz)):vse;
+  return(filtr.some(p=>p.id===S.activeId)?filtr:vse).map(p=>p.id);
+}
+function listujHracku(smer){
+  const ids=domuPoradiIds(),i=ids.indexOf(S.activeId);if(i<0)return false;
+  const id=ids[i+smer];if(!id)return false;
+  const p=S.players.find(x=>x.id===id),tab=S.activeTab;
+  const t=p&&tabyPoradi(p).find(x=>x.id===tab);
+  S.activeId=id;S.activeTab=t&&t.ma?tab:vychoziTab(id);_detailToTop=true;
+  if(NAV_POS>=0&&NAV_HIST[NAV_POS]&&NAV_HIST[NAV_POS].type==='player')NAV_HIST[NAV_POS]={type:'player',id};
+  render();
+  try{navigator.vibrate&&navigator.vibrate(10);}catch(e){}
+  const el=document.getElementById('playerDetail');
+  if(el){el.classList.remove('sw-l','sw-r');void el.offsetWidth;el.classList.add(smer>0?'sw-l':'sw-r');setTimeout(()=>el.classList.remove('sw-l','sw-r'),260);}
+  return true;
+}
+(function(){
+  let x0=null,y0=0,t0=0;
+  const vodorovnyScroll=t=>{for(let e=t;e&&e!==document.body;e=e.parentElement){if(e.scrollWidth>e.clientWidth+2){const o=getComputedStyle(e).overflowX;if(o==='auto'||o==='scroll')return true;}}return false;};
+  const smiTahnout=t=>{
+    if(!isTrener()||!S.activeId||S.cmpMode||!gP())return false;
+    const det=document.getElementById('playerDetail');if(!det||!det.contains(t))return false;
+    if(document.getElementById('modal').style.display!=='none'||document.getElementById('liveOverlay'))return false;
+    const sb=document.getElementById('sidebar');if(sb&&sb.classList.contains('open'))return false;
+    if(t.closest('input,textarea,select,[contenteditable],.tabsWrap,.ds-rte'))return false;
+    return!vodorovnyScroll(t);
+  };
+  document.addEventListener('touchstart',e=>{x0=null;if(e.touches.length!==1||!smiTahnout(e.target))return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;t0=Date.now();},{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(x0==null)return;const c=e.changedTouches[0],dx=c.clientX-x0,dy=c.clientY-y0;x0=null;
+    if(Date.now()-t0>700||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.6)return;
+    listujHracku(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{x0=null;},{passive:true});
+  // Kolo 108 (Mek 6. 11.): na počítači šipkami ← →.
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+    if(!isTrener()||!S.activeId||S.cmpMode||!gP())return;
+    const a=document.activeElement;if(a&&a.closest&&a.closest('input,textarea,select,[contenteditable]'))return;
+    if(document.getElementById('modal').style.display!=='none'||document.getElementById('liveOverlay'))return;
+    const sb=document.getElementById('sidebar');if(sb&&sb.classList.contains('open'))return;
+    const det=document.getElementById('playerDetail');if(!det||!det.offsetParent)return;
+    if(listujHracku(e.key==='ArrowRight'?1:-1))e.preventDefault();
+  });
+})();
 // Kolo 34: "Zápas" přesunut hned za Pavouka (schválená Varianta 2 z mock-upu) — na
 // mobilu se řádek tabů nevejde do šířky a potichu scrolluje (schovaný scrollbar, viz
 // .tabsWrap níže), takže čím dřív v pořadí, tím míň se tab dá přehlédnout.
@@ -4030,7 +4091,8 @@ function badgeTagStyle(color,bdProp){
   return bdProp==='bc'?`background:${color}33;color:${color};border:1px solid ${color}`:`background:${color}33;border-color:${color};color:${color}`;
 }
 // Kolo 58: ikona odznaku — ve vzhledu Trenéra Font Awesome (když ji odznak má), jinak emoji.
-function badgeIco(b){return isTrener()&&b.fa?`<i class="fa-solid fa-${b.fa}" aria-hidden="true"></i>`:b.icon;}
+// Kolo 108 (Mek 6. 11.): kapitánka má ve sportu (C), ne korunku.
+function badgeIco(b){if(isTrener()&&b.id==='kapitanka')return'<span class="bdg-c" aria-hidden="true">C</span>';return isTrener()&&b.fa?`<i class="fa-solid fa-${b.fa}" aria-hidden="true"></i>`:b.icon;}
 // Neprůhledné podbarvení barvou odznaku a tmavší odstín ikony (koláž, okno Odznaky).
 function badgeTint(b){
   if(!isTrener()||!b.fa||b.special||!/^#[0-9a-fA-F]{6}$/.test(b.color||''))return null;
@@ -9037,6 +9099,9 @@ const HELP_DATA=[
  kw:"sidebar postranní panel seznam hráček"},
 {q:`Co udělá tlačítko „🏠 Domů" / klik na nápis „Bombito"?`,
  a:`Obojí tě vrátí na domovskou obrazovku aplikace — mřížku karet všech aktivních hráček s jejich Overall skóre a průměrem týmu (viz blok „Domovská obrazovka"). Je to „výchozí bod" aplikace, na který se aplikace vrací i po každém novém otevření aplikace.`},
+{tr:1,q:`Jak rychle přepnu na další hráčku?`,
+ a:`Na otevřené kartě hráčky táhni prstem doleva — otevře se další hráčka, doprava předchozí. Na počítači stačí šipky → a ←. Pořadí je stejné jako na Domů, včetně zvoleného řazení a filtru pozice. Zůstaneš na stejné záložce (třeba Zápas), pokud ji má i další hráčka. Na řádku záložek a v řádcích, které se posouvají do strany, tažení nefunguje, aby se nepletlo s posouváním. Tlačítko Zpět pak vede tam, odkud jsi kartu otevřel, ne přes všechny prolistované hráčky.`,
+ kw:"listování swipe tažení šipky klávesnice další předchozí hráčka přepnout"},
 {q:`Jak fungují tlačítka Zpět/Dopředu?`,
  a:`Aplikace si pamatuje, kterými hlavními obrazovkami jsi prošel (hráčka → Domů → Přehled → Porovnání a tak dál) a tlačítka „← Zpět" / „Dopředu →" (dole na mobilu jako lišta, na počítači jako pilulky nahoře) tě mezi nimi vrací a posouvá — podobně jako tlačítka Zpět/Vpřed v internetovém prohlížeči. Přepínání mezi taby na kartě jedné hráčky (Fyzické/Herní/Zápas...) se do téhle historie nepočítá, jen velké přechody mezi celými obrazovkami.<br>Ve vzhledu Trenéra na telefonu spodní lišta není: zpátky tě vrátí systémové Zpět (gesto nebo tlačítko telefonu) nebo šipka Zpět v hlavičce, viz „Co dělá tlačítko Zpět na telefonu?“.`,
  kw:"navigace historie back forward"},
@@ -9307,7 +9372,7 @@ const HELP_DATA=[
 {q:`Co jsou Odznaky a co znamenají jednotlivé ikonky?`,
  a:`Odznaky jsou způsob, jak hráčce dát viditelné ocenění/nálepku za nějakou vlastnost nebo úspěch (třeba 🧱 Blokař, 🎯 Servis Girl, 💣 Bomberka, 🤿 Čapačka, 🔥 Hecířka) — na rozdíl od milníků aplikace odznaky NEPOČÍTÁ ani neodvozuje sama z naměřených dat, jsou to čistě tvoje vlastní ocenění podle toho, co u hráčky vidíš na tréninku. Aplikace má i speciální odznak 👑 Kapitánka se zvláštním „třpytivým" vzhledem, který ji odlišuje od ostatních. Přesný seznam a vzhled odznaků jde upravit v Nastavení.`},
 {q:`Proč mají odznaky ve vzhledu Trenéra jiné ikony než emoji?`,
- a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka (obrana v poli) = ruce chytající míč, Hecířka = megafon, Kapitánka = koruna, Přijímačka = šipky mířící do středu (přesnost), Zakončovatelka = meteor. Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
+ a:`Ve vzhledu Trenéra mají odznaky ikony Font Awesome, stejně jako zbytek ovládání: Blokař = kostky, Servis Girl = papírové letadlo, Bomberka = bomba, Čapačka (obrana v poli) = ruce chytající míč, Hecířka = megafon, Kapitánka = C jako kapitánská páska, Přijímačka = šipky mířící do středu (přesnost), Zakončovatelka = meteor. Ikony se schválně nepotkávají s ikonami metrik. V kolečku hráčky (koláži) jsou silné stránky plně zelené a odznaky podbarvené svou barvou, takže je hned rozeznáš. V klasickém vzhledu, v PDF a v Sezónním shrnutí zůstávají emoji.<br>Ikonu vlastního odznaku vybereš v Nastavení → Odznaky (u nového i při úpravě ✎) z mřížky ikon. Opětovným klepnutím na vybranou ikonu volbu zrušíš a odznak pak i ve vzhledu Trenéra ukáže své emoji. Emoji vyplň i tak, je pro klasický vzhled.`,
  kw:"odznak ikona font awesome emoji trenér vzhled vybrat ikonu koruna megafon"},
 {q:`Jak funguje odznak Přijímačka?`,
  a:`Přijímačka (🙌) je jediný odznak, který se přiděluje sám. Rozhoduje <b>průměrná kvalita příjmu</b> v zápasech aktuální sezóny, stejná jako na kartě hráčky a v živém zápase: známka 1 = 100 %, 3 = 50 %, 5 = 0 %. Jednička tak váží dvakrát víc než trojka. Hráčka odznak má, dokud je její průměr aspoň na hranici, kterou nastavíš (výchozí 45 %). Počítá se ze všech jejích příjmů z posledních 12 zápasů dohromady, stejně jako v Overallu. Aby nerozhodla jedna náhoda, musí mít příjem aspoň ve 3 zápasech a aspoň 8 příjmů celkem. Když průměr klesne pod hranici, odznak sám zmizí. Ručně ho v okně Odznaky zapnout ani vypnout nejde.<br><b>Hranice:</b> Nastavení → Odznaky → ✎ u Přijímačky, pole „Hranice – průměrná kvalita příjmu“, od 30 do 95 % po 5. Pod polem hned vidíš, které hráčky by odznak při zvolené hranici měly (počítají se jen ty s dost příjmy), průměr týmu a návrh „Nejlepší čtvrtina“: hranici, kterou splní zhruba čtvrtina nejlepších. Klepnutím na návrh ho nastavíš. Po uložení se odznaky hned přepočítají. Hranice se ukládá k odznaku, takže je i v záloze. Normy podle věku nebo pro kluky a holky tu nejsou, protože pro známky 1-3-5 žádné spolehlivé neexistují; hranice vychází z tvých vlastních dat.<br><b>Barva</b> ukazuje, o kolik je hráčka nad hranicí: zlatá = o 30 bodů a víc, zelená = o 15 až 29 bodů, jinak fialová (barva odznaku). Název, emoji, ikonu i výchozí barvu změníš ve stejném okně. Když odznak smažeš, už se sám nevrátí.`,
