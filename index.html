@@ -1757,6 +1757,12 @@ html.skin-trener #playerDetail.sw-r{animation:swZleva .2s ease-out}
 @media (prefers-reduced-motion:reduce){html.skin-trener #playerDetail.sw-l,html.skin-trener #playerDetail.sw-r{animation:none}}
 .tym-pill{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;font:600 11.5px 'DM Sans',sans-serif;background:var(--line);color:var(--ink)}
 .tym-pill.warn{background:var(--warn);color:var(--warn-bg)}
+/* Kolo 118: souhrn „Doplnit ze souboru“ — štítky místo vět. */
+.sl-stitky{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
+.sl-stitky .tym-pill{margin-top:0;padding:3px 10px;font-size:12.5px}
+.sl-dup{display:flex;align-items:center;gap:8px;margin:0 0 12px;cursor:pointer}
+.sl-dup input{width:20px;height:20px;accent-color:var(--court)}
+.sl-dup .tym-pill{margin-top:0;padding:3px 10px;font-size:12.5px}
 /* Kolo 104: Google Disk */
 html.skin-trener #hdrTym .hdr-disk{font-size:11px;opacity:.95}
 html.skin-trener #hdrTym .hdr-disk.ceka{opacity:.6}
@@ -9689,6 +9695,9 @@ const HELP_DATA=[
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
  a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Telefony s Androidem soubor .json sdílet neumí, proto se tam záloha sdílí jako bombito_….json.txt (stejně tak na zařízení, které .json jednou odmítlo) — obsah je stejný a „Načíst tým ze souboru“ ho přijme. Když sdílení selže, aplikace ukáže chybu a nic sama nestahuje; pak použij „Jen stáhnout do zařízení“. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
  kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
+{tr:1,q:`Jak doplním do týmu data z jiného zařízení (sloučení)?`,
+ a:`Když jsi část dat zapisoval jinde (třeba na telefonu, protože tablet zůstal doma), exportuj tým na tom druhém zařízení a soubor otevři na hlavním: klepni nahoře na název týmu → „Načíst tým ze souboru“ a vyber <b>Doplnit vybraný tým</b>. Aplikace nic nepřepíše, jen doplní, co v týmu chybí, a nejdřív ukáže štítky, co přibude (zápasy, tréninky, testování, hodnoty, milníky, odznaky, poznámky, hráčky).<br>• <b>Hráčky</b> se poznají podle ID, a když tým na druhém zařízení vznikl znovu, podle jména a roku narození. Jejich statistiky ze zápasů se tak připíšou správné hráčce. Hráčka bez páru se přidá jako nová.<br>• <b>Testování</b> ve stejný den je jedno testování: chybějící hodnoty se doplní. Když se hodnota liší, zůstane ta z vybraného týmu (štítek „jiná hodnota“).<br>• <b>Milník</b> platí vyšší fáze, <b>odznaky</b> a <b>poznámky</b> se přidají.<br>• <b>Možná duplicita</b> = zápas se stejným datem a soupeřem, který už v týmu je. Přeskočí se; zatržením ho přidáš i tak.<br>• Nastavení, normy, pozice a archiv zůstanou z vybraného týmu, přidají se jen nové metriky, milníky a odznaky.<br>Po doplnění jde všechno vrátit tlačítkem <b>Vrátit</b> v hlášce, později v Data a zálohy → „Vrátit stav před posledním importem“.`,
+ kw:"sloučit sloučení spojit doplnit merge dvě zařízení telefon tablet nouzový soubor záloha druhý soubor"},
 {tr:1,q:`Jak propojím tým s Google Diskem?`,
  a:`Přímé propojení s Diskem zatím v aplikaci není zapnuté — tým na Disk ulož přes Export. Až bude zapnuté: klepni nahoře na název týmu → „Google Disk“ (nebo v Exportu „Propojit tým s Google Diskem“) a přihlas se Googlem. Pak „Uložit tým na Disk“ — aplikace na Disku vytvoří složku Bombito a v ní soubor „Bombito – název týmu.json“. Od té chvíle se změny ukládají na Disk samy (asi 15 vteřin po poslední změně), dokud jsi přihlášený a online; vypnout to jde zaškrtávátkem „Ukládat změny na Disk automaticky“. Ikonka mráčku vedle názvu týmu ukazuje stav: plný mráček = uloženo, mráček se šipkou = změny čekají (třeba na přihlášení), vykřičník = něco je potřeba vyřešit. Google drží přihlášení zhruba hodinu — pak aplikace ukládá dál do zařízení a po dalším přihlášení pošle na Disk, co chybí. Aplikace na Disku vidí jen soubory, které sama vytvořila nebo které jsi v ní sám vybral.`,
  kw:"google disk drive propojení automatické ukládání cloud mráček přihlášení"},
@@ -11128,10 +11137,175 @@ function tymImportVolba(filename,d){
   const prazdny=!S.players.length&&!(S.matches||[]).length&&!(S.tournaments||[]).length;
   const nahraditAkt=zTymu&&zTymu.id===r.aktivni||!zTymu&&(prazdny||!info&&r.seznam.length===1);
   h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni)+(prazdny?'<span class="tym-pill">prázdný</span>':''),nahraditAkt);
+  // Kolo 118: doplnit do vybraného týmu jen to, co v něm chybí.
+  h+=volba(`_slDup=false;tymDoplnModal()`,'code-merge','Doplnit vybraný tým „'+tymEsc(aktNazev)+'“','',false);
   h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','',!nahraditAkt&&!(zTymu&&zTymu.id!==r.aktivni));
   openModal(`${skHubHead('Načíst tým ze souboru')}
     <div class="tym-exp-info"><b>${tymEsc(filename)}</b><br><span>V souboru: ${tymHracekTxt(d.players.length)}, poslední data ${newDate?fmtDate(newDate):'žádná'}${info&&info.nazev?' · tým „'+tymEsc(info.nazev)+'“':''}</span></div>
     <div class="tym-volby">${h}</div>`);
+}
+// ── Doplnit ze souboru (Kolo 118, Mek 7. 11.) ──
+// Sloučení zálohy z jiného zařízení do vybraného týmu. Hlavní (vybraný) tým má vždy přednost,
+// ze souboru se jen doplňuje to, co chybí. Pravidla schválil Mek 7. 11.:
+// • hráčky: podle ID, jinak podle jména + roku narození (jen jednoznačná shoda), jinak nová hráčka;
+// • testy: stejné datum = stejné testování, chybějící hodnoty se doplní, rozdílná hodnota zůstane
+//   z hlavního týmu a jen se počítá jako rozdíl;
+// • milníky: vyšší fáze; odznaky: sjednotit; poznámky: přidat chybějící;
+// • zápasy, tréninky, turnaje, minihry, Deníček týmu: přidat chybějící podle ID; zápas se stejným
+//   datem a soupeřem (a jiným ID) = možná duplicita, přeskočí se, pokud ji trenér nepřidá;
+// • ID hráček a turnajů ze souboru se přepíšou na ID hlavního týmu (statistiky sedí na správnou hráčku);
+// • nastavení: přidat jen metriky, milníky a odznaky, které hlavní tým nemá.
+function slPrazdne(v){return v===undefined||v===null||v==='';}
+function slNorm(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/\s+/g,' ').trim();}
+function slKlon(x){return JSON.parse(JSON.stringify(x));}
+// Hluboké přepsání ID (hodnoty i klíče objektů), mapa: staré ID → nové ID.
+function slPremapuj(x,mapa){
+  if(typeof x==='string')return Object.prototype.hasOwnProperty.call(mapa,x)?mapa[x]:x;
+  if(Array.isArray(x))return x.map(v=>slPremapuj(v,mapa));
+  if(x&&typeof x==='object'){const o={};for(const k in x)o[Object.prototype.hasOwnProperty.call(mapa,k)?mapa[k]:k]=slPremapuj(x[k],mapa);return o;}
+  return x;
+}
+function slZapasKlic(m){return(m.trenink?'T':'Z')+'|'+(m.date||'')+'|'+slNorm(m.opponent);}
+// base = hlavní tým (nemění se), add = data ze souboru. Vrátí {data, st} — data jsou nová kopie.
+function slSlouc(base,add,sDuplicitami){
+  const B=slKlon(base),A=slKlon(add);delete A._tym;
+  const st={hracky:0,jmenem:0,testy:0,hodnoty:0,milniky:0,odznaky:0,poznamky:0,zapasy:0,treninky:0,turnaje:0,minihry:0,denik:0,nastaveni:0,rozdily:0,duplicity:0,rozdilyTxt:[]};
+  B.players=B.players||[];
+  // 1) Páry hráček
+  const mapa={},bId=new Set(B.players.map(p=>p.id)),obsazene=new Set();
+  const klic=p=>slNorm(p.name)+'|'+(p.birthYear||'');
+  const pocet=(arr,k)=>arr.filter(p=>klic(p)===k).length;
+  const pary=[];
+  (A.players||[]).forEach(a=>{
+    let b=B.players.find(p=>p.id===a.id);
+    if(b){pary.push([a,b]);obsazene.add(b.id);}
+  });
+  (A.players||[]).forEach(a=>{
+    if(pary.some(x=>x[0]===a))return;
+    const k=klic(a),kand=B.players.filter(p=>!obsazene.has(p.id)&&klic(p)===k);
+    if(kand.length===1&&pocet(A.players,k)===1){pary.push([a,kand[0]]);obsazene.add(kand[0].id);mapa[a.id]=kand[0].id;st.jmenem++;}
+    else pary.push([a,null]);
+  });
+  // Nová hráčka s ID, které v hlavním týmu už nosí někdo jiný, dostane nové ID.
+  pary.forEach(([a,b],i)=>{if(!b&&bId.has(a.id)){mapa[a.id]=a.id+'_s'+i;}});
+  // 2) Turnaje: podle ID, jinak podle názvu
+  B.tournaments=B.tournaments||[];
+  (A.tournaments||[]).forEach(t=>{
+    if(B.tournaments.some(x=>x.id===t.id))return;
+    const stejny=B.tournaments.find(x=>slNorm(x.name)===slNorm(t.name)&&slNorm(t.name));
+    if(stejny)mapa[t.id]=stejny.id;
+  });
+  const A2=slPremapuj(A,mapa);
+  // 3) Hráčky
+  pary.forEach(([a0])=>{
+    const a=A2.players.find(p=>p.id===(mapa[a0.id]||a0.id));if(!a)return;
+    const b=B.players.find(p=>p.id===a.id);
+    if(!b){B.players.push(a);st.hracky++;return;}
+    // testy
+    b.testSessions=b.testSessions||[];
+    (a.testSessions||[]).forEach(sa=>{
+      const sb=b.testSessions.find(x=>x.date===sa.date);
+      if(!sb){b.testSessions.push(sa);st.testy++;return;}
+      ['physical','game'].forEach(cast=>{
+        const va=sa[cast];if(!va||typeof va!=='object')return;
+        if(!sb[cast]||typeof sb[cast]!=='object')sb[cast]={};
+        for(const k in va){
+          if(slPrazdne(va[k]))continue;
+          if(slPrazdne(sb[cast][k])){sb[cast][k]=va[k];st.hodnoty++;}
+          else if(JSON.stringify(sb[cast][k])!==JSON.stringify(va[k])){st.rozdily++;st.rozdilyTxt.push({hracka:b.name,datum:sb.date,metrika:k,cast,hlavni:sb[cast][k],soubor:va[k]});}
+        }
+      });
+      for(const k in sa)if(k!=='physical'&&k!=='game'&&slPrazdne(sb[k])&&!slPrazdne(sa[k]))sb[k]=sa[k];
+    });
+    b.testSessions.sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+    // milníky: vyšší fáze
+    b.milestones=b.milestones||{};
+    for(const k in (a.milestones||{})){
+      const ma=a.milestones[k],mb=b.milestones[k];
+      const fa=ma&&typeof ma==='object'?(+ma.stage||0):(ma?1:0),fb=mb&&typeof mb==='object'?(+mb.stage||0):(mb?1:0);
+      if(fa>fb){b.milestones[k]=ma;st.milniky++;}
+    }
+    // odznaky
+    b.badges=b.badges||[];
+    (a.badges||[]).forEach(x=>{if(!b.badges.includes(x)){b.badges.push(x);st.odznaky++;}});
+    // poznámky
+    b.notes=b.notes||[];
+    (a.notes||[]).forEach(n=>{if(!b.notes.some(x=>x.id===n.id||x.date===n.date&&x.text===n.text)){b.notes.push(n);st.poznamky++;}});
+    // ostatní: jen co v hlavním chybí (archivace zůstává z hlavního týmu)
+    for(const k in a){if(['id','testSessions','milestones','badges','notes','archived'].includes(k))continue;if(slPrazdne(b[k])&&!slPrazdne(a[k]))b[k]=a[k];}
+  });
+  // 4) Turnaje (nové)
+  (A2.tournaments||[]).forEach(t=>{if(!B.tournaments.some(x=>x.id===t.id)){B.tournaments.push(t);st.turnaje++;}});
+  // 5) Zápasy a tréninky (+ možné duplicity)
+  st.duplicityTxt=[];
+  [['matches','zapasy'],['treninky','treninky']].forEach(([pole,cnt])=>{
+    if(!(A2[pole]||[]).length)return;
+    B[pole]=B[pole]||[];
+    A2[pole].forEach(m=>{
+      const i=B[pole].findIndex(x=>x.id===m.id);
+      if(i>=0){if(!B[pole][i].finished&&m.finished)B[pole][i]=m;return;}
+      if(B[pole].some(x=>slZapasKlic(x)===slZapasKlic(m))){st.duplicity++;st.duplicityTxt.push({date:m.date,opponent:m.opponent||'',trenink:pole==='treninky'});if(!sDuplicitami)return;}
+      B[pole].push(m);st[cnt]++;
+    });
+  });
+  // 6) Minihry, Deníček týmu
+  [['minihry','minihry'],['teamNotes','denik']].forEach(([pole,cnt])=>{
+    if(!(A2[pole]||[]).length)return;
+    B[pole]=B[pole]||[];
+    A2[pole].forEach(x=>{if(!B[pole].some(y=>y.id===x.id)){B[pole].push(x);st[cnt]++;}});
+  });
+  // 7) Sezóny (archiv): přidat chybějící podle názvu
+  if((A2.seasons||[]).length){B.seasons=B.seasons||[];A2.seasons.forEach(s=>{if(!B.seasons.some(x=>x.name===s.name))B.seasons.push(s);});}
+  // 8) Nastavení: jen chybějící metriky, milníky, odznaky
+  B.config=B.config||{};
+  ['physical','game','milestones','badges'].forEach(k=>{
+    const ca=(A2.config||{})[k];if(!Array.isArray(ca))return;
+    B.config[k]=B.config[k]||[];
+    ca.forEach(x=>{if(x&&x.id&&!B.config[k].some(y=>y.id===x.id)){B.config[k].push(x);st.nastaveni++;}});
+  });
+  st.nic=!['hracky','testy','hodnoty','milniky','odznaky','poznamky','zapasy','treninky','turnaje','minihry','denik','nastaveni'].some(k=>st[k]);
+  return{data:B,st};
+}
+let _slDup=false;
+function slStitky(st){
+  const s=(n,jed,dve,pet,ic,cls)=>n?`<span class="tym-pill${cls?' '+cls:''}"><i class="fa-solid fa-${ic}" aria-hidden="true"></i> +${n} ${n===1?jed:n<5?dve:pet}</span>`:'';
+  return s(st.hracky,'hráčka','hráčky','hráček','user-plus')
+    +s(st.zapasy,'zápas','zápasy','zápasů','trophy')
+    +s(st.treninky,'trénink','tréninky','tréninků','dumbbell')
+    +s(st.turnaje,'turnaj','turnaje','turnajů','flag')
+    +s(st.testy,'testování','testování','testování','clipboard-list')
+    +s(st.hodnoty,'hodnota','hodnoty','hodnot','pen')
+    +s(st.milniky,'milník výš','milníky výš','milníků výš','seedling')
+    +s(st.odznaky,'odznak','odznaky','odznaků','medal')
+    +s(st.poznamky,'poznámka','poznámky','poznámek','note-sticky')
+    +s(st.denik,'zápis týmu','zápisy týmu','zápisů týmu','book')
+    +s(st.minihry,'minihra','minihry','miniher','gamepad')
+    +s(st.nastaveni,'metrika / milník','metriky / milníky','metrik / milníků','sliders');
+}
+function tymDoplnModal(){
+  const d=_pendingImport;if(!d)return;
+  const {st}=slSlouc(S,d,_slDup);
+  const info=d._tym&&typeof d._tym==='object'?d._tym:null;
+  const jiny=info&&info.nazev&&slNorm(info.nazev)!==slNorm(tymNazev());
+  const pill=(txt,ic,cls)=>`<span class="tym-pill${cls?' '+cls:''}"><i class="fa-solid fa-${ic}" aria-hidden="true"></i> ${txt}</span>`;
+  const info2=(jiny?pill('jiný tým „'+tymEsc(info.nazev)+'“','triangle-exclamation','warn'):'')
+    +(st.jmenem?pill(st.jmenem+'× podle jména','user-check',''):'')
+    +(st.rozdily?pill(st.rozdily+'× jiná hodnota','not-equal','warn'):'');
+  const dup=st.duplicity?`<label class="sl-dup"><input type="checkbox" ${_slDup?'checked':''} onchange="_slDup=this.checked;tymDoplnModal()"> ${pill((_slDup?'přidat i ':'')+st.duplicity+'× možná duplicita','clone','warn')}</label>`:'';
+  openModal(`${skHubHead('Doplnit do „'+tymEsc(tymNazev())+'“')}
+    <div class="sl-stitky">${st.nic?pill('nic nového','check',''):slStitky(st)}</div>
+    ${info2?`<div class="sl-stitky">${info2}</div>`:''}
+    ${dup}
+    <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zpět</button><button class="btn btn-p" ${st.nic?'disabled':''} onclick="tymDoplnProved()"><i class="fa-solid fa-code-merge" aria-hidden="true"></i> Doplnit</button></div>`);
+}
+function tymDoplnProved(){
+  const d=_pendingImport;if(!d)return;
+  const snap=JSON.stringify(S);
+  const {data}=slSlouc(S,d,_slDup);
+  try{localStorage.setItem('bombito_v4_pred_importem',snap);}catch(e){}
+  S=data;_pendingImport=null;_slDup=false;save();load();closeModal();render();
+  navigator.vibrate&&navigator.vibrate(10);
+  offerUndo(snap,'Doplněno');
 }
 function tymImportProved(cilId){
   const d=_pendingImport;if(!d)return;
