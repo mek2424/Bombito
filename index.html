@@ -4307,6 +4307,10 @@ function buildPhys(){
       <button class="btn btn-d sm" onclick="deleteTest(${i})">✕</button>
     </div>`;
   }).join('')+(histKratka?`<button class="btn btn-o sm hist-vse" onclick="histVsePid=gP().id;renderTab()">Zobrazit všechna (${histN})</button>`:''):'<div class="no-data">Žádné testy</div>';
+  // Kolo 116 (Mek 7. 11.): hráčka bez fyzického testu → místo prázdných grafů a pomlček jen nízká karta
+  // s tlačítkem na fyzický test (jako Herní v kole 111). Historie zůstane, když má jiná testování.
+  if(isTrener()&&p2&&!(p2.testSessions||[]).some(x=>x.physical&&Object.values(x.physical).some(v=>v!=null&&v!=='')))
+    return`<div class="card ov-prazdne"><div class="no-data">Žádný fyzický test</div><button class="btn btn-o sm" onclick="openAddTest('fyz')"><i class="fa-solid fa-wave-square" aria-hidden="true"></i> Fyzický test</button></div>${histN?`<div class="card"><h3>Historie &nbsp;<span style="font-weight:400;color:var(--gm)">✎ upravit · ✕ smazat</span></h3>${sessList}</div>`:''}`;
   return`<div class="${hasG?"g2":""} gr-prvni"><div>
     <div class="card"><h3>Poslední hodnoty &nbsp;<span class="sk-vysv" style="font-weight:400;color:var(--gm)">💬 = podmínky</span></h3>${lS()?.note?`<div style="font-size:0.78rem;color:var(--acc);margin-bottom:10px;padding:6px 10px;background:var(--x-acc-bg3);border-radius:6px;border-left:3px solid var(--acc)">📝 ${lS().note}</div>`:""}${rows||'<div class="no-data">Přidej první test</div>'}</div>
     <div class="card"><h3>Historie &nbsp;<span style="font-weight:400;color:var(--gm)">✎ upravit · ✕ smazat</span></h3>${sessList}</div>
