@@ -9212,6 +9212,8 @@ const HELP_DATA=[
  kw:"sidebar postranní panel seznam hráček"},
 {q:`Co udělá tlačítko „🏠 Domů" / klik na nápis „Bombito"?`,
  a:`Obojí tě vrátí na domovskou obrazovku aplikace — mřížku karet všech aktivních hráček s jejich Overall skóre a průměrem týmu (viz blok „Domovská obrazovka"). Je to „výchozí bod" aplikace, na který se aplikace vrací i po každém novém otevření aplikace.`},
+{q:`Jde Nápovědu otevřít odkazem, rovnou na konkrétním tématu?`,
+ a:`Ano. Když za adresu Bombita připíšeš <b>?napoveda=</b> a hledané slovo — třeba <b>…/Bombito/?napoveda=T-skóre</b> — aplikace se otevře rovnou v Nápovědě s tímhle hledáním. Takhle fungují odkazy v PDF prezentaci pro trenéry. Funguje to i bez internetu, pokud máš Bombito v telefonu už otevřené aspoň jednou.`},
 {tr:1,q:`Jak rychle přepnu na další hráčku?`,
  a:`Na otevřené kartě hráčky táhni prstem doleva — otevře se další hráčka, doprava předchozí. Na počítači stačí šipky → a ←. Pořadí je stejné jako na Domů, včetně zvoleného řazení a filtru pozice. Zůstaneš na stejné záložce (třeba Zápas), pokud ji má i další hráčka. Na řádku záložek a v řádcích, které se posouvají do strany, tažení nefunguje, aby se nepletlo s posouváním. Tlačítko Zpět pak vede tam, odkud jsi kartu otevřel, ne přes všechny prolistované hráčky.`,
  kw:"listování swipe tažení šipky klávesnice další předchozí hráčka přepnout"},
@@ -11497,6 +11499,16 @@ function diskStart(){
 }
 
 tymyInit();load();tymySyncPoLoad();diskStart();tymHlaskaPoStartu();S.activeId=null;S.cmpMode=false;loadLM();applyChartSkin();BACKNAV.init();render();lmPripomenPoStartu();setTimeout(checkBackupReminder,2000);window.bombitoInstalaceUpdate();
+/* Kolo 117 (Mek 7. 11.): odkaz rovnou do Nápovědy. …/Bombito/?napoveda=T-skóre otevře Nápovědu
+   s tímhle hledáním (odkazy z PDF prezentace pro trenéry). Parametr se z adresy hned smaže, ať se
+   Nápověda neotvírá znovu po každém obnovení stránky; historie (BACKNAV) zůstává beze změny. */
+(function(){
+  let q=null;
+  try{const p=new URLSearchParams(location.search);q=p.get('napoveda');if(q===null)return;
+    p.delete('napoveda');const zbytek=p.toString();
+    history.replaceState(history.state,'',location.pathname+(zbytek?'?'+zbytek:'')+location.hash);}catch(e){return;}
+  setTimeout(()=>openHelp(String(q).trim()),300);
+})();
 
 </script>
 <script>
