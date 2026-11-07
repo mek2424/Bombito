@@ -40,7 +40,7 @@ window.BOMBITO_VZHLED=(function(){
   // Výchozí hlavní barva je o kousek tmavší než #339933 v Trenérovi (Mek 26. 10.) — na #339933
   // má bílý text tlačítek jen 3,66 : 1, na #2B7D2B 5,16 : 1. Kdo měl uloženou starou výchozí
   // #339933, dostane novou výchozí (vlastní volbu jinou barvou to nemění).
-  var DEF={skin:"klasik",dark:false,primary:"#2B7D2B",accent:"#E8622C",pismo:"patrick"},STARA_VYCHOZI="#339933";
+  var DEF={skin:"trener",dark:false,primary:"#2B7D2B",accent:"#E8622C",pismo:"patrick"},STARA_VYCHOZI="#339933";
   // Kolo 66 (P2): rukopis lepíků jako ve Vzhledu Deníčku v Trenérovi (DENIK_PISMA).
   var PISMA={patrick:{rodina:"Patrick Hand",dotaz:"Patrick+Hand",nazev:"Úhledný"},caveat:{rodina:"Caveat",dotaz:"Caveat:wght@400;700",nazev:"Rychlý"},kalam:{rodina:"Kalam",dotaz:"Kalam:wght@400;700",nazev:"Fixou"}};
   function read(){
@@ -48,6 +48,8 @@ window.BOMBITO_VZHLED=(function(){
     try{v=JSON.parse(localStorage.getItem("bombito_vzhled")||"null");}catch(e){}
     var o={};for(var k in DEF)o[k]=DEF[k];
     if(v&&typeof v==="object")for(var k2 in DEF)if(v[k2]!==undefined)o[k2]=v[k2];
+    // Kolo 117 (Mek 7. 11.): klasický vzhled vypnutý — vždy Trenér, i se starou uloženou volbou.
+    o.skin="trener";
     if(!/^#[0-9a-fA-F]{6}$/.test(o.primary)||o.primary.toUpperCase()===STARA_VYCHOZI)o.primary=DEF.primary;
     if(!/^#[0-9a-fA-F]{6}$/.test(o.accent))o.accent=DEF.accent;
     if(!PISMA[o.pismo])o.pismo=DEF.pismo;
@@ -3574,8 +3576,8 @@ function openEditor(){
 function vzhledSectionHtml(){
   const v=BOMBITO_VZHLED.read(),on=v.skin==='trener';
   const tog=(id,act,label,plain,fn)=>`<button type="button" role="switch" id="${id}" aria-checked="${act}" aria-label="${label}" title="${label}" class="theme-toggle${plain?' plain':''}${act?' active':''}" onclick="${fn}"><span class="theme-toggle-knob">${plain?'':'<i class="fa-solid fa-sun" aria-hidden="true"></i><i class="fa-solid fa-moon" aria-hidden="true"></i>'}</span></button>`;
-  let h=`<div class="${on?'':'sk-vzhled-classic'}"><div class="sk-grp">Vzhled</div>
-    <div class="sk-set-row"><span class="sk-set-lbl">Vzhled Trenéra</span>${tog('vzSkin',on,'Vzhled Trenéra',true,'setVzhled({skin:this.classList.contains(\'active\')?\'klasik\':\'trener\'})')}</div>`;
+  // Kolo 117: přepínač „Vzhled Trenéra“ zrušený, klasický vzhled už nejde zapnout.
+  let h=`<div class="${on?'':'sk-vzhled-classic'}"><div class="sk-grp">Vzhled</div>`;
   if(on)h+=`<div class="sk-set-row"><span class="sk-set-lbl">Tmavý režim</span>${tog('vzDark',v.dark,'Tmavý režim',false,'setVzhled({dark:!this.classList.contains(\'active\')})')}</div>
     <div class="sk-colors">
       <label><span>Hlavní barva</span><input type="color" id="vzPrimary" value="${v.primary}" oninput="setVzhled({primary:this.value},true)" onchange="setVzhled({primary:this.value})"></label>
@@ -9682,7 +9684,7 @@ const HELP_DATA=[
 
 {title:"Zálohy a data",icon:"💾",qa:[
 {tr:1,q:`Jak mít v aplikaci víc týmů a přepínat mezi nimi?`,
- a:`Klepni nahoře vedle nápisu Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vybraný tým má v seznamu zatržítko. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš. Klasický vzhled ukazuje vždy tým, který je zrovna vybraný.`,
+ a:`Klepni nahoře vedle nápisu Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vybraný tým má v seznamu zatržítko. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš.`,
  kw:"tým týmy přepnout přepínání nový tým více týmů družstvo kategorie"},
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
  a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Telefony s Androidem soubor .json sdílet neumí, proto se tam záloha sdílí jako bombito_….json.txt (stejně tak na zařízení, které .json jednou odmítlo) — obsah je stejný a „Načíst tým ze souboru“ ho přijme. Když sdílení selže, aplikace ukáže chybu a nic sama nestahuje; pak použij „Jen stáhnout do zařízení“. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
@@ -9727,8 +9729,8 @@ const HELP_DATA=[
 ]},
 
 {title:"Vzhled Trenéra",icon:"🎨",qa:[
-{q:`Jak přepnu Bombito do vzhledu Trenéra a zpátky?`,
- a:`V menu ⋮ → „⚙ Nastavení" je úplně nahoře sekce „Vzhled" a v ní přepínač „Vzhled Trenéra". Po zapnutí se Bombito přebarví do vzhledu aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Srovnání · Zápasy · Testy</b> (Testy = Přehled týmu, Srovnání = Porovnání) (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Tabulky (Přehled, Zápasy, Skupinový test, milníky v Porovnání) mají čísla uprostřed sloupců a sloupce oddělené jemnou linkou. Zpátky se vrátíš stejným přepínačem (ve vzhledu Trenéra je v menu ⋮ → „Nastavení"). Data, výpočty ani obsah obrazovek se přepnutím nemění — mění se jen to, jak Bombito vypadá.`,
+{q:`Jak vypadá vzhled Trenéra?`,
+ a:`Bombito má vzhled aplikace Trenér: hlavička v hlavní barvě (bez znaku klubu — na Domů vede záložka i nápis BOMBITO), pod ní záložky <b>Domů · Srovnání · Zápasy · Testy</b> (Testy = Přehled týmu, Srovnání = Porovnání) (zápasové statistiky týmu) a oranžová ikona <b>Deníčku</b>, bílé karty a ikony místo emoji v tlačítkách i v nadpisech oken. Emoji, která něco znamenají (forma 🔥❄️➖, fáze milníků 🌱🌿🌳, ikony odznaků), zůstávají. Tabulky (Přehled, Zápasy, Skupinový test, milníky v Porovnání) mají čísla uprostřed sloupců a sloupce oddělené jemnou linkou. Barvy, tmavý režim a rukopis lepíků nastavíš v menu ⋮ → „Nastavení" → sekce „Vzhled".`,
  kw:"vzhled téma motiv barvy trenér klasický klasik přepnout skin design ikony emoji logo znak tabulky sloupce linky zarovnání"},
 {q:`Jak zapnu tmavý režim a jak si změním barvy?`,
  a:`Jen ve vzhledu Trenéra. V „Nastavení" → sekce „Vzhled" je přepínač „Tmavý režim" (se sluníčkem a měsícem) a pod ním dvě políčka: „Hlavní barva" (hlavička, tlačítka, nadpisy) a „Zvýrazňovací barva" (linka pod aktivní záložkou, tečky upozornění). Klepnutím na políčko vybereš barvu a změna se projeví hned, nic se neukládá tlačítkem. Tlačítko „Výchozí barvy" vrátí výchozí zelenou a oranžovou. Malé písmo si Bombito v hlavní a zvýrazňovací barvě samo trochu ztmaví (v tmavém režimu zesvětlí), aby zůstalo čitelné.`,
@@ -9950,7 +9952,7 @@ function setVzhled(patch,live){
   clearTimeout(_vzhledLiveTm);
   const redraw=()=>{
     applyChartSkin();rerenderCurrent();
-    if(document.getElementById('vzSkin')&&!live)openEditor();
+    if(document.getElementById('vzDark')&&!live)openEditor();
     skinIcons(document.body);
     if(window.bombitoInstalaceUpdate)window.bombitoInstalaceUpdate();
   };
