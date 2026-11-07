@@ -3634,11 +3634,11 @@ function openSeasonHub(){
 // Kolo 80: ve vzhledu Trenéra jedna položka menu „Sezóna a data“ místo dvou.
 function openSezonaData(){
   openModal(`${skHubHead('Sezóna a data')}<div class="sk-grp" style="margin-top:14px">Sezóna</div><div class="sk-rows">${skHubRow('openArchiveWizard()','box-archive','Uzavřít sezónu a archivovat')}${skHubRow('openArchiveView()','folder-open','Archiv sezón')}</div>
-    <div class="sk-grp" style="margin-top:10px">Data a zálohy</div><div class="sk-rows">${skHubRow('exportData()','download','Exportovat tým (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
+    <div class="sk-grp" style="margin-top:10px">Data a zálohy</div><div class="sk-rows">${skHubRow('exportData()','download','Exportovat tým (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
 }
 function openDataHub(){
   if(isTrener()){
-    openModal(`${skHubHead('Data a zálohy')}<div class="sk-rows" style="margin-top:14px">${skHubRow('exportData()','download','Exportovat tým (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
+    openModal(`${skHubHead('Data a zálohy')}<div class="sk-rows" style="margin-top:14px">${skHubRow('exportData()','download','Exportovat tým (JSON)')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importData(event)"></label>${skHubRow('undoLastImport()','rotate-left','Vrátit stav před posledním importem')}${skHubRow('openResetConfirm()','trash-can','Resetovat paměť','sk-danger')}</div>`);
     return;
   }
   openModal(`<h2>💾 Data a zálohy</h2>
@@ -9681,7 +9681,7 @@ const HELP_DATA=[
  a:`Klepni nahoře vedle nápisu Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vybraný tým má v seznamu zatržítko. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš. Klasický vzhled ukazuje vždy tým, který je zrovna vybraný.`,
  kw:"tým týmy přepnout přepínání nový tým více týmů družstvo kategorie"},
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
- a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
+ a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Telefony s Androidem soubor .json sdílet neumí, proto se tam záloha sdílí jako bombito_….json.txt — obsah je stejný a „Načíst tým ze souboru“ ho přijme. Když sdílení selže, aplikace ukáže chybu a nic sama nestahuje; pak použij „Jen stáhnout do zařízení“. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
  kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
 {tr:1,q:`Jak propojím tým s Google Diskem?`,
  a:`Přímé propojení s Diskem zatím v aplikaci není zapnuté — tým na Disk ulož přes Export. Až bude zapnuté: klepni nahoře na název týmu → „Google Disk“ (nebo v Exportu „Propojit tým s Google Diskem“) a přihlas se Googlem. Pak „Uložit tým na Disk“ — aplikace na Disku vytvoří složku Bombito a v ní soubor „Bombito – název týmu.json“. Od té chvíle se změny ukládají na Disk samy (asi 15 vteřin po poslední změně), dokud jsi přihlášený a online; vypnout to jde zaškrtávátkem „Ukládat změny na Disk automaticky“. Ikonka mráčku vedle názvu týmu ukazuje stav: plný mráček = uloženo, mráček se šipkou = změny čekají (třeba na přihlášení), vykřičník = něco je potřeba vyřešit. Google drží přihlášení zhruba hodinu — pak aplikace ukládá dál do zařízení a po dalším přihlášení pošle na Disk, co chybí. Aplikace na Disku vidí jen soubory, které sama vytvořila nebo které jsi v ní sám vybral.`,
@@ -10938,7 +10938,7 @@ function openTymy(){
   }).join('');
   openModal(`${skHubHead('Týmy')}
     <div class="tym-seznam">${radky}</div>
-    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,application/json" style="display:none" onchange="importData(event)"></label></div>`);
+    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importData(event)"></label></div>`);
 }
 
 // ── Přepnutí ──
@@ -11053,9 +11053,20 @@ function tymZaznamExport(id){
   if(id===r.aktivni){localStorage.setItem('bombito_last_export',Date.now());document.querySelector('.backup-bubble')?.remove();}
   else{const t=r.seznam.find(x=>x.id===id);if(t){t.posledniExport=Date.now();tymyPis(r);}}
 }
-function tymUmiSdilet(){
-  try{return!!(navigator.canShare&&navigator.canShare({files:[new File(['{}'],'x.json',{type:'application/json'})]}));}catch(e){return false;}
+// Kolo 114: Chrome na Androidu soubor .json sdílet neumí (jen povolené typy jako .txt), proto se dřív
+// místo sdílení na Disk jen stahovalo. Když .json nejde, sdílí se stejný obsah jako .json.txt (text/plain);
+// import ho přijme. Sdílení jen na dotykových zařízeních — na počítači sdílecí nabídka Disk nenabízí.
+function tymSdilSoubor(json,filename){
+  try{
+    if(!navigator.canShare||!matchMedia('(pointer:coarse)').matches)return null;
+    const fj=new File([json],filename,{type:'application/json'});
+    if(navigator.canShare({files:[fj]}))return fj;
+    const ft=new File([json],filename+'.txt',{type:'text/plain'});
+    if(navigator.canShare({files:[ft]}))return ft;
+  }catch(e){}
+  return null;
 }
+function tymUmiSdilet(){return!!tymSdilSoubor('{}','x.json');}
 let _tymExportId=null;
 function tymExportModal(id){
   const b=tymExportBalik(id);if(!b){toast('Tým nejde exportovat','err');return;}
@@ -11071,10 +11082,11 @@ function tymExportModal(id){
 }
 function tymExportSdilej(){
   const b=tymExportBalik(_tymExportId);if(!b)return;
-  const file=new File([b.json],b.filename,{type:'application/json'});
-  navigator.share({files:[file],title:'Bombito — '+b.nazev,text:'Záloha týmu '+b.nazev+' z aplikace Bombito'})
+  const file=tymSdilSoubor(b.json,b.filename);
+  if(!file){toast('Sdílení tu nejde — použij Jen stáhnout','err');return;} // Kolo 114
+  navigator.share({files:[file],title:'Bombito — '+b.nazev})
     .then(()=>{tymZaznamExport(b.id);closeModal();toast('Záloha týmu sdílena ✓');})
-    .catch(err=>{if(err&&err.name==='AbortError')return;tymExportStahni();});
+    .catch(err=>{if(err&&err.name==='AbortError')return;toast('Sdílení selhalo ('+((err&&err.name)||'chyba')+') — zkus Jen stáhnout','err');}); // Kolo 114: bez tichého stažení
 }
 function tymExportStahni(disk){
   const b=tymExportBalik(_tymExportId);if(!b)return;
@@ -11088,7 +11100,7 @@ function tymImportVolba(filename,d){
   const r=tymyCti();if(!r)return;
   const info=d._tym&&typeof d._tym==='object'?d._tym:null;
   const zTymu=info?r.seznam.find(t=>t.id===info.id):null;
-  const nazevSouboru=(info&&info.nazev)||d.subtitle||filename.replace(/\.json$/i,'');
+  const nazevSouboru=(info&&info.nazev)||d.subtitle||filename.replace(/\.txt$/i,'').replace(/\.json$/i,''); // Kolo 114: i .json.txt
   const newDate=latestDataDate(d);
   const srovnani=(id)=>{
     const cur=tymData(id)||{players:[]};const cd=latestDataDate(cur);
