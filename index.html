@@ -1763,6 +1763,15 @@ html.skin-trener #playerDetail.sw-r{animation:swZleva .2s ease-out}
 .sl-dup{display:flex;align-items:center;gap:8px;margin:0 0 12px;cursor:pointer}
 .sl-dup input{width:20px;height:20px;accent-color:var(--court)}
 .sl-dup .tym-pill{margin-top:0;padding:3px 10px;font-size:12.5px}
+/* Kolo 119: rozklikávací štítky a seznam rozdílů / duplicit / párů. */
+.sl-pill-btn{border:0;cursor:pointer;min-height:28px}
+.sl-pill-btn .sl-chev{font-size:10px;margin-left:2px}
+.sl-seznam{border:1px solid var(--line);border-radius:10px;margin:0 0 12px;max-height:40vh;overflow:auto}
+.sl-radek{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;font:13px/1.35 'DM Sans',sans-serif;color:var(--ink)}
+.sl-radek+.sl-radek{border-top:1px solid var(--line)}
+.sl-r-b{display:flex;flex-direction:column;align-items:flex-end;text-align:right;white-space:nowrap}
+.sl-hl{font-weight:700}
+.sl-so{color:var(--ink-faint-ink);font-size:12px}
 /* Kolo 104: Google Disk */
 html.skin-trener #hdrTym .hdr-disk{font-size:11px;opacity:.95}
 html.skin-trener #hdrTym .hdr-disk.ceka{opacity:.6}
@@ -11138,7 +11147,7 @@ function tymImportVolba(filename,d){
   const nahraditAkt=zTymu&&zTymu.id===r.aktivni||!zTymu&&(prazdny||!info&&r.seznam.length===1);
   h+=volba(`tymImportProved('${r.aktivni}')`,'rotate','Nahradit vybraný tým „'+tymEsc(aktNazev)+'“',srovnani(r.aktivni)+(prazdny?'<span class="tym-pill">prázdný</span>':''),nahraditAkt);
   // Kolo 118: doplnit do vybraného týmu jen to, co v něm chybí.
-  h+=volba(`_slDup=false;tymDoplnModal()`,'code-merge','Doplnit vybraný tým „'+tymEsc(aktNazev)+'“','',false);
+  h+=volba(`_slDup=false;_slDetail=null;tymDoplnModal()`,'code-merge','Doplnit vybraný tým „'+tymEsc(aktNazev)+'“','',false);
   h+=volba(`tymImportProved(null)`,'plus','Přidat jako nový tým „'+tymEsc(nazevSouboru)+'“','',!nahraditAkt&&!(zTymu&&zTymu.id!==r.aktivni));
   openModal(`${skHubHead('Načíst tým ze souboru')}
     <div class="tym-exp-info"><b>${tymEsc(filename)}</b><br><span>V souboru: ${tymHracekTxt(d.players.length)}, poslední data ${newDate?fmtDate(newDate):'žádná'}${info&&info.nazev?' · tým „'+tymEsc(info.nazev)+'“':''}</span></div>
@@ -11169,7 +11178,7 @@ function slZapasKlic(m){return(m.trenink?'T':'Z')+'|'+(m.date||'')+'|'+slNorm(m.
 // base = hlavní tým (nemění se), add = data ze souboru. Vrátí {data, st} — data jsou nová kopie.
 function slSlouc(base,add,sDuplicitami){
   const B=slKlon(base),A=slKlon(add);delete A._tym;
-  const st={hracky:0,jmenem:0,testy:0,hodnoty:0,milniky:0,odznaky:0,poznamky:0,zapasy:0,treninky:0,turnaje:0,minihry:0,denik:0,nastaveni:0,rozdily:0,duplicity:0,rozdilyTxt:[]};
+  const st={hracky:0,jmenem:0,testy:0,hodnoty:0,milniky:0,odznaky:0,poznamky:0,zapasy:0,treninky:0,turnaje:0,minihry:0,denik:0,nastaveni:0,rozdily:0,duplicity:0,rozdilyTxt:[],jmenemTxt:[]};
   B.players=B.players||[];
   // 1) Páry hráček
   const mapa={},bId=new Set(B.players.map(p=>p.id)),obsazene=new Set();
@@ -11183,7 +11192,7 @@ function slSlouc(base,add,sDuplicitami){
   (A.players||[]).forEach(a=>{
     if(pary.some(x=>x[0]===a))return;
     const k=klic(a),kand=B.players.filter(p=>!obsazene.has(p.id)&&klic(p)===k);
-    if(kand.length===1&&pocet(A.players,k)===1){pary.push([a,kand[0]]);obsazene.add(kand[0].id);mapa[a.id]=kand[0].id;st.jmenem++;}
+    if(kand.length===1&&pocet(A.players,k)===1){pary.push([a,kand[0]]);obsazene.add(kand[0].id);mapa[a.id]=kand[0].id;st.jmenem++;st.jmenemTxt.push(kand[0].name);}
     else pary.push([a,null]);
   });
   // Nová hráčka s ID, které v hlavním týmu už nosí někdo jiný, dostane nové ID.
@@ -11266,7 +11275,17 @@ function slSlouc(base,add,sDuplicitami){
   st.nic=!['hracky','testy','hodnoty','milniky','odznaky','poznamky','zapasy','treninky','turnaje','minihry','denik','nastaveni'].some(k=>st[k]);
   return{data:B,st};
 }
-let _slDup=false;
+let _slDup=false,_slDetail=null;
+// Kolo 119: hodnota testu do seznamu rozdílů (herní test = skóre/pokusy, desetinná čárka).
+function slHodnota(v){if(v&&typeof v==='object')return v.score!=null?v.score+'/'+(v.attempts??'–'):JSON.stringify(v);return czc(v);}
+function slMetrika(cast,k){const m=((S.config||{})[cast]||[]).find(x=>x.id===k);return m?m.label:k;}
+function slDetailHtml(st){
+  const radek=(a,b)=>`<div class="sl-radek"><span class="sl-r-a">${a}</span><span class="sl-r-b">${b}</span></div>`;
+  if(_slDetail==='rozd'&&st.rozdily)return'<div class="sl-seznam">'+st.rozdilyTxt.map(r=>radek(tymEsc(r.hracka)+' · '+fmtDate(r.datum)+'<br><b>'+tymEsc(slMetrika(r.cast,r.metrika))+'</b>',`<span class="sl-hl">${tymEsc(slHodnota(r.hlavni))}</span><span class="sl-so"><i class="fa-solid fa-file-import" aria-hidden="true"></i> ${tymEsc(slHodnota(r.soubor))}</span>`)).join('')+'</div>';
+  if(_slDetail==='dup'&&st.duplicity)return'<div class="sl-seznam">'+st.duplicityTxt.map(d=>radek(fmtDate(d.date),d.trenink?'Trénink':tymEsc(d.opponent||'–'))).join('')+'</div>';
+  if(_slDetail==='jm'&&st.jmenem)return'<div class="sl-seznam">'+st.jmenemTxt.map(n=>radek(tymEsc(n),'<i class="fa-solid fa-user-check" aria-hidden="true"></i>')).join('')+'</div>';
+  return'';
+}
 function slStitky(st){
   const s=(n,jed,dve,pet,ic,cls)=>n?`<span class="tym-pill${cls?' '+cls:''}"><i class="fa-solid fa-${ic}" aria-hidden="true"></i> +${n} ${n===1?jed:n<5?dve:pet}</span>`:'';
   return s(st.hracky,'hráčka','hráčky','hráček','user-plus')
@@ -11288,14 +11307,17 @@ function tymDoplnModal(){
   const info=d._tym&&typeof d._tym==='object'?d._tym:null;
   const jiny=info&&info.nazev&&slNorm(info.nazev)!==slNorm(tymNazev());
   const pill=(txt,ic,cls)=>`<span class="tym-pill${cls?' '+cls:''}"><i class="fa-solid fa-${ic}" aria-hidden="true"></i> ${txt}</span>`;
+  // Kolo 119: štítky s podrobnostmi jsou tlačítka, klepnutí ukáže seznam pod nimi.
+  const pillBtn=(co,txt,ic,cls)=>`<button type="button" class="tym-pill sl-pill-btn${cls?' '+cls:''}" aria-expanded="${_slDetail===co}" onclick="_slDetail=_slDetail==='${co}'?null:'${co}';tymDoplnModal()"><i class="fa-solid fa-${ic}" aria-hidden="true"></i> ${txt} <i class="fa-solid fa-chevron-${_slDetail===co?'up':'down'} sl-chev" aria-hidden="true"></i></button>`;
   const info2=(jiny?pill('jiný tým „'+tymEsc(info.nazev)+'“','triangle-exclamation','warn'):'')
-    +(st.jmenem?pill(st.jmenem+'× podle jména','user-check',''):'')
-    +(st.rozdily?pill(st.rozdily+'× jiná hodnota','not-equal','warn'):'');
-  const dup=st.duplicity?`<label class="sl-dup"><input type="checkbox" ${_slDup?'checked':''} onchange="_slDup=this.checked;tymDoplnModal()"> ${pill((_slDup?'přidat i ':'')+st.duplicity+'× možná duplicita','clone','warn')}</label>`:'';
+    +(st.jmenem?pillBtn('jm',st.jmenem+'× podle jména','user-check',''):'')
+    +(st.rozdily?pillBtn('rozd',st.rozdily+'× jiná hodnota','not-equal','warn'):'');
+  const dup=st.duplicity?`<div class="sl-dup"><input type="checkbox" id="slDupChk" aria-label="Přidat i možné duplicity" ${_slDup?'checked':''} onchange="_slDup=this.checked;tymDoplnModal()"> ${pillBtn('dup',(_slDup?'přidat i ':'')+st.duplicity+'× možná duplicita','clone','warn')}</div>`:'';
   openModal(`${skHubHead('Doplnit do „'+tymEsc(tymNazev())+'“')}
     <div class="sl-stitky">${st.nic?pill('nic nového','check',''):slStitky(st)}</div>
     ${info2?`<div class="sl-stitky">${info2}</div>`:''}
     ${dup}
+    ${slDetailHtml(st)}
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zpět</button><button class="btn btn-p" ${st.nic?'disabled':''} onclick="tymDoplnProved()"><i class="fa-solid fa-code-merge" aria-hidden="true"></i> Doplnit</button></div>`);
 }
 function tymDoplnProved(){
@@ -11303,7 +11325,7 @@ function tymDoplnProved(){
   const snap=JSON.stringify(S);
   const {data}=slSlouc(S,d,_slDup);
   try{localStorage.setItem('bombito_v4_pred_importem',snap);}catch(e){}
-  S=data;_pendingImport=null;_slDup=false;save();load();closeModal();render();
+  S=data;_pendingImport=null;_slDup=false;_slDetail=null;save();load();closeModal();render();
   navigator.vibrate&&navigator.vibrate(10);
   offerUndo(snap,'Doplněno');
 }
