@@ -1,0 +1,22 @@
+{
+  "name": "bombito-prezentace",
+  "private": true,
+  "description": "PDF prezentace „Co všechno Bombito umí“ pro trenéry — screenshoty z aplikace, PPTX → PDF",
+  "scripts": {
+    "foto": "node snimky.js",
+    "sestavit": "bash sestavit.sh",
+    "vse": "bash sestavit.sh --foto",
+    "napoveda": "node kontrola-napovedy.js"
+  },
+  "dependencies": {
+    "@fontsource/bebas-neue": "^5.3.0",
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/kalam": "^5.3.0",
+    "@fontsource/patrick-hand": "^5.3.0",
+    "pdfjs-dist": "^5.4.0",
+    "playwright": "1.63.0",
+    "pptxgenjs": "^4.0.1",
+    "sharp": "^0.34.0"
+  }
+}
