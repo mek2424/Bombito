@@ -9681,7 +9681,7 @@ const HELP_DATA=[
  a:`Klepni nahoře vedle nápisu Bombito na název týmu (nebo menu ⋮ → „Týmy“). Uvidíš seznam týmů — klepnutím na tým se na něj přepneš, tlačítkem „Nový tým“ založíš další (můžeš převzít nastavení metrik, milníků a odznaků z aktuálního týmu). Každý tým má svoje hráčky, testy, zápasy, turnaje, normu i zálohu, týmy se navzájem neovlivňují. Vybraný tým má v seznamu zatržítko. Vzhled aplikace (barvy, tmavý režim, Deníček) je společný. Během rozehraného zápasu přepnout nejde — nejdřív ho dokonči nebo zruš. Klasický vzhled ukazuje vždy tým, který je zrovna vybraný.`,
  kw:"tým týmy přepnout přepínání nový tým více týmů družstvo kategorie"},
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
- a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Telefony s Androidem soubor .json sdílet neumí, proto se tam záloha sdílí jako bombito_….json.txt — obsah je stejný a „Načíst tým ze souboru“ ho přijme. Když sdílení selže, aplikace ukáže chybu a nic sama nestahuje; pak použij „Jen stáhnout do zařízení“. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
+ a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Telefony s Androidem soubor .json sdílet neumí, proto se tam záloha sdílí jako bombito_….json.txt (stejně tak na zařízení, které .json jednou odmítlo) — obsah je stejný a „Načíst tým ze souboru“ ho přijme. Když sdílení selže, aplikace ukáže chybu a nic sama nestahuje; pak použij „Jen stáhnout do zařízení“. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
  kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
 {tr:1,q:`Jak propojím tým s Google Diskem?`,
  a:`Přímé propojení s Diskem zatím v aplikaci není zapnuté — tým na Disk ulož přes Export. Až bude zapnuté: klepni nahoře na název týmu → „Google Disk“ (nebo v Exportu „Propojit tým s Google Diskem“) a přihlas se Googlem. Pak „Uložit tým na Disk“ — aplikace na Disku vytvoří složku Bombito a v ní soubor „Bombito – název týmu.json“. Od té chvíle se změny ukládají na Disk samy (asi 15 vteřin po poslední změně), dokud jsi přihlášený a online; vypnout to jde zaškrtávátkem „Ukládat změny na Disk automaticky“. Ikonka mráčku vedle názvu týmu ukazuje stav: plný mráček = uloženo, mráček se šipkou = změny čekají (třeba na přihlášení), vykřičník = něco je potřeba vyřešit. Google drží přihlášení zhruba hodinu — pak aplikace ukládá dál do zařízení a po dalším přihlášení pošle na Disk, co chybí. Aplikace na Disku vidí jen soubory, které sama vytvořila nebo které jsi v ní sám vybral.`,
@@ -11056,13 +11056,15 @@ function tymZaznamExport(id){
 // Kolo 114: Chrome na Androidu soubor .json sdílet neumí (jen povolené typy jako .txt), proto se dřív
 // místo sdílení na Disk jen stahovalo. Když .json nejde, sdílí se stejný obsah jako .json.txt (text/plain);
 // import ho přijme. Sdílení jen na dotykových zařízeních — na počítači sdílecí nabídka Disk nenabízí.
+// Kolo 115: na Androidu canShare .json schválí, ale share ho pak zamítne (NotAllowedError). Proto Android
+// sdílí rovnou .json.txt; jinde se po zamítnutí .json zapamatuje (bombito_sdil_txt) a příště jde .txt.
+function tymSdilTxt(){try{return/Android/i.test(navigator.userAgent)||localStorage.getItem('bombito_sdil_txt')==='1';}catch(e){return false;}}
 function tymSdilSoubor(json,filename){
   try{
     if(!navigator.canShare||!matchMedia('(pointer:coarse)').matches)return null;
-    const fj=new File([json],filename,{type:'application/json'});
-    if(navigator.canShare({files:[fj]}))return fj;
     const ft=new File([json],filename+'.txt',{type:'text/plain'});
-    if(navigator.canShare({files:[ft]}))return ft;
+    const fj=new File([json],filename,{type:'application/json'});
+    for(const f of tymSdilTxt()?[ft,fj]:[fj,ft])if(navigator.canShare({files:[f]}))return f;
   }catch(e){}
   return null;
 }
@@ -11086,7 +11088,12 @@ function tymExportSdilej(){
   if(!file){toast('Sdílení tu nejde — použij Jen stáhnout','err');return;} // Kolo 114
   navigator.share({files:[file],title:'Bombito — '+b.nazev})
     .then(()=>{tymZaznamExport(b.id);closeModal();toast('Záloha týmu sdílena ✓');})
-    .catch(err=>{if(err&&err.name==='AbortError')return;toast('Sdílení selhalo ('+((err&&err.name)||'chyba')+') — zkus Jen stáhnout','err');}); // Kolo 114: bez tichého stažení
+    .catch(err=>{
+      if(err&&err.name==='AbortError')return;
+      // Kolo 115: zamítnutý .json → příště .txt a hned nabídnout nový pokus (nové klepnutí = nové povolení)
+      if(err&&err.name==='NotAllowedError'&&!/\.txt$/.test(file.name)){try{localStorage.setItem('bombito_sdil_txt','1');}catch(e){}toast('Disk soubor .json nepřijal — zkus to znovu','err',{text:'Znovu',fn:tymExportSdilej});return;}
+      toast('Sdílení selhalo ('+[(err&&err.name)||'chyba',err&&err.message].filter(Boolean).join(': ')+') — zkus Jen stáhnout','err');
+    }); // Kolo 114: bez tichého stažení
 }
 function tymExportStahni(disk){
   const b=tymExportBalik(_tymExportId);if(!b)return;
