@@ -1757,6 +1757,27 @@ html.skin-trener #playerDetail.sw-r{animation:swZleva .2s ease-out}
 @media (prefers-reduced-motion:reduce){html.skin-trener #playerDetail.sw-l,html.skin-trener #playerDetail.sw-r{animation:none}}
 .tym-pill{display:inline-block;margin-top:4px;padding:1px 8px;border-radius:999px;font:600 11.5px 'DM Sans',sans-serif;background:var(--line);color:var(--ink)}
 .tym-pill.warn{background:var(--warn);color:var(--warn-bg)}
+/* Kolo 120: osobní milníky — odstíny zelené z prstence, proužek na kartě a oddíl v Milnících. */
+.os-pruh{position:relative;display:flex;align-items:center;gap:10px;width:100%;margin:18px 0 0;padding:10px 12px 8px;border:1.5px solid var(--court);border-radius:12px;background:color-mix(in srgb,var(--court) 8%,var(--card));color:var(--ink);cursor:pointer;text-align:left;font:inherit}
+.os-tag{position:absolute;top:-9px;left:10px;display:flex;align-items:center;gap:4px;padding:0 6px;background:var(--paper);font:700 11px/16px 'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--court-ink)}
+.os-tag i{font-size:11px}
+.os-segs{flex:1;display:flex;gap:6px;min-width:0}
+.os-seg{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.os-seg-ic{font-size:13px;line-height:1;height:14px;display:flex;gap:8px;white-space:nowrap}
+.os-poc{display:inline-flex;align-items:center;gap:3px;font:700 12px 'DM Sans',sans-serif;color:var(--ink)}
+.os-seg-hot{justify-content:center;flex:0 0 auto;padding:0 6px}
+.os-seg-hot .os-hot{color:var(--court-ink);font-size:17px}
+.os-seg-ic .os-nic{opacity:.35;filter:grayscale(1)} /* nezačatý: vybledlý klíček */
+.os-bar{display:block;width:100%;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--c) calc(var(--p)*100%),var(--kol-m0) 0)}
+.os-n{font:700 14px 'DM Sans',sans-serif;color:var(--court-ink);white-space:nowrap;margin-left:auto}
+.os-mil{border:1.5px solid var(--court);border-radius:12px;padding:8px 10px 10px;margin:0 0 12px;background:color-mix(in srgb,var(--court) 6%,var(--card))}
+.os-mil-h{display:flex;align-items:center;gap:6px;font:700 13px 'DM Sans',sans-serif;color:var(--court-ink);text-transform:uppercase;letter-spacing:.04em;margin:2px 2px 6px}
+.os-mil-h .os-n{font-size:13px}
+.os-mil .os-pridat{margin-top:6px}
+.os-pridat-wrap{display:flex;justify-content:flex-start;margin-top:10px}
+.os-upr{font-size:13px}
+html.skin-trener .pdi .os-pruh{grid-column:1/-1;grid-row:4}
+html.skin-trener .pdh:has(.os-pruh) .pdi .da{grid-row:5}
 /* Kolo 118: souhrn „Doplnit ze souboru“ — štítky místo vět. */
 .sl-stitky{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
 .sl-stitky .tym-pill{margin-top:0;padding:3px 10px;font-size:12.5px}
@@ -2130,7 +2151,8 @@ function proPozice(item,p){const z=item&&item.pozice;if(!z||!z.length)return tru
 const LIBERO_BEZ=['utok_cil','utok_pole'];
 function jenPrijem(p){return!!p&&!!p.liberoJenPrijem&&pozHracky(p).includes('libero');}
 function metPlati(m,p){return !p||(proPozice(m,p)&&!(jenPrijem(p)&&LIBERO_BEZ.includes(m.id)));}
-function milAktivni(p){return S.config.milestones.filter(m=>m.active!==false&&(!p||proPozice(m,p)));}
+// Kolo 120: osobní milník (m.hracka) platí jen pro svou hráčku; bez hráčky (týmové výběry) se vynechá.
+function milAktivni(p){return S.config.milestones.filter(m=>m.active!==false&&(m.hracka?!!p&&m.hracka===p.id:true)&&(!p||proPozice(m,p)));}
 function pozChip(z,hlavni,velka){
   const d=pozDef(z);if(!d)return'';
   return`<span class="poz${hlavni?' hl':''}${velka?' vel':''}" style="--pc:${d.color};--pi:${d.ink};--pt:${d.txt}" title="${d.label}${hlavni&&!isTrener()?' (hlavní)':''}">${d.zk}</span>`;
@@ -2774,7 +2796,7 @@ function ovVahy(blocks){
 // Průměr, ne součet → víc pozic neznamená výhodu. hlavniPoz() používají body (bodySk), ne milníky.
 function hlavniPoz(p){const h=p?.pozice?.hlavni;return h&&pozDef(h)?h:null;}
 function milPodil(p,cutoff){
-  const ms=milAktivni(p);if(!ms.length)return null;
+  const ms=milAktivni(p).filter(m=>!m.hracka);if(!ms.length)return null; // Kolo 120: osobní milníky ne
   const st=m=>{const z=p.milestones?.[m.id];return z&&(!cutoff||!z.date||z.date<=cutoff)?z.stage||0:0;};
   const podil=a=>a.length?a.reduce((s,m)=>s+st(m),0)/(a.length*3):null;
   const spol=podil(ms.filter(m=>!(m.pozice||[]).length));
@@ -3705,7 +3727,7 @@ function openMilEdTrener(){
   const radek=(m,i)=>`<div class="ed-item"><button class="tog ${m.active!==false?"on":""}" onclick="toggleActive('milestones',${i})" aria-label="${m.label}: ${m.active!==false?'zapnuto':'vypnuto'}"></button><div class="ed-lbl">${m.label}${(m.pozice||[]).length>1?pozSeznamChipy(m):''}</div><button class="btn btn-o sm" onclick="editMil(${i})" aria-label="Upravit">✎</button><button class="btn btn-d sm" onclick="delM('milestones',${i})" aria-label="Smazat">✕</button></div>`;
   const sk=[{k:'spol',h:'Společné',st:''},...POZICE.map(d=>({k:d.id,h:pozChip(d.id,true)+d.label,st:`--pc:${d.color};--pi:${d.ink}`}))];
   const kam=m=>m.pozice&&m.pozice.length?POZICE.map(d=>d.id).find(z=>m.pozice.includes(z))||'spol':'spol';
-  const html=sk.map(o=>{const ms=S.config.milestones.map((m,i)=>({m,i})).filter(x=>kam(x.m)===o.k);if(!ms.length)return'';
+  const html=sk.map(o=>{const ms=S.config.milestones.map((m,i)=>({m,i})).filter(x=>kam(x.m)===o.k&&!x.m.hracka);if(!ms.length)return'';
     const zap=ms.filter(x=>x.m.active!==false).length;
     return`<details class="med-sk${o.k==='spol'?'':' med-poz'}" data-k="${o.k}" style="${o.st}"${_milEdOtevr.has(o.k)?' open':''} ontoggle="_milEdOtevr[this.open?'add':'delete'](this.dataset.k)"><summary><span class="med-h">${o.h}</span><span class="med-n">${zap}/${ms.length}</span><i class="fa-solid fa-chevron-down med-sip" aria-hidden="true"></i></summary>${ms.map(x=>radek(x.m,x.i)).join('')}</details>`;}).join('');
   openModal(`<h2>Milníky</h2><div class="med">${html}</div><hr class="sep">
@@ -4239,7 +4261,7 @@ function renderDetail(){
     ?`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px" title="Norma: ${ovScopeTitle}"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ovZapIko()} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:var(--gm)">–</div></div>`
     :`<div class="pd-ov" style="text-align:center;flex-shrink:0;min-width:56px;cursor:pointer" onclick="showOverallBreakdown('${p.id}')" title="${ov.incomplete?`Naměřeno ${ov.n} z ${ov.total} metrik (nejtestovanější hráčka v týmu má ${ovMax})`:`Naměřeno ${ov.n} z ${ov.total} metrik`} · Norma: ${ovScopeTitle} · klepni pro rozpad na fyzické/herní/zápasy"><div style="font-size:0.58rem;letter-spacing:1px;color:var(--gm)">OVERALL${ovZapIko()}${ov.incomplete?' <span style="color:var(--acc)">★</span>':''} <span style="opacity:.55">${ovScopeIcon}</span></div><div class="mv" style="font-size:2rem;color:${overallColor(ov.tAvg)}">${ov.score}${ovSipka(p,ovNorms)}</div>${ovKartaSpark(p,ovNorms)}</div>`;
   const avHtml=isTrener()?collageHtml(p,72,ovNorms,`openCollage('${p.id}')`):`<div class="pav">${ini}</div>`;
-  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${dresHtml(p)}${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2>${pozKartaHtml(p)}<p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div><div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
+  el.innerHTML=`<div class="pdh">${avHtml}${ovHtml}<div class="pdi"><h2>${dresHtml(p)}${p.name}${p.nickname?` <span style="font-size:1rem;color:var(--gm);font-family:'DM Sans',sans-serif;letter-spacing:0;font-weight:400">(${p.nickname})</span>`:""}</h2>${pozKartaHtml(p)}<p>Nar. ${p.birthYear}&nbsp;·&nbsp;${p.testSessions?.length||0} testování${staleNoteHtml(p)}</p><div class="brow" id="badgeRowEl">${brow||'<span style="color:var(--gm);font-size:0.73rem">Žádné odznaky</span>'}</div>${isTrener()?osMilPruhHtml(p):''}<div class="da"><button class="btn btn-o sm da-badges" onclick="openBadges()"><span class="k-only">🏅 Odznaky</span><span class="t-only t-lbl"><i class="fa-solid fa-medal" aria-hidden="true"></i>Odznaky</span></button><button class="btn btn-a sm da-test" onclick="openAddTest()"><span class="k-only">+ Test</span><span class="t-only t-lbl"><i class="fa-solid fa-plus" aria-hidden="true"></i>Test</span></button><button class="btn btn-o sm da-pdf" onclick="exportPDF()"><span class="k-only">📄 PDF</span><span class="t-only t-lbl"><i class="fa-solid fa-file-lines" aria-hidden="true"></i>PDF</span></button><button class="btn btn-gray sm da-ic da-ed" onclick="openRenamePlayer()" aria-label="Upravit hráčku" title="Upravit hráčku"><span class="i-em">✎</span><i class="i-fa fa-solid fa-pen" aria-hidden="true"></i></button><button class="btn btn-gray sm da-ic" onclick="openCopyPlayer()" aria-label="Kopírovat hráčku" title="Kopírovat hráčku"><span class="i-em">⎘</span><i class="i-fa fa-solid fa-copy" aria-hidden="true"></i></button><button class="btn btn-d sm da-ic da-del" onclick="deletePlayer()" aria-label="Smazat hráčku" title="Smazat hráčku"><span class="i-em">✕</span><i class="i-fa fa-solid fa-trash-can" aria-hidden="true"></i></button>${isTrener()?'<button class="btn btn-gray sm da-ic da-more" onclick="openKartaMenu()" aria-label="Další akce s hráčkou" title="Další akce"><i class="fa-solid fa-ellipsis-vertical" aria-hidden="true"></i></button>':''}</div></div></div>${isTrener()?lepikKartaHtml(p):''}
   <div class="tabsWrap"><div class="tabs" id="tabsRow">${(isTrener()?tabyPoradi(p):TABS).map(t=>`<div class="tab ${S.activeTab===t.id?"active":""}${t.ma===false?' tab-bez':''}" onclick="switchTab('${t.id}')">${t.label}</div>`).join("")}</div><div class="tabsFade" id="tabsFade">›</div></div>
   <div id="tabContent"></div>`;
   renderTab();
@@ -4819,13 +4841,13 @@ function buildMil(){
   const act=milAktivni(p).map((m,i)=>({m,i})).sort((a,b)=>klic(a.m)-klic(b.m)||a.i-b.i).map(x=>x.m);
   // Kolo 96 (revize F4): ve vzhledu Trenéra v oddílu rozpracované nahoře (🌿 před 🌱), pak nezačaté, hotové 🌳 na konci sbalené.
   if(isTrener()){const st=m=>{const c=milStage(p,m.id);return c===3?9:-c;};act.sort((a,b)=>klic(a)-klic(b)||st(a)-st(b));}
-  const inact=S.config.milestones.filter(m=>m.active===false&&proPozice(m,p));
+  const inact=S.config.milestones.filter(m=>m.active===false&&!m.hracka&&proPozice(m,p));
   const c1=act.filter(m=>milStage(p,m.id)===1).length;
   const c2=act.filter(m=>milStage(p,m.id)===2).length;
   const c3=act.filter(m=>milStage(p,m.id)===3).length;
   const c0=act.length-c1-c2-c3;
   let skup=null;
-  const polozky=[...act,...inact].map(m=>{
+  const radekMil=m=>{
     const isA=m.active!==false,cur=isA?milStage(p,m.id):0,dt=p.milestones?.[m.id]?.date||"";
     let hlav='',pozSt='';
     if(isTrener()&&isA&&mp.length){const g=poradi(m);const z=mp[g],d=g>=0?pozDef(z):null;if(d)pozSt=` mi-poz" style="--pc:${d.color};--pi:${d.ink}`;if(g!==skup){skup=g;hlav=g<0?(act.some(x=>poradi(x)>=0)?'<div class="mil-poz-h">Společné</div>':''):`<div class="mil-poz-h mil-poz-hp" style="--pc:${d.color};--pi:${d.ink};--pt:${d.txt}">${pozChip(z,true)}${d.label}</div>`;}}
@@ -4841,10 +4863,17 @@ function buildMil(){
     const statusHtml=cur>0?`${milIco(cur)} od ${fmtDate(dt)}`:isTrener()?'':'<span style="color:var(--x-faint)">zatím nezačato</span>';
     const backBtn=(isA&&cur>0)?'<button class="mil-back" onclick="revertMil(\''+m.id+'\')" title="Vrátit o fázi zpět">↩</button>':'';
     return{hl:hlav,m,hot:isTrener()&&isA&&cur===3,t:`<div class="mi ${isA?"":"inactive"}${pozSt}">
-      <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}${pn?`<div class="mi-note">${pn}</div>`:""}</div>${nb}</div>
+      <div class="mi-top"><div class="ml2">${m.label}${!isA?' <small style="color:var(--gm)">(neaktivní)</small>':""}${pn?`<div class="mi-note">${pn}</div>`:""}</div>${nb}${m.hracka?`<button class="note-btn os-upr" onclick="osMilUprav('${m.id}')" aria-label="Upravit osobní milník" title="Upravit"><i class="fa-solid fa-pen" aria-hidden="true"></i></button>`:''}</div>
       <div class="mi-bot"><div class="mstages">${stagesHtml}</div><div class="md2">${statusHtml}</div>${backBtn}</div>
     </div>`};
-  });
+  };
+  const polozky=[...act.filter(m=>!m.hracka),...inact].map(radekMil);
+  // Kolo 120: osobní milníky hráčky (jen vzhled Trenéra).
+  const osobni=isTrener()?act.filter(m=>m.hracka):[];
+  const osHot=osobni.filter(m=>milStage(p,m.id)>=3).length;
+  const osPridat=`<button type="button" class="sk-ghost os-pridat" onclick="osMilNovy()"><i class="fa-solid fa-plus" aria-hidden="true"></i>Osobní milník</button>`;
+  const osHtml=osobni.length?`<div class="os-mil" id="osMil"><div class="os-mil-h"><i class="fa-solid fa-bullseye" aria-hidden="true"></i>Osobní<span class="os-n">${osHot}/${osobni.length}</span></div>${osobni.filter(m=>milStage(p,m.id)<3).map(m=>radekMil(m).t).join('')}${osHot?`<details class="mil-hot"><summary>${osobni.filter(m=>milStage(p,m.id)>=3).map(m=>`<span class="mh-chip">${milIco(3)}${m.label}</span>`).join('')}</summary>${osobni.filter(m=>milStage(p,m.id)>=3).map(m=>radekMil(m).t).join('')}</details>`:''}${osPridat}</div>`:'';
+  const osPrazdny=isTrener()&&!osobni.length?`<div class="os-pridat-wrap" id="osMil">${osPridat}</div>`:'';
   let rows='',hot=[];
   const vylij=()=>{if(hot.length){rows+=`<details class="mil-hot"><summary>${hot.map(x=>`<span class="mh-chip">${milIco(3)}${x.m.label}</span>`).join('')}</summary>${hot.map(x=>x.t).join('')}</details>`;hot=[];}};
   polozky.forEach(x=>{if(x.hl)vylij();rows+=x.hl;if(x.hot)hot.push(x);else{vylij();rows+=x.t;}});vylij();
@@ -4852,7 +4881,7 @@ function buildMil(){
   // Kolo 49: vysvětlení emoji fází dřív nikde nebylo — teď je schované v klepacím
   // souhrnném řádku (varianta C z mock-upu), ať nezabírá trvalé místo v kartě.
   const legend=MIL_STAGES.map(s=>`<div>${milIco(s.n)} ${s.full}</div>`).join("");
-  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><details class="mil-summary"><summary>${summary}</summary><div class="mil-leg">${legend}</div></details>${rows||'<div class="no-data">Žádné milníky</div>'}</div>${buildPlayerNotesCard(p)}`;
+  return`<div class="card"><h3>Milníky &nbsp;·&nbsp; ${c3}/${act.length} zvládá pravidelně</h3><details class="mil-summary"><summary>${summary}</summary><div class="mil-leg">${legend}</div></details>${osHtml}${rows||(osobni.length?'':'<div class="no-data">Žádné milníky</div>')}${osPrazdny}</div>${buildPlayerNotesCard(p)}`;
 }
 // Kolo 47: aplikace dřív měla poznámku jen u metodiky testu (fixní text na metrice) a u
 // jednoho testování (jedna poznámka na session) — aplikace neměla žádné volné, datované
@@ -4937,6 +4966,68 @@ function lepikHtml(o){
     +`<div class="lp-text${o.stary?' stary':''}${o.prazdny?' prazdny':''}" data-lp="psat" role="button" tabindex="0" aria-label="${o.prazdny?'Napsat poznámku':'Upravit poznámku'}">${txt}${o.stary?`<small>z ${fmtDate(o.stary)}</small>`:''}</div>`
     +`<button type="button" class="lp-sbal" data-lp="sbalit" aria-expanded="${!sb}" aria-label="${sb?'Rozbalit lepík':'Sbalit lepík'}"><i class="fa-solid fa-chevron-${sb?'down':'up'}" aria-hidden="true"></i></button>`
     +`</div><span class="lp-roh"></span></div>`;
+}
+// ── OSOBNÍ MILNÍKY (Kolo 120, Mek 7. 11.) ──
+// Milník jen pro jednu hráčku: v S.config.milestones s polem hracka:<id hráčky>. Stejné 3 fáze.
+// Nepočítá se do Overall ani norem (milPodil), do týmových tabulek, Porovnání ani Wrapped, ale
+// počítá se do prstence (koláž) a ukazuje se zvýrazněný: proužek „Osobní cíle“ na kartě pod
+// lepíkem (všechny záložky) a oddíl „Osobní“ jako první v Milnících. Nastavení › Milníky je neukazuje.
+const OS_MIL_DILKY=6;
+// Mek v náhledu: hotový osobní milník = na proužku jen fajfka místo dílku.
+const OS_HOTOVO='<i class="fa-solid fa-check mil-ic os-hot" aria-hidden="true"></i>';
+function osMilHracky(p){return p?S.config.milestones.filter(m=>m.hracka===p.id&&m.active!==false):[];}
+function osMilPruhHtml(p){
+  const ms=osMilHracky(p);if(!ms.length)return'';
+  const hot=ms.filter(m=>milStage(p,m.id)>=3).length;
+  // Kolo 120 (Mek v náhledu): odstíny zelené z prstence (--kol-m1..3). Do 6 milníků dílek na milník
+  // s ikonou fáze; víc milníků = jeden souvislý ukazatel a počty fází (jinak by dílky byly moc úzké).
+  const st=ms.map(m=>milStage(p,m.id));
+  let stred;
+  if(ms.length<=OS_MIL_DILKY)stred=ms.map((m,i)=>st[i]>=3
+    ?`<span class="os-seg os-seg-hot" title="${tymEsc(m.label)}">${OS_HOTOVO}</span>` // Mek v náhledu: hotový = jen fajfka, bez dílku
+    :`<span class="os-seg" title="${tymEsc(m.label)}"><span class="os-seg-ic">${st[i]?milIco(st[i]):`<span class="os-nic">${milIco(1)}</span>`}</span><span class="os-bar" style="--p:${st[i]/3};--c:${milStageColor(st[i])}"></span></span>`).join('');
+  else{const pr=st.reduce((a,b)=>a+b,0)/(3*st.length),poc=n=>st.filter(x=>x===n).length;
+    stred=`<span class="os-seg os-souhrn"><span class="os-seg-ic">${[1,2,3].filter(n=>poc(n)).map(n=>`<span class="os-poc">${milIco(n)}${poc(n)}</span>`).join('')}</span><span class="os-bar" style="--p:${pr};--c:var(--kol-m3)"></span></span>`;}
+  return`<button type="button" class="os-pruh" onclick="osMilOtevri()" aria-label="Osobní cíle: ${hot} z ${ms.length} hotovo">
+    <span class="os-tag" aria-hidden="true"><i class="fa-solid fa-bullseye"></i>Osobní</span>
+    <span class="os-segs">${stred}</span></button>`;
+}
+function osMilOtevri(){
+  S.activeTab='milestones';renderDetail();
+  setTimeout(()=>{const el=document.getElementById('osMil');if(el)el.scrollIntoView({block:'start',behavior:'smooth'});},60);
+}
+function osMilNovy(){
+  const p=gP();if(!p)return;
+  openModal(`${skHubHead('Osobní milník')}
+    <div class="fg"><label>Název</label><input id="osNazev" type="text" maxlength="60" placeholder="Např. Nadhoz nad hlavou"></div>
+    <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="osMilUloz()">Přidat</button></div>`);
+  setTimeout(()=>{const i=document.getElementById('osNazev');if(i){i.focus();i.onkeydown=e=>{if(e.key==='Enter')osMilUloz();};}},80);
+}
+function osMilUloz(id){
+  const p=gP();if(!p)return;
+  const label=(document.getElementById('osNazev')?.value||'').trim();
+  if(!label){toast('Zadej název!','err');return;}
+  if(id){const m=S.config.milestones.find(x=>x.id===id);if(m)m.label=label;}
+  else S.config.milestones.push({id:'mo_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),label,active:true,hracka:p.id});
+  save();closeModal();navigator.vibrate&&navigator.vibrate(10);
+  S.activeTab='milestones';renderDetail();
+  if(!id)setTimeout(()=>{const el=document.getElementById('osMil');if(el)el.scrollIntoView({block:'nearest'});},60);
+}
+function osMilUprav(id){
+  const m=S.config.milestones.find(x=>x.id===id);if(!m)return;
+  openModal(`${skHubHead('Osobní milník')}
+    <div class="fg"><label>Název</label><input id="osNazev" type="text" maxlength="60" value="${tymEsc(m.label)}"></div>
+    <div class="ma"><button class="btn btn-d" onclick="osMilSmaz('${id}')"><i class="fa-solid fa-trash-can" aria-hidden="true"></i> Smazat</button><button class="btn btn-p" onclick="osMilUloz('${id}')">Uložit</button></div>`);
+  setTimeout(()=>{const i=document.getElementById('osNazev');if(i)i.onkeydown=e=>{if(e.key==='Enter')osMilUloz(id);};},80);
+}
+function osMilSmaz(id){
+  const snap=undoSnapshot();
+  const m=S.config.milestones.find(x=>x.id===id);if(!m)return;
+  S.config.milestones=S.config.milestones.filter(x=>x.id!==id);
+  const p=S.players.find(x=>x.id===m.hracka);
+  if(p){if(p.milestones)delete p.milestones[id];if(p.milNotes)delete p.milNotes[id];}
+  save();closeModal();renderDetail();
+  offerUndo(snap,'Osobní milník smazán');
 }
 function lepikPosledni(p){const ns=[...(p.notes||[])].sort((a,b)=>a.date.localeCompare(b.date));return ns[ns.length-1]||null;}
 function lepikKartaHtml(p){
@@ -5065,7 +5156,7 @@ function renderCmp(){
   // Physical: show výška + spider metrics, not dosah (replaced by výška)
   const phAct=S.config.physical.filter(m=>m.active!==false&&m.id!=="dosah_vyskoku"&&m.id!=="dosah");
   const gaAct=S.config.game.filter(m=>m.active!==false);
-  const milAct=S.config.milestones.filter(m=>m.active!==false);
+  const milAct=S.config.milestones.filter(m=>m.active!==false&&!m.hracka);
   // Kolo 86 (Mek): ve vzhledu Trenéra grafy bez dat (u žádné vybrané hráčky) nízké a na konci své kategorie.
   const maSel=f=>sel.some(p=>(p.testSessions||[]).some(x=>f(x)!=null));
   const jedSel=(f,lb,unit)=>{if(!isTrener())return null;const b=[];for(const [i,p] of sel.entries()){const vs=(p.testSessions||[]).map(f).filter(v=>v!=null);if(vs.length>1)return null;if(vs.length)b.push({v:vs[0],c:COLORS[i%COLORS.length],t:playerLabel(p)});}return b.length?listaTymu(b,tymHodnoty(f),lb,unit,'Tým'):null;};
@@ -6051,7 +6142,7 @@ function computeSeasonWrappedJadro(si){
   // Kolo 48: "splněno v období" teď znamená dosažení nejvyšší fáze (🌳 pravidelně
   // v zápase) v daném rozmezí dat, ne jen jakoukoli změnu fáze — nejblíž to
   // odpovídá tomu, co dřív znamenalo jedno prosté zaškrtnutí.
-  const milestones=S.config.milestones.filter(m=>m.active!==false).map(m=>{
+  const milestones=S.config.milestones.filter(m=>m.active!==false&&!m.hracka).map(m=>{
     const completed=roster.filter(p=>{const ms=p.milestones?.[m.id];return ms&&ms.stage>=3&&ms.date>=start&&ms.date<=end;});
     // Kolo 87: fáze každé hráčky soupisky ke konci sezóny (pro mřížku ve Wrapped).
     const stages=roster.map(p=>{const ms=p.milestones?.[m.id];return ms&&ms.date<=end?(ms.stage||0):0;});
@@ -6850,9 +6941,9 @@ function renderOverviewObsah(el){
     // takže se sama zalomí do dalších řádků i při jiném počtu aktivních milníků
     // než 9 (přidání/ubrání milníku v Nastavení).
     {id:'milestones',label:'Milníky',nazev:'Milníky',
-      get:p=>milAktivni(p).filter(m=>milStage(p,m.id)>=3).length,
+      get:p=>milAktivni(p).filter(m=>!m.hracka&&milStage(p,m.id)>=3).length,
       display:(p,v)=>{
-        const actM=milAktivni(p);
+        const actM=milAktivni(p).filter(m=>!m.hracka);
         const tot=actM.length;
         const cells=actM.map(m=>{
           const st=milStage(p,m.id);
@@ -6863,7 +6954,7 @@ function renderOverviewObsah(el){
         }).join('');
         return `<div style="display:flex;align-items:center;gap:7px"><div style="display:flex;flex-wrap:wrap;gap:2px;width:28px">${cells}</div><span style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--x-muted)">${v}/${tot}</span></div>`;
       },
-      sortVal:p=>milAktivni(p).filter(m=>milStage(p,m.id)>=3).length,
+      sortVal:p=>milAktivni(p).filter(m=>!m.hracka&&milStage(p,m.id)>=3).length,
       lowerBetter:false},
     {id:'last_test',nazev:'Poslední test',label:'Poslední<br><small>test</small>',
       get:p=>lS(p)?.date,
@@ -9481,6 +9572,9 @@ const HELP_DATA=[
 {title:"Milníky",icon:"🎖",qa:[
 {q:`Co jsou Milníky?`,
  a:`Milníky aplikace odlišuje od číselných metrik — jde o dovednostní „odemčení", třeba „Vrchní servis" nebo „Smeč z výskoku". Místo jednoho zaškrtnutí má každý milník tři postupné fáze: 🌱 začíná fungovat v tréninku, 🌿 funguje v herním cvičení, 🌳 funguje pravidelně v zápase — s datem, kdy na ni hráčka postoupila.`},
+{tr:1,q:`Jak udělám osobní milník jen pro jednu hráčku?`,
+ a:`Na kartě hráčky otevři záložku Milníky a dole klepni na <b>+ Osobní milník</b>, napiš název (třeba „Nadhoz nad hlavou“) a dej Přidat. Osobní milníky má jen tahle hráčka, ostatní je nevidí a v Nastavení › Milníky nejsou.<br>• Mají stejné tři fáze jako ostatní milníky a posouvají se stejně.<br>• Jsou <b>zvýrazněné</b>: v Milnících první v orámovaném oddílu <b>Osobní</b> (hotové sbalené do štítků) a v hlavičce karty pod pozicemi zelený proužek se štítkem „Osobní“: rozpracovaný milník má ikonu fáze a dílek, nezačatý vybledlý klíček, hotový jen fajfku (u víc než 6 milníků jeden ukazatel s počty fází). Proužek je vidět na každé záložce, klepnutím otevře Milníky.<br>• Počítají se do prstence u hráčky, ale <b>ne do Overall</b>, norem, Porovnání, tabulek týmu ani Wrapped, aby hráčky šly dál férově srovnávat.<br>• Tužka u osobního milníku ho přejmenuje nebo smaže (s „Vrátit“).`,
+ kw:"osobní milník individuální cíl jedna hráčka vlastní milník priorita proužek osobní cíle"},
 {q:`Jak milník hráčce posunu na další fázi?`,
  a:`Na kartě hráčky v sekci Milníků klikneš na další (zlatě orámovanou) fázi u daného milníku. Aplikace se před uložením zeptá na potvrzení — teprve po něm fázi posune a uloží dnešní datum. Fáze jdou jen popořadě, žádnou nejde přeskočit.`},
 {q:`Jde fázi milníku vrátit zpátky?`,
