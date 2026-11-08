@@ -1778,6 +1778,17 @@ html.skin-trener #playerDetail.sw-r{animation:swZleva .2s ease-out}
 .os-upr{font-size:13px}
 html.skin-trener .pdi .os-pruh{grid-column:1/-1;grid-row:4}
 html.skin-trener .pdh:has(.os-pruh) .pdi .da{grid-row:5}
+/* Kolo 121: hráčky do jiného týmu. */
+.pr-tymy{align-items:center}
+.pr-sipka{color:var(--court-ink);font-size:14px;margin-right:2px}
+.pr-tym[aria-pressed="true"]{background:var(--court);color:var(--on-court)}
+.pr-seznam{border:1px solid var(--line);border-radius:12px;max-height:46vh;overflow:auto;margin:0 0 12px}
+.pr-hr{display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;font:14px 'DM Sans',sans-serif;color:var(--ink)}
+.pr-hr+.pr-hr{border-top:1px solid var(--line)}
+.pr-hr input{width:20px;height:20px;accent-color:var(--court);flex:0 0 auto}
+.pr-hr.on{background:color-mix(in srgb,var(--court) 8%,var(--card))}
+.pr-jm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-tam{color:var(--court-ink);font-size:13px}
 /* Kolo 118: souhrn „Doplnit ze souboru“ — štítky místo vět. */
 .sl-stitky{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}
 .sl-stitky .tym-pill{margin-top:0;padding:3px 10px;font-size:12.5px}
@@ -3653,7 +3664,7 @@ function skHubHead(t){return`<div class="sk-modal-head"><h2>${t}</h2><button cla
 // se hůř trefí omylem.
 function openKartaMenu(){
   const p=gP();if(!p)return;
-  openModal(`${skHubHead(p.name)}<div class="sk-rows" style="margin-top:14px">${skHubRow('openRenamePlayer()','pen','Upravit hráčku')}${skHubRow('openCopyPlayer()','copy','Kopírovat hráčku')}${skHubRow('closeModal();deletePlayer()','trash-can','Smazat hráčku','sk-danger')}</div>`);
+  openModal(`${skHubHead(p.name)}<div class="sk-rows" style="margin-top:14px">${skHubRow('openRenamePlayer()','pen','Upravit hráčku')}${skHubRow('closeModal();deletePlayer()','trash-can','Smazat hráčku','sk-danger')}</div>`);
 }
 function openSeasonHub(){
   if(isTrener()){
@@ -9377,9 +9388,9 @@ const HELP_DATA=[
 {q:`Jak upravím jméno nebo rok narození hráčky?`,
  a:`Na kartě hráčky klikni na tlačítko „✎" (u avataru nahoře) — v okně jde upravit jméno, nepovinná přezdívka (ta se pak místo celého jména používá v grafech a v živém zápase, kde je na displeji míň místa) i rok narození, klidně všechno najednou. Funguje to i u hráčky, co už má zapsané testy — rok narození se totiž nikde v aplikaci nepočítá do žádného vzorce, jen se zobrazuje, takže úprava nijak neovlivní testovací data ani výpočty.`,
  kw:"přezdívka nickname přejmenování rok narození editace oprava"},
-{q:`Co dělá tlačítko „⎘" (kopírovat hráčku) na kartě hráčky?`,
- a:`Vytvoří úplně NOVOU hráčku se stejným jménem (jde přepsat), odznaky a milníky jako originál, ale úplně BEZ testovacích a zápasových dat — hodí se hlavně na přechod hráčky do starší kategorie (třeba z U14 do U16), kde chceš na papíře novou hráčku s čistou historií čísel, ale nechceš přijít o to, co si už vysloužila (odznaky, splněné milníky). Originální hráčka zůstává aplikaci beze změny vedle své kopie — aplikace žádnou z nich sama nemaže ani nearchivuje.`,
- kw:"kopie přechod kategorie postup U14 U16"},
+{tr:1,q:`Jak převedu hráčku do starší kategorie (třeba z U14 do U16)?`,
+ a:`Každá kategorie je vlastní tým. Klepni nahoře na název týmu → <b>Hráčky do jiného týmu</b>, vyber cílový tým a hráčky a dej <b>Přesunout</b> (tady se archivují) nebo <b>Zkopírovat</b> (budou v obou). Hráčky si vezmou testy, milníky, odznaky i poznámky, zápasy zůstanou starému týmu. Podrobně v otázce „Jak přesunu nebo zkopíruju hráčku do jiného týmu?“.`,
+ kw:"kopie kopírovat přechod kategorie postup U14 U16 starší kategorie"},
 ]},
 
 ]},
@@ -9798,6 +9809,9 @@ const HELP_DATA=[
 {tr:1,q:`Jak exportuju a sdílím jeden tým? Jde to uložit na Google Disk?`,
  a:`Export ve vzhledu Trenéra ukládá vždy jen JEDEN tým do vlastního souboru (např. bombito_SK-Meteor-U16_2026-11-05.json) — v přehledu Týmy má každý tým svoje tlačítko ⬇, takže jde exportovat i tým, který zrovna nemáš vybraný. Aplikace se při exportu zeptá, jestli zálohu chceš i na Google Disk: na telefonu otevře sdílení, kde vybereš „Disk“ (nebo e-mail, soubory…), na počítači soubor stáhne a otevře Google Disk, kam ho jen přetáhneš (třeba do složky „Bombito“). Telefony s Androidem soubor .json sdílet neumí, proto se tam záloha sdílí jako bombito_….json.txt (stejně tak na zařízení, které .json jednou odmítlo) — obsah je stejný a „Načíst tým ze souboru“ ho přijme. Když sdílení selže, aplikace ukáže chybu a nic sama nestahuje; pak použij „Jen stáhnout do zařízení“. Protože soubor obsahuje jen jeden tým, můžeš ho poslat i kolegovi, aniž by viděl ostatní týmy.`,
  kw:"google disk drive sdílení sdílet export jednoho týmu kolega"},
+{tr:1,q:`Jak přesunu nebo zkopíruju hráčku do jiného týmu?`,
+ a:`Klepni nahoře na název týmu a vyber <b>Hráčky do jiného týmu</b> (jen když máš aspoň dva týmy). Nahoře zvol cílový tým, zatrhni hráčky a dej:<br>• <b>Přesunout</b>: hráčka přejde do cílového týmu a tady se archivuje. Její zápasy a data tu zůstanou, statistiky týmu se nerozbijí.<br>• <b>Zkopírovat</b>: hráčka bude v obou týmech, třeba když hraje ve dvou kategoriích.<br>Přenesou se testy, milníky (i osobní), odznaky, poznámky, pozice, dres a přezdívka. Zápasy a tréninky patří týmu, ty zůstávají. Do nastavení cílového týmu se přidají jen metriky, milníky a odznaky, které hráčka opravdu má. Její testy se v cílovém týmu počítají do norem.<br>Hráčka si drží stejné ID, takže když už v cílovém týmu je (ikona <i class="fa-solid fa-user-check"></i> u jména, štítek „doplní se“), jen se doplní, co tam chybí, a z archivu se vrátí mezi aktivní. Hláška má <b>Vrátit</b>, které vrátí oba týmy.`,
+ kw:"přesun přesunout zkopírovat kopie hráčka jiný tým kategorie postup přeřadit dvě kategorie vrátit se"},
 {tr:1,q:`Jak doplním do týmu data z jiného zařízení (sloučení)?`,
  a:`Když jsi část dat zapisoval jinde (třeba na telefonu, protože tablet zůstal doma), exportuj tým na tom druhém zařízení a soubor otevři na hlavním: klepni nahoře na název týmu → „Načíst tým ze souboru“ a vyber <b>Doplnit vybraný tým</b>. Aplikace nic nepřepíše, jen doplní, co v týmu chybí, a nejdřív ukáže štítky, co přibude (zápasy, tréninky, testování, hodnoty, milníky, odznaky, poznámky, hráčky).<br>• <b>Hráčky</b> se poznají podle ID, a když tým na druhém zařízení vznikl znovu, podle jména a roku narození. Jejich statistiky ze zápasů se tak připíšou správné hráčce. Hráčka bez páru se přidá jako nová.<br>• <b>Testování</b> ve stejný den je jedno testování: chybějící hodnoty se doplní. Když se hodnota liší, zůstane ta z vybraného týmu (štítek „jiná hodnota“).<br>• <b>Milník</b> platí vyšší fáze, <b>odznaky</b> a <b>poznámky</b> se přidají.<br>• <b>Možná duplicita</b> = zápas se stejným datem a soupeřem, který už v týmu je. Přeskočí se; zatržením ho přidáš i tak.<br>• Nastavení, normy, pozice a archiv zůstanou z vybraného týmu, přidají se jen nové metriky, milníky a odznaky.<br>Po doplnění jde všechno vrátit tlačítkem <b>Vrátit</b> v hlášce, později v Data a zálohy → „Vrátit stav před posledním importem“.`,
  kw:"sloučit sloučení spojit doplnit merge dvě zařízení telefon tablet nouzový soubor záloha druhý soubor"},
@@ -11056,7 +11070,7 @@ function openTymy(){
   }).join('');
   openModal(`${skHubHead('Týmy')}
     <div class="tym-seznam">${radky}</div>
-    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importData(event)"></label></div>`);
+    <div class="sk-rows" style="margin-top:6px">${diskNastaveny()?skHubRow('openDisk()','cloud','Google Disk'):''}${(r.seznam.length>1?skHubRow('_prVyber=new Set();openPresun()','people-arrows','Hráčky do jiného týmu'):'')+skHubRow('tymNovyModal()','plus','Nový tým')}<label class="sk-row-btn"><i class="fa-solid fa-upload" aria-hidden="true"></i>Načíst tým ze souboru (JSON)<i class="fa-solid fa-chevron-right chev" aria-hidden="true"></i><input type="file" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="importData(event)"></label></div>`);
 }
 
 // ── Přepnutí ──
@@ -11422,6 +11436,78 @@ function tymDoplnProved(){
   S=data;_pendingImport=null;_slDup=false;_slDetail=null;save();load();closeModal();render();
   navigator.vibrate&&navigator.vibrate(10);
   offerUndo(snap,'Doplněno');
+}
+// ── Hráčky do jiného týmu (Kolo 121, Mek 7. 11.) ──
+// Z přehledu Týmy (klepnutí na název týmu nahoře). Přesunout = hráčka přejde do cílového týmu a tady se
+// archivuje (zápasy a data zůstávají); Zkopírovat = bude v obou. Přenáší se hráčka celá (testy, milníky,
+// osobní milníky, odznaky, poznámky, pozice, dres, přezdívka), zápasy a tréninky zůstávají týmu.
+// Hráčka si drží své ID, takže v cílovém týmu se pozná a jen doplní (pravidla sloučení z kola 118).
+// Do nastavení cílového týmu se přidají jen metriky, milníky a odznaky, které hráčka opravdu má
+// (milník rozpracovaný nebo hotový; osobní milníky všechny). Normy cílového týmu je normálně započítají.
+let _prCil=null,_prVyber=new Set();
+function prDoplnek(p){
+  const c=S.config||{},ts=p.testSessions||[];
+  const fyz=new Set(),her=new Set();
+  ts.forEach(s=>{for(const k in (s.physical||{}))if(!slPrazdne(s.physical[k]))fyz.add(k);for(const k in (s.game||{}))if(s.game[k]!=null)her.add(k);});
+  return{players:[slKlon(p)],config:{
+    physical:(c.physical||[]).filter(m=>fyz.has(m.id)).map(slKlon),
+    game:(c.game||[]).filter(m=>her.has(m.id)).map(slKlon),
+    milestones:(c.milestones||[]).filter(m=>m.hracka===p.id||!m.hracka&&milStage(p,m.id)>0).map(slKlon),
+    badges:(c.badges||[]).filter(b=>(p.badges||[]).includes(b.id)).map(slKlon)}};
+}
+// Vrátí nová data cílového týmu (nic neukládá).
+function prDoTymu(T,hracky){
+  let D=slKlon(T||{players:[]});const st={nove:0,doplnene:0};
+  hracky.forEach(p=>{
+    const k=slNorm(p.name)+'|'+(p.birthYear||'');
+    const uz=(D.players||[]).some(x=>x.id===p.id||slNorm(x.name)+'|'+(x.birthYear||'')===k);
+    D=slSlouc(D,prDoplnek(p),false).data;
+    const t=D.players.find(x=>x.id===p.id)||D.players.find(x=>slNorm(x.name)+'|'+(x.birthYear||'')===k);
+    if(t)delete t.archived;
+    st[uz?'doplnene':'nove']++;
+  });
+  return{data:D,st};
+}
+function openPresun(){
+  const r=tymyCti();if(!r||r.seznam.length<2)return;
+  const jine=r.seznam.filter(t=>t.id!==r.aktivni);
+  if(!_prCil||!jine.some(t=>t.id===_prCil))_prCil=jine[0].id;
+  const akt=getActiveP();
+  _prVyber=new Set([..._prVyber].filter(id=>akt.some(p=>p.id===id)));
+  const T=tymData(_prCil),vyb=akt.filter(p=>_prVyber.has(p.id));
+  const {st}=vyb.length?prDoTymu(T,vyb):{st:{nove:0,doplnene:0}};
+  const tymy=jine.map(t=>`<button type="button" class="tym-pill sl-pill-btn pr-tym" aria-pressed="${t.id===_prCil}" onclick="_prCil='${t.id}';openPresun()"><i class="fa-solid fa-${t.id===_prCil?'circle-check':'circle'}" aria-hidden="true"></i> ${tymEsc(t.nazev)}</button>`).join('');
+  const hr=akt.map(p=>{const v=_prVyber.has(p.id),k=slNorm(p.name)+'|'+(p.birthYear||''),tam=T&&(T.players||[]).some(x=>x.id===p.id||slNorm(x.name)+'|'+(x.birthYear||'')===k);
+    return`<label class="pr-hr${v?' on':''}"><input type="checkbox" ${v?'checked':''} onchange="_prVyber[this.checked?'add':'delete']('${p.id}');openPresun()"><span class="pr-jm">${dresHtml(p)}${tymEsc(p.name)}</span>${tam?'<i class="fa-solid fa-user-check pr-tam" aria-label="už v cílovém týmu" title="už v cílovém týmu"></i>':''}</label>`;}).join('');
+  const pill=(n,ic,txt)=>n?`<span class="tym-pill"><i class="fa-solid fa-${ic}" aria-hidden="true"></i> ${txt}</span>`:'';
+  const souhrn=pill(st.nove,'user-plus','+'+st.nove+' '+(st.nove===1?'hráčka':st.nove<5?'hráčky':'hráček'))+pill(st.doplnene,'user-check',st.doplnene+'× doplní se');
+  const nic=!vyb.length;
+  openModal(`${skHubHead('Hráčky do týmu')}
+    <div class="sl-stitky pr-tymy"><i class="fa-solid fa-arrow-right pr-sipka" aria-hidden="true"></i>${tymy}</div>
+    <div class="pr-seznam">${hr||'<div class="no-data">Žádné aktivní hráčky</div>'}</div>
+    ${souhrn?`<div class="sl-stitky">${souhrn}</div>`:''}
+    <div class="ma"><button class="btn btn-o" ${nic?'disabled':''} onclick="prProved(false)"><i class="fa-solid fa-copy" aria-hidden="true"></i> Zkopírovat</button><button class="btn btn-p" ${nic?'disabled':''} onclick="prProved(true)"><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i> Přesunout</button></div>`);
+}
+function prProved(presun){
+  const r=tymyCti();if(!r||!_prCil||_prCil===r.aktivni)return;
+  if(tymZapasBezi()){toast('Nejdřív dokonči nebo zruš rozehraný zápas','err');return;}
+  const cil=r.seznam.find(t=>t.id===_prCil);if(!cil)return;
+  const vyb=getActiveP().filter(p=>_prVyber.has(p.id));if(!vyb.length)return;
+  const klic=TYM_PREFIX+_prCil,predT=localStorage.getItem(klic);
+  let T=null;try{T=JSON.parse(predT||'null');}catch(e){}
+  if(!T){toast('Data týmu „'+cil.nazev+'“ v zařízení chybí','err');return;}
+  const {data}=prDoTymu(T,vyb);
+  try{localStorage.setItem(klic,JSON.stringify(data));}catch(e){toast('V zařízení není dost místa','err');return;}
+  const snap=JSON.stringify(S);
+  if(presun){
+    vyb.forEach(p=>{p.archived=true;});
+    if(vyb.some(p=>p.id===S.activeId))S.activeId=null;
+    S.cmpIds=(S.cmpIds||[]).filter(id=>!vyb.some(p=>p.id===id));
+  }
+  save();_prVyber=new Set();closeModal();render();
+  navigator.vibrate&&navigator.vibrate(10);
+  const n=vyb.length,co=n===1?vyb[0].name:n+' '+(n<5?'hráčky':'hráček');
+  offerUndo(snap,(presun?'Přesunuto':'Zkopírováno')+' do „'+cil.nazev+'“: '+co,()=>{try{if(predT==null)localStorage.removeItem(klic);else localStorage.setItem(klic,predT);}catch(e){}});
 }
 function tymImportProved(cilId){
   const d=_pendingImport;if(!d)return;

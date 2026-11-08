@@ -1,4 +1,4 @@
-const CACHE = 'bombito-v125'; // Kolo 120
+const CACHE = 'bombito-v126'; // Kolo 121
 const ASSETS = ['./', './index.html', './manifest.json', './chart.umd.min.js',
   './icons/bombito-192.png', './icons/bombito-512.png',
   // Kolo 51: Font Awesome pro vzhled Trenéra — uložený v repu, ať ikony fungují i offline.
