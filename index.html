@@ -1778,6 +1778,11 @@ html.skin-trener #playerDetail.sw-r{animation:swZleva .2s ease-out}
 .os-upr{font-size:13px}
 html.skin-trener .pdi .os-pruh{grid-column:1/-1;grid-row:4}
 html.skin-trener .pdh:has(.os-pruh) .pdi .da{grid-row:5}
+/* Kolo 122: Přidat hráčku — shoda v archivu nebo v jiném týmu. */
+.pn-najdi{display:flex;flex-direction:column;gap:6px;margin:-4px 0 10px}
+.pn-najdi:empty{display:none}
+.pn-shoda{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.pn-shoda .tym-pill{margin-top:0;padding:3px 10px;font-size:12.5px}
 /* Kolo 121: hráčky do jiného týmu. */
 .pr-tymy{align-items:center}
 .pr-sipka{color:var(--court-ink);font-size:14px;margin-right:2px}
@@ -3336,7 +3341,7 @@ function closeModal(){document.getElementById("modal").style.display="none";}
 function openAddPlayer(){
   const defYear=new Date().getFullYear()-13;
   openModal(`<h2>Přidat hráčku</h2>
-    <div class="fg"><label>Jméno a příjmení</label><input id="pName" type="text" placeholder="Jana Nováková"></div>
+    <div class="fg"><label>Jméno a příjmení</label><input id="pName" type="text" placeholder="Jana Nováková"${isTrener()?' oninput="prNajdiUkaz()"':''}></div>${isTrener()?'<div id="pNajdi" class="pn-najdi" aria-live="polite"></div>':''}
     <div class="fg"><label>Rok narození</label><input id="pYear" type="number" value="${defYear}" min="2000" max="${new Date().getFullYear()-4}"></div>
     ${isTrener()?'<div class="fg"><label>Číslo dresu (volitelně)</label><input id="pDres" type="number" inputmode="numeric" min="1" max="99" placeholder="1–99"></div>':''}
     <div class="ma"><button class="btn btn-o" onclick="closeModal()">Zrušit</button><button class="btn btn-p" onclick="addPlayer()">Přidat</button></div>`);
@@ -9388,6 +9393,9 @@ const HELP_DATA=[
 {q:`Jak upravím jméno nebo rok narození hráčky?`,
  a:`Na kartě hráčky klikni na tlačítko „✎" (u avataru nahoře) — v okně jde upravit jméno, nepovinná přezdívka (ta se pak místo celého jména používá v grafech a v živém zápase, kde je na displeji míň místa) i rok narození, klidně všechno najednou. Funguje to i u hráčky, co už má zapsané testy — rok narození se totiž nikde v aplikaci nepočítá do žádného vzorce, jen se zobrazuje, takže úprava nijak neovlivní testovací data ani výpočty.`,
  kw:"přezdívka nickname přejmenování rok narození editace oprava"},
+{tr:1,q:`Co když přidávám hráčku, kterou už znám (vrátila se, je v jiném týmu)?`,
+ a:`Při psaní jména v <b>Přidat hráčku</b> aplikace hledá stejné jméno v archivu tohoto týmu a v ostatních týmech. Když ho najde, ukáže pod jménem štítek (v archivu, nebo název týmu, a rok narození) a tlačítko:<br>• <b>Obnovit</b>: hráčka z archivu se vrátí mezi aktivní se vší historií.<br>• <b>Převzít data</b>: hráčka z jiného týmu přijde i s testy, milníky, odznaky a poznámkami (stejně jako Hráčky do jiného týmu → Zkopírovat).<br>Když jde o jinou hráčku se stejným jménem, štítek nevšímej a dej normálně Přidat. Obojí jde vrátit tlačítkem Vrátit v hlášce.`,
+ kw:"vrátila se návrat znovu přidat obnovit archiv převzít data jiný tým stejná hráčka přestup"},
 {tr:1,q:`Jak převedu hráčku do starší kategorie (třeba z U14 do U16)?`,
  a:`Každá kategorie je vlastní tým. Klepni nahoře na název týmu → <b>Hráčky do jiného týmu</b>, vyber cílový tým a hráčky a dej <b>Přesunout</b> (tady se archivují) nebo <b>Zkopírovat</b> (budou v obou). Hráčky si vezmou testy, milníky, odznaky i poznámky, zápasy zůstanou starému týmu. Podrobně v otázce „Jak přesunu nebo zkopíruju hráčku do jiného týmu?“.`,
  kw:"kopie kopírovat přechod kategorie postup U14 U16 starší kategorie"},
@@ -11445,8 +11453,8 @@ function tymDoplnProved(){
 // Do nastavení cílového týmu se přidají jen metriky, milníky a odznaky, které hráčka opravdu má
 // (milník rozpracovaný nebo hotový; osobní milníky všechny). Normy cílového týmu je normálně započítají.
 let _prCil=null,_prVyber=new Set();
-function prDoplnek(p){
-  const c=S.config||{},ts=p.testSessions||[];
+function prDoplnek(p,cfg){
+  const c=cfg||S.config||{},ts=p.testSessions||[];
   const fyz=new Set(),her=new Set();
   ts.forEach(s=>{for(const k in (s.physical||{}))if(!slPrazdne(s.physical[k]))fyz.add(k);for(const k in (s.game||{}))if(s.game[k]!=null)her.add(k);});
   return{players:[slKlon(p)],config:{
@@ -11508,6 +11516,46 @@ function prProved(presun){
   navigator.vibrate&&navigator.vibrate(10);
   const n=vyb.length,co=n===1?vyb[0].name:n+' '+(n<5?'hráčky':'hráček');
   offerUndo(snap,(presun?'Přesunuto':'Zkopírováno')+' do „'+cil.nazev+'“: '+co,()=>{try{if(predT==null)localStorage.removeItem(klic);else localStorage.setItem(klic,predT);}catch(e){}});
+}
+// ── Přidat hráčku: už ji znám? (Kolo 122, Mek 7. 11.) ──
+// Při psaní jména v „Přidat hráčku“ aplikace hledá stejné jméno v archivu tohoto týmu a v ostatních
+// týmech. Shoda = štítek s týmem a tlačítko: z archivu „Obnovit“, z jiného týmu „Převzít data“
+// (stejná pravidla jako Hráčky do jiného týmu, kolo 121 — hráčka přijde i s historií).
+function prNajdi(jmeno){
+  const k=slNorm(jmeno);if(k.length<3)return[];
+  const out=S.players.filter(p=>p.archived&&slNorm(p.name)===k).map(p=>({typ:'archiv',p}));
+  const r=tymyCti();
+  if(r)r.seznam.filter(t=>t.id!==r.aktivni).forEach(t=>{const d=tymData(t.id);(d&&d.players||[]).filter(p=>slNorm(p.name)===k).forEach(p=>out.push({typ:'tym',t,p}));});
+  return out;
+}
+function prNajdiUkaz(){
+  const el=document.getElementById('pNajdi');if(!el)return;
+  const v=prNajdi(document.getElementById('pName')?.value||'');
+  el.innerHTML=v.map(x=>`<div class="pn-shoda"><span class="tym-pill"><i class="fa-solid fa-${x.typ==='archiv'?'box-archive':'people-group'}" aria-hidden="true"></i> ${x.typ==='archiv'?'v archivu':tymEsc(x.t.nazev)} · ${x.p.birthYear||'–'}</span>`
+    +(x.typ==='archiv'?`<button type="button" class="btn btn-p sm" onclick="prObnov('${x.p.id}')"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Obnovit</button>`
+      :`<button type="button" class="btn btn-p sm" onclick="prPrevzit('${x.t.id}','${x.p.id}')"><i class="fa-solid fa-file-import" aria-hidden="true"></i> Převzít data</button>`)+`</div>`).join('');
+}
+function prObnov(id){
+  const snap=undoSnapshot();
+  const p=S.players.find(x=>x.id===id);if(!p)return;
+  delete p.archived;(S.seasons||[]).forEach(s=>{if(s.playerIds)s.playerIds=s.playerIds.filter(x=>x!==id);}); // jako restorePlayer, bez druhé hlášky
+  save();closeModal();selectPlayer(id);
+  offerUndo(snap,'Obnovena z archivu');
+}
+function prPrevzit(tid,pid){
+  const r=tymyCti(),t=r&&r.seznam.find(x=>x.id===tid),src=tymData(tid);
+  const p=src&&(src.players||[]).find(x=>x.id===pid);if(!p){toast('Hráčka v týmu chybí','err');return;}
+  const dr=dresZPole('pDres');if(dr===false)return;
+  const snap=JSON.stringify(S);
+  const add=prDoplnek(p,src.config||{});
+  const k=slNorm(p.name)+'|'+(p.birthYear||'');
+  S=slSlouc(S,add,false).data;
+  const h=S.players.find(x=>x.id===p.id)||S.players.find(x=>slNorm(x.name)+'|'+(x.birthYear||'')===k);
+  if(h){delete h.archived;(S.seasons||[]).forEach(s=>{if(s.playerIds)s.playerIds=s.playerIds.filter(x=>x!==h.id);});if(dr!=null){h.dres=dr;dresHlidej(h);}}
+  save();closeModal();
+  if(h)selectPlayer(h.id);else render();
+  navigator.vibrate&&navigator.vibrate(10);
+  offerUndo(snap,'Převzato z „'+(t?t.nazev:'týmu')+'“: '+p.name);
 }
 function tymImportProved(cilId){
   const d=_pendingImport;if(!d)return;
